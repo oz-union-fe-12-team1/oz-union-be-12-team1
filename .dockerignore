@@ -1,0 +1,30 @@
+# 파이썬/가상환경
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+.pytest_cache/
+.venv/
+.env
+.env.*
+.dist-info/
+build/
+dist/
+
+# VCS/IDE
+.git
+.gitignore
+.gitattributes
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# 데이터/로그
+logs/
+*.log
+
+# 캐시
+.cache/
