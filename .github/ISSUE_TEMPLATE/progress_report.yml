@@ -1,0 +1,30 @@
+name: 📌 Progress Report
+description: 진행 상황 공유용 템플릿
+title: "[PROGRESS] "
+labels: [progress]
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: 작업 내용
+      description: 어떤 작업을 진행 중인지 간단히 작성해주세요
+      placeholder: ex. 회원가입 API 구현
+
+  - type: dropdown
+    id: status
+    attributes:
+      label: 현재 상태
+      options:
+        - 진행 전
+        - 진행 중
+        - 검토 필요
+        - 완료
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: 메모
+      description: 추가적으로 공유할 내용이 있으면 적어주세요
+      placeholder: ex. 프론트엔드와 API 스펙 조율 필요
