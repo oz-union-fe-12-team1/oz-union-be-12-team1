@@ -1,0 +1,25 @@
+name: 🐛 Bug Report
+description: 간단한 버그 리포트 템플릿
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: textarea
+    id: situation
+    attributes:
+      label: 상황
+      description: 버그가 발생한 상황을 간단히 적어주세요
+      placeholder: 로그인 버튼 클릭 시 500 에러 발생
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 해결 상황
+      description: 시도한 해결 방법이 있다면 적어주세요
+      placeholder: 캐시 삭제 후 재시도
+
+  - type: checkbox
+    id: done
+    attributes:
+      label: 해결 완료
+      options:
+        - label: 완료됨
