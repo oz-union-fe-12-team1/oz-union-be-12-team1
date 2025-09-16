@@ -1,155 +1,274 @@
-from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime
-from typing import Optional
+from sqlalchemy import (
+    Column, BigInteger, String, Boolean, DateTime, 
+    Text, Integer, Numeric, CheckConstraint, Index
+)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import CITEXT
 
-# ========== 요청 스키마 ==========
+Base = declarative_base()
 
-class UserCreate(BaseModel):
-    """회원가입 요청 데이터"""
-    email: EmailStr
-    password: str
-    username: Optional[str] = None
+
+class User(Base):
+    """사용자 테이블 모델"""
+    __tablename__ = "users"
+
+    # Primary Key
+    id = Column(BigInteger, primary_key=True, index=True)
     
-    @validator('password')
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('비밀번호는 최소 8자 이상이어야 합니다')
-        return v
+    # 기본 정보
+    email = Column(CITEXT, unique=True, nullable=False, index=True)
+    password_hash = Column(Text, nullable=False)
+    username = Column(CITEXT, nullable=False, index=True)  # NOT NULL로 변경
+    profile_image = Column(Text, nullable=True)
     
-    @validator('username')
-    def validate_username(cls, v):
-        if v and len(v) < 2:
-            raise ValueError('사용자명은 최소 2자 이상이어야 합니다')
-        return v
-
-class UserLogin(BaseModel):
-    """로그인 요청 데이터"""
-    email: EmailStr
-    password: str
-    device_info: Optional[dict] = None  
-
-class UserUpdate(BaseModel):
-    """사용자 정보 수정 요청 데이터"""
-    username: Optional[str] = None
-    profile_image: Optional[str] = None
-
-class PasswordUpdate(BaseModel):
-    """비밀번호 변경 요청 데이터"""
-    current_password: str
-    new_password: str
+    # 상태 관리
+    is_active = Column(Boolean, nullable=False, default=True)
+    is_email_verified = Column(Boolean, nullable=False, default=False)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
+    login_count = Column(Integer, nullable=False, default=0)
     
-    @validator('new_password')
-    def validate_new_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('새 비밀번호는 최소 8자 이상이어야 합니다')
-        return v
-
-# ========== 응답 스키마 ==========
-
-class UserResponse(BaseModel):
-    """사용자 정보 응답 데이터"""
-    User_id: int
-    email: str
-    username: Optional[str]
-    profile_image: Optional[str]
-    is_active: bool
-    is_email_verified: bool
-    login_count: int
-    created_at: datetime
-    updated_at: datetime
+    # 소셜 로그인
+    social_provider = Column(String(32), nullable=True)
+    social_id = Column(String(128), nullable=True)
     
-    class Config:
-        from_attributes = True
+    # 타임스탬프
+    created_at = Column(
+        DateTime(timezone=True), 
+        nullable=False, 
+        server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True), 
+        nullable=False, 
+        server_default=func.now(),
+        onupdate=func.now()
+    )
 
-class UserProfile(BaseModel):
-    """사용자 프로필 응답 (간단한 정보)"""
-    User_id: int
-    username: Optional[str]
-    email: str
-    profile_image: Optional[str]
+    # 관계 설정
+    settings = relationship("UserSettings", back_populates="user", uselist=False)
+    permissions = relationship("UserPermissions", back_populates="user", uselist=False)
+    sessions = relationship("UserSession", back_populates="user")
+    schedules = relationship("Schedule", back_populates="user")
+    todos = relationship("Todo", back_populates="user")
+    chat_sessions = relationship("ChatSession", back_populates="user")
+    push_subscriptions = relationship("PushSubscription", back_populates="user")
 
-class Token(BaseModel):
-    """토큰 응답 데이터"""
-    access_token: str
-    refresh_token: str  
-    token_type: str = "bearer"
-    expires_in: int
-    user: UserResponse
+    # 인덱스
+    __table_args__ = (
+        Index('idx_users_email_active', 'email', 'is_active'),
+        Index('idx_users_username_active', 'username', 'is_active'),
+        Index('idx_users_social', 'social_provider', 'social_id'),
+        Index('idx_users_created_at', 'created_at'),
+    )
+
+    def __repr__(self):
+        return f"<User(id={self.id}, email='{self.email}', username='{self.username}')>"
+
+    def to_dict(self):
+        """모델을 딕셔너리로 변환"""
+        return {
+            'id': self.id,
+            'email': self.email,
+            'username': self.username,
+            'profile_image': self.profile_image,
+            'is_active': self.is_active,
+            'is_email_verified': self.is_email_verified,
+            'email_verified_at': self.email_verified_at,
+            'last_login_at': self.last_login_at,
+            'login_count': self.login_count,
+            'social_provider': self.social_provider,
+            'social_id': self.social_id,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
+        }
 
 
-class UserSettings(BaseModel):
-    """사용자 설정 데이터"""
-    timezone: str = "Asia/Seoul"
-    language: str = "ko-KR"
-    date_format: str = "YYYY-MM-DD"
-    time_format: str = "HH:mm"
-    theme: str = "system"
-    location_name: Optional[str] = None
+class UserSettings(Base):
+    """사용자 설정 테이블 모델"""
+    __tablename__ = "user_settings"
 
-class UserPermissions(BaseModel):
-    """사용자 권한 데이터"""
-    notification_permission: bool = False
-    calendar_permission: bool = False
-    microphone_permission: bool = False
-    location_permission: bool = False
-
-# ========== API 명세서 추가 스키마 ==========
-
-class SocialLogin(BaseModel):
-    """소셜 로그인 요청 데이터"""
-    provider: str  # google|kakao|naver
-    access_token: str
-
-class RefreshToken(BaseModel):
-    """토큰 갱신 요청 데이터"""
-    refresh_token: str
-
-class ForgotPassword(BaseModel):
-    """비밀번호 재설정 요청 데이터"""
-    email: EmailStr
-
-class ResetPassword(BaseModel):
-    """비밀번호 재설정 데이터"""
-    token: str
-    new_password: str
+    # Primary Key
+    id = Column(BigInteger, primary_key=True, index=True)
     
-    @validator('new_password')
-    def validate_new_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('새 비밀번호는 최소 8자 이상이어야 합니다')
-        return v
+    # Foreign Key
+    user_id = Column(
+        BigInteger, 
+        nullable=False, 
+        unique=True,
+        index=True
+    )
+    
+    # 설정 정보
+    timezone = Column(String(64), default='Asia/Seoul')
+    language = Column(String(16), default='ko-KR')
+    date_format = Column(String(16), default='YYYY-MM-DD')
+    time_format = Column(String(16), default='HH:mm')
+    theme = Column(String(16), default='system')
+    
+    # 위치 정보
+    default_location_lat = Column(
+        Numeric(9, 6), 
+        nullable=True,
+        # 위도는 -90 ~ 90 범위
+    )
+    default_location_lon = Column(
+        Numeric(9, 6), 
+        nullable=True,
+        # 경도는 -180 ~ 180 범위
+    )
+    location_name = Column(String(255), nullable=True)
+    
+    # 타임스탬프
+    created_at = Column(
+        DateTime(timezone=True), 
+        nullable=False, 
+        server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True), 
+        nullable=False, 
+        server_default=func.now(),
+        onupdate=func.now()
+    )
 
-class UserSettingsUpdate(BaseModel):
-    """사용자 설정 수정 요청 데이터"""
-    language: Optional[str] = None
-    date_format: Optional[str] = None
-    time_format: Optional[str] = None
-    default_location_lat: Optional[float] = None
-    default_location_lon: Optional[float] = None
-    location_name: Optional[str] = None
+    # 관계 설정
+    user = relationship("User", back_populates="settings")
 
-# ========== 응답 포맷 (API 명세서 형식) ==========
+    # 제약 조건
+    __table_args__ = (
+        CheckConstraint(
+            'default_location_lat >= -90 AND default_location_lat <= 90',
+            name='chk_latitude_range'
+        ),
+        CheckConstraint(
+            'default_location_lon >= -180 AND default_location_lon <= 180',
+            name='chk_longitude_range'
+        ),
+        Index('idx_user_settings_user_id', 'user_id'),
+    )
 
-class APIResponse(BaseModel):
-    """API 표준 응답 형식"""
-    success: bool
-    data: Optional[dict] = None
-    message: Optional[str] = None
-    error: Optional[str] = None
+    def __repr__(self):
+        return f"<UserSettings(user_id={self.user_id}, timezone='{self.timezone}')>"
 
-class UserInDB(BaseModel):
-    """데이터베이스에서 가져온 사용자 데이터 (비밀번호 포함)"""
-    User_id: int
-    email: str
-    password_hash: str
-    username: Optional[str]
-    profile_image: Optional[str]
-    is_active: bool
-    is_email_verified: bool
-    email_verified_at: Optional[datetime]
-    last_login_at: Optional[datetime]
-    login_count: int
-    social_provider: Optional[str]
-    social_id: Optional[str]
-    created_at: datetime
-    updated_at: datetime
+
+class UserPermissions(Base):
+    """사용자 권한 테이블 모델"""
+    __tablename__ = "user_permissions"
+
+    # Primary Key
+    id = Column(BigInteger, primary_key=True, index=True)
+    
+    # Foreign Key
+    user_id = Column(
+        BigInteger, 
+        nullable=False, 
+        unique=True,
+        index=True
+    )
+    
+    # 권한 설정
+    notification_permission = Column(Boolean, default=False)
+    calendar_permission = Column(Boolean, default=False)
+    microphone_permission = Column(Boolean, default=False)
+    location_permission = Column(Boolean, default=False)
+    
+    # 권한 관련 타임스탬프
+    permission_requested_at = Column(DateTime(timezone=True), nullable=True)
+    last_updated_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # 타임스탬프
+    created_at = Column(
+        DateTime(timezone=True), 
+        nullable=False, 
+        server_default=func.now()
+    )
+
+    # 관계 설정
+    user = relationship("User", back_populates="permissions")
+
+    # 인덱스
+    __table_args__ = (
+        Index('idx_user_permissions_user_id', 'user_id'),
+        Index('idx_user_permissions_updated', 'last_updated_at'),
+    )
+
+    def __repr__(self):
+        return f"<UserPermissions(user_id={self.user_id})>"
+
+
+# 인증 관련 모델들
+class EmailVerification(Base):
+    """이메일 인증 테이블 모델"""
+    __tablename__ = "email_verifications"
+
+    # Primary Key
+    id = Column(BigInteger, primary_key=True, index=True)
+    
+    # Foreign Key
+    user_id = Column(BigInteger, nullable=False, index=True)
+    
+    # 인증 정보
+    token = Column(String(64), unique=True, nullable=False, index=True)
+    email = Column(CITEXT, nullable=False)
+    is_used = Column(Boolean, nullable=False, default=False)
+    
+    # 타임스탬프
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), 
+        nullable=False, 
+        server_default=func.now()
+    )
+    used_at = Column(DateTime(timezone=True), nullable=True)
+
+    # 인덱스
+    __table_args__ = (
+        Index('idx_email_verifications_token', 'token'),
+        Index('idx_email_verifications_user_id', 'user_id'),
+        Index('idx_email_verifications_expires', 'expires_at'),
+    )
+
+    def __repr__(self):
+        return f"<EmailVerification(user_id={self.user_id}, email='{self.email}')>"
+
+
+class PasswordReset(Base):
+    """비밀번호 재설정 테이블 모델"""
+    __tablename__ = "password_resets"
+
+    # Primary Key
+    id = Column(BigInteger, primary_key=True, index=True)
+    
+    # Foreign Key
+    user_id = Column(BigInteger, nullable=False, index=True)
+    
+    # 재설정 정보
+    token = Column(String(64), unique=True, nullable=False, index=True)
+    is_used = Column(Boolean, nullable=False, default=False)
+    
+    # 요청 정보
+    ip_address = Column(String(45), nullable=True)  # IPv6 지원
+    user_agent = Column(Text, nullable=True)
+    
+    # 타임스탬프
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), 
+        nullable=False, 
+        server_default=func.now()
+    )
+    used_at = Column(DateTime(timezone=True), nullable=True)
+
+    # 인덱스
+    __table_args__ = (
+        Index('idx_password_resets_token', 'token'),
+        Index('idx_password_resets_user_id', 'user_id'),
+        Index('idx_password_resets_expires', 'expires_at'),
+    )
+
+    def __repr__(self):
+        return f"<PasswordReset(user_id={self.user_id}, token='{self.token[:8]}...')>"
