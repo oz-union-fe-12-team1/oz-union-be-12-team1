@@ -17,7 +17,7 @@ body:
       description: 시도한 해결 방법이 있다면 적어주세요
       placeholder: 캐시 삭제 후 재시도
 
-  - type: checkbox
+  - type: checkboxes
     id: done
     attributes:
       label: 해결 완료
