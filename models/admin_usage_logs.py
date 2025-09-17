@@ -22,7 +22,6 @@ class AdminUsageLog(Model):
     active_user = fields.IntField(null=True)
     new_user = fields.IntField(null=True)
 
-    weather_call = fields.IntField(null=True)
     ai_call = fields.IntField(null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
