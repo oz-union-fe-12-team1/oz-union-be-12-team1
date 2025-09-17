@@ -18,7 +18,6 @@ class AIConversation(Model):
     ai_response = fields.TextField(null=True)
     message_type = fields.CharField(max_length=50, null=True)  # user / ai / system
 
-    tokens_used = fields.IntField(null=True)
     response_time_ms = fields.IntField(null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
