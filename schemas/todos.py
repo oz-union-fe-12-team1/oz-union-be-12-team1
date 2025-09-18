@@ -1,75 +1,63 @@
-from datetime import datetime
-from typing import Optional
 from pydantic import BaseModel, Field
-import enum
+from typing import Optional, List
+from datetime import datetime
 
 
-# ======================
-# 우선순위 Enum
-# ======================
-class Priority(str, enum.Enum):
-    low = "low"
-    medium = "medium"
-    high = "high"
+# 👉 공통 속성
+class TodoBase(BaseModel):
+    title: str = Field(..., example="장보기")
+    description: Optional[str] = Field(None, example="우유, 계란, 빵 사오기")
+    is_completed: Optional[bool] = Field(False, example=False)
 
 
-# ======================
-# Notification 응답 (선택사항)
-# ======================
-class NotificationResponse(BaseModel):
-    main_alert: Optional[datetime] = Field(
-        None, example="2025-09-15T10:00:00Z", description="메인 알림 시각 (NULL이면 알림 없음)"
-    )
-
-
-# ======================
-# Todo 응답 스키마
-# ======================
-class TodoResponse(BaseModel):
-    id: int = Field(..., example=1, description="할 일 고유 ID")
-    title: str = Field(..., example="오전 10시 운동가기", description="할 일 제목")
-    description: Optional[str] = Field(None, example="아침에 헬스장 가기", description="할 일 설명 (선택사항)")
-    is_completed: bool = Field(..., example=False, description="완료 여부")
-    scheduled_time: Optional[datetime] = Field(
-        None, example="2025-09-15T10:00:00Z", description="예정 시간 (선택사항)"
-    )
-    priority: Optional[Priority] = Field(
-        None, example="medium", description="우선순위 (null/low/medium/high)"
-    )
-    notifications: Optional[NotificationResponse] = Field(
-        None, description="알림 정보 (선택사항)"
-    )
-    created_at: datetime = Field(..., example="2025-09-15T09:00:00Z", description="생성 시각")
-    updated_at: datetime = Field(..., example="2025-09-15T09:05:00Z", description="수정 시각")
-
-    class Config:
-        from_attributes = True  # ORM 객체 → Pydantic 변환 허용
-
-# ======================
-# Todo 생성 요청 (POST /todos)
-# ======================
+# 👉 생성 요청
 class TodoCreate(TodoBase):
-    pass
+    schedule_id: Optional[int] = Field(None, example=1)
 
 
-# ======================
-# Todo 수정 요청 (PUT /todos/{id})
-# ======================
+# 👉 수정 요청
 class TodoUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    is_completed: Optional[bool] = None
-    scheduled_time: Optional[datetime] = None
-    notifications: Optional[NotificationBase] = None
+    title: Optional[str] = Field(None, example="장보기 (수정됨)")
+    description: Optional[str] = Field(None, example="계란 대신 두부 사오기")
+    is_completed: Optional[bool] = Field(None, example=True)
+    schedule_id: Optional[int] = Field(None, example=1)
 
 
-# ======================
-# Todo 응답 스키마 (GET /todos)
-# ======================
-class TodoResponse(TodoBase):
-    id: int
-    created_at: datetime
-    updated_at: datetime
+# 👉 단일 조회 응답
+class TodoOut(TodoBase):
+    id: int = Field(..., example=5)
+    user_id: int = Field(..., example=42)
+    schedule_id: Optional[int] = Field(None, example=1)
+    created_at: datetime = Field(..., example="2025-09-18T12:34:56")
+    updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
 
     class Config:
-        from_attributes = True  # ORM → Pydantic 변환 지원
+        orm_mode = True
+
+
+# 👉 리스트 조회 응답
+class TodoListOut(BaseModel):
+    todos: List[TodoOut] = Field(
+        ...,
+        example=[
+            {
+                "id": 5,
+                "user_id": 42,
+                "schedule_id": 1,
+                "title": "장보기",
+                "description": "우유, 계란, 빵 사오기",
+                "is_completed": False,
+                "created_at": "2025-09-18T12:34:56",
+                "updated_at": "2025-09-18T12:34:56"
+            }
+        ]
+    )
+    total: int = Field(..., example=1)
+
+
+# 👉 삭제 응답
+class TodoDeleteResponse(BaseModel):
+    message: str = Field(
+        "Todo deleted successfully",
+        example="Todo deleted successfully"
+    )
