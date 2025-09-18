@@ -27,6 +27,11 @@ class UserLoginRequest(BaseModel):
     password: str = Field(..., example="password123!")
 
 
+# 👉 구글 로그인 요청
+class GoogleLoginRequest(BaseModel):
+    access_token: str = Field(..., example="ya29.A0ARrdaM...")
+
+
 # 👉 사용자 정보 수정 요청
 class UserUpdateRequest(BaseModel):
     name: Optional[str] = Field(None, example="고터키")
@@ -66,12 +71,15 @@ class UserVerifyErrorResponse(BaseModel):
 
 # 👉 로그인 성공 응답
 class UserLoginResponse(BaseModel):
-    access_token: str = Field(
-        ..., example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    )
-    refresh_token: str = Field(
-        ..., example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    )
+    access_token: str = Field(..., example="eyJhbGciOiJIUzI1NiIs...")
+    refresh_token: str = Field(..., example="eyJhbGciOiJIUzI1NiIs...")
+    token_type: str = Field("bearer", example="bearer")
+
+
+# 👉 구글 로그인 성공 응답
+class GoogleLoginResponse(BaseModel):
+    access_token: str = Field(..., example="eyJhbGciOiJIUzI1NiIs...")
+    refresh_token: str = Field(..., example="eyJhbGciOiJIUzI1NiIs...")
     token_type: str = Field("bearer", example="bearer")
 
 
