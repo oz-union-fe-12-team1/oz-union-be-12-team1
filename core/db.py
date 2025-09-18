@@ -24,15 +24,13 @@ TORTOISE_ORM = {
         "models": {
             "models": [
                 "models.user",
-                "models.user_settings",
-                "models.user_sessions", 
                 "models.schedules",
                 "models.todo",
                 "models.notifications",
-                "models.api_usage_logs",
-                "models.admin_usage_logs",
-                "models.ai_conversations",
-                "aerich.models",
+                "models.inquiries",
+                "models.user_locations",
+                "models.token_revocations",
+                "aerich.models",   # aerich 내부 관리용
             ],
             "default_connection": "default",
         }

@@ -1,20 +1,9 @@
-from typing import TYPE_CHECKING
 from tortoise import fields
 from tortoise.models import Model
-import enum
-
-class Priority(str, enum.Enum):
-    low = "low"
-    medium = "medium"
-    high = "high"
-
-if TYPE_CHECKING:
-    from .todo import Todo
-    from .notifications import Notification
 
 
 class Schedule(Model):
-    id = fields.IntField(pk=True)
+    id = fields.BigIntField(pk=True)  # SERIAL → BigIntField
 
     user = fields.ForeignKeyField(
         "models.User",
@@ -31,25 +20,13 @@ class Schedule(Model):
     all_day = fields.BooleanField(default=False)
     location = fields.CharField(max_length=255, null=True)
 
-    priority = fields.CharEnumField(
-        enum_type=Priority,
-        null=True
-    )
-
-    is_recurring = fields.BooleanField(default=False)
-    recurrence_rule = fields.CharField(max_length=255, null=True)
-
-    parent_schedule = fields.ForeignKeyField(
-        "models.Schedule",
-        related_name="children",
-        null=True,
-        on_delete=fields.SET_NULL
-    )
-
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
-    # 역참조 관계
+    # Soft Delete (복구 가능)
+    #deleted_at = fields.DatetimeField(null=True)
+
+    # 역참조 (문자열 참조만으로 충분)
     todos: fields.ReverseRelation["Todo"]
     notifications: fields.ReverseRelation["Notification"]
 
