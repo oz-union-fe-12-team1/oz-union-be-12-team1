@@ -7,8 +7,8 @@ if TYPE_CHECKING:
     from .todos import todos
     from .token_revocations import token_revocations
     from .user_locations import user_locations
-    from .inauiries import inauiries
-    from notifications import notifications
+    from .inquiries import inauiries
+    from .notifications import notifications
 
 class User(Model):
     id = fields.BigIntField(pk=True)  # BIGSERIAL PRIMARY KEY
@@ -42,7 +42,7 @@ class User(Model):
     schedules: fields.ReverseRelation["Schedule"]
     todos: fields.ReverseRelation["Todo"]
     user_locations: fields.ReverseRelation["user_locations"]
-    inauiries: fields.ReverseRelation["inauiries"]
+    inquiries: fields.ReverseRelation["inauiries"]
     notifications: fields.ReverseRelation["notifications"]
 
     class Meta:
