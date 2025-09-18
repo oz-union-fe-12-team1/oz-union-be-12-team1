@@ -3,7 +3,14 @@ from datetime import datetime
 from models.todo import Todo
 
 
-class TodoRepository:
+class TodosRepository:
+    """
+    Repository for managing Todos (CRUD + soft delete).
+    """
+
+    # --------------------
+    # CREATE
+    # --------------------
     @staticmethod
     async def create_todo(
         user_id: int,
@@ -19,16 +26,22 @@ class TodoRepository:
             schedule_id=schedule_id,
         )
 
+    # --------------------
+    # READ
+    # --------------------
     @staticmethod
-    async def get_todo(todo_id: int) -> Optional[Todo]:
-        """ID 기준 단일 Todo 조회 (삭제되지 않은 것만)"""
+    async def get_todo_by_id(todo_id: int) -> Optional[Todo]:
+        """ID 기준 단일 Todo 조회 (Soft Delete 제외)"""
         return await Todo.get_or_none(id=todo_id, deleted_at=None)
 
     @staticmethod
-    async def list_todos(user_id: int) -> List[Todo]:
+    async def get_todos_by_user(user_id: int) -> List[Todo]:
         """특정 사용자의 Todo 목록 조회 (Soft Delete 제외)"""
         return await Todo.filter(user_id=user_id, deleted_at=None).all()
 
+    # --------------------
+    # UPDATE
+    # --------------------
     @staticmethod
     async def update_todo(todo_id: int, **kwargs) -> Optional[Todo]:
         """Todo 업데이트"""
@@ -39,14 +52,18 @@ class TodoRepository:
             await todo.save()
         return todo
 
+    # --------------------
+    # DELETE
+    # --------------------
     @staticmethod
-    async def soft_delete_todo(todo_id: int) -> Optional[Todo]:
+    async def delete_todo(todo_id: int) -> bool:
         """Soft Delete (deleted_at만 기록)"""
         todo = await Todo.get_or_none(id=todo_id, deleted_at=None)
         if todo:
             todo.deleted_at = datetime.utcnow()
             await todo.save()
-        return todo
+            return True
+        return False
 
     @staticmethod
     async def hard_delete_todo(todo_id: int) -> int:
