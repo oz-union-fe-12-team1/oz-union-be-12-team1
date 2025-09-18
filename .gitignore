@@ -144,6 +144,9 @@ fabric.properties
 # https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
 .idea/**/azureSettings.xml
 
+google-credentials.json
+google-credentials.json.json
+
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
