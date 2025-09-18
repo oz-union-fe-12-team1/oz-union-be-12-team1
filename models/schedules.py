@@ -2,13 +2,9 @@ from tortoise import fields
 from tortoise.models import Model
 
 
-class Schedules(Model):
+class Schedule(Model):
     id = fields.IntField(pk=True)
-    user = fields.ForeignKeyField(
-        "models.User",
-        related_name="schedules",
-        on_delete=fields.CASCADE
-    )
+    user = fields.ForeignKeyField("models.User", related_name="schedules", on_delete=fields.CASCADE)
     title = fields.CharField(max_length=255)
     description = fields.TextField(null=True)
     start_time = fields.DatetimeField()
@@ -21,5 +17,5 @@ class Schedules(Model):
     class Meta:
         table = "schedules"
 
-    def str(self):
-        return f"Schedule(id={self.id}, user={self.user_id}, title={self.title}, all_day={self.all_day})"
+    def __str__(self):
+        return f"Schedule(id={self.id}, user_id={self.user_id}, title={self.title})"

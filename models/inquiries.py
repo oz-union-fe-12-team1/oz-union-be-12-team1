@@ -2,7 +2,7 @@ from tortoise import fields
 from tortoise.models import Model
 
 
-class Inquiries(Model):
+class Inquiry(Model):  # ✅ 단수형 클래스명
     id = fields.IntField(pk=True)
     user = fields.ForeignKeyField(
         "models.User",
@@ -18,9 +18,7 @@ class Inquiries(Model):
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
-        table = "inquiries"
+        table = "inquiries"  # ✅ DB 테이블은 복수형
 
-    def str(self):
-        return f"Inquiry(id={self.id}, user={self.user_id}, title={self.title})"
-
- 
+    def __str__(self):  # ✅ 매직 메서드
+        return f"Inquiry(id={self.id}, user_id={self.user_id}, title={self.title})"

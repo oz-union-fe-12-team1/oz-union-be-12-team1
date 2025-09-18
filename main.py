@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from core.db import init_db, close_db
 
 # 라우터 import 추가
-from app.api import news, weather, quiz, gemini
+from api.v1 import news, weather, quiz, gemini
 
 
 @asynccontextmanager
@@ -22,6 +22,8 @@ app.include_router(news.router, prefix="/api", tags=["News"])
 app.include_router(weather.router, prefix="/api", tags=["Weather"])
 app.include_router(quiz.router, prefix="/api", tags=["Quiz"])
 app.include_router(gemini.router, prefix="/api", tags=["Gemini"])
+
+
 
 
 @app.get("/")
