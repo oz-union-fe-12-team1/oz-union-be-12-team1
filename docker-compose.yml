@@ -26,17 +26,29 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:                   # ✅ redis가 떠야 api가 실행됨
+        condition: service_started
     environment:
       DATABASE_URL: ${DATABASE_URL}
       PYTHONUNBUFFERED: "1"
     ports:
       - "8000:8000"
     restart: unless-stopped
-    # ✅ FastAPI 서버 실행 (개발 모드)
-    # --reload: 코드 변경 시 자동 리로드
-    # --host 0.0.0.0: 외부 접속 허용
-    # --port 8000: 포트 8000에서 실행
     command: uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  redis:
+    image: redis:7
+    container_name: redis-1
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   pgdata:
+  redisdata:
