@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime
 from tortoise.exceptions import DoesNotExist
 from models.inquiries import Inquiry, InquiryStatus
 
@@ -37,27 +38,30 @@ class InquiryRepository:
         """사용자별 문의 목록 조회"""
         return await Inquiry.filter(user_id=user_id).order_by("-created_at")
 
+    @staticmethod
+    async def get_all_inquiries() -> List[Inquiry]:
+        """관리자 전용 전체 문의 목록 조회"""
+        return await Inquiry.all().order_by("-created_at")
+
     # --------------------
     # UPDATE
     # --------------------
     @staticmethod
-    async def reply_to_inquiry(inquiry_id: int, reply: str, status: InquiryStatus) -> Optional[Inquiry]:
-        """관리자 답변 등록 + 상태 변경"""
+    async def update_inquiry(
+        inquiry_id: int,
+        status: Optional[InquiryStatus] = None,
+        admin_reply: Optional[str] = None,
+        replied_at: Optional[datetime] = None,
+    ) -> Optional[Inquiry]:
+        """관리자 답변/상태/답변시간 수정"""
         try:
             inquiry = await Inquiry.get(id=inquiry_id)
-            inquiry.admin_reply = reply
-            inquiry.status = status
-            await inquiry.save()
-            return inquiry
-        except DoesNotExist:
-            return None
-
-    @staticmethod
-    async def update_status(inquiry_id: int, status: InquiryStatus) -> Optional[Inquiry]:
-        """문의 상태만 변경"""
-        try:
-            inquiry = await Inquiry.get(id=inquiry_id)
-            inquiry.status = status
+            if status is not None:
+                inquiry.status = status
+            if admin_reply is not None:
+                inquiry.admin_reply = admin_reply
+            if replied_at is not None:
+                inquiry.replied_at = replied_at
             await inquiry.save()
             return inquiry
         except DoesNotExist:
