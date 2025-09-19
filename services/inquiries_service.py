@@ -1,6 +1,7 @@
 from typing import List, Optional
-from repositories.inquiries_repo import InquiryRepository  # ✅ 단수형으로 맞춤
+from repositories.inquiries_repo import InquiryRepository
 from models.inquiries import Inquiry, InquiryStatus
+from datetime import datetime
 
 
 class InquiryService:
@@ -8,43 +9,58 @@ class InquiryService:
     Service layer for managing Inquiries (문의사항).
     """
 
-    # ✅ Create (문의 작성)
+    # --------------------
+    # CREATE
+    # --------------------
     @staticmethod
     async def create_inquiry(user_id: int, title: str, message: str) -> Inquiry:
+        """새 문의 작성"""
         return await InquiryRepository.create_inquiry(
             user_id=user_id,
             title=title,
-            message=message
+            message=message,
         )
 
-    # ✅ Read (단일 조회)
+    # --------------------
+    # READ
+    # --------------------
     @staticmethod
     async def get_inquiry_by_id(inquiry_id: int) -> Optional[Inquiry]:
+        """단일 문의 조회"""
         return await InquiryRepository.get_inquiry_by_id(inquiry_id)
 
-    # ✅ Read (사용자별 문의 목록)
     @staticmethod
     async def get_inquiries_by_user(user_id: int) -> List[Inquiry]:
+        """사용자별 문의 목록"""
         return await InquiryRepository.get_inquiries_by_user(user_id)
 
-    # ✅ Update (관리자 답변 등록 + 상태 변경)
     @staticmethod
-    async def reply_to_inquiry(inquiry_id: int, reply: str, status: InquiryStatus) -> Optional[Inquiry]:
-        return await InquiryRepository.reply_to_inquiry(
+    async def get_all_inquiries() -> List[Inquiry]:
+        """관리자 전용 전체 문의 목록"""
+        return await InquiryRepository.get_all_inquiries()
+
+    # --------------------
+    # UPDATE
+    # --------------------
+    @staticmethod
+    async def update_inquiry(
+        inquiry_id: int,
+        status: Optional[InquiryStatus] = None,
+        admin_reply: Optional[str] = None,
+        replied_at: Optional[datetime] = None,
+    ) -> Optional[Inquiry]:
+        """관리자 답변 / 상태 / 답변시간 수정"""
+        return await InquiryRepository.update_inquiry(
             inquiry_id=inquiry_id,
-            reply=reply,
-            status=status
+            status=status,
+            admin_reply=admin_reply,
+            replied_at=replied_at,
         )
 
-    # ✅ Update (문의 상태만 변경)
-    @staticmethod
-    async def update_status(inquiry_id: int, status: InquiryStatus) -> Optional[Inquiry]:
-        return await InquiryRepository.update_status(
-            inquiry_id=inquiry_id,
-            status=status
-        )
-
-    # ✅ Delete (사용자 요청 → 문의 삭제)
+    # --------------------
+    # DELETE
+    # --------------------
     @staticmethod
     async def delete_inquiry(inquiry_id: int) -> bool:
+        """문의 삭제 (사용자 or 관리자)"""
         return await InquiryRepository.delete_inquiry(inquiry_id)

@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
-
 # 👉 상태 Enum (명세서 기준)
 class InquiryStatus(str):
     pending = "pending"
@@ -40,28 +39,16 @@ class InquiryOut(InquiryBase):
     updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
 
     class Config:
-        orm_mode = True
+        from_attributes = True   # ✅ Pydantic v2 필수
 
 
 # 👉 목록 조회 응답
 class InquiryListOut(BaseModel):
-    inquiries: List[InquiryOut] = Field(
-        ...,
-        example=[
-            {
-                "id": 12,
-                "user_id": 42,
-                "title": "로그인 오류가 발생합니다",
-                "message": "구글 로그인 시 500 오류가 뜹니다.",
-                "status": "pending",
-                "admin_reply": None,
-                "replied_at": None,
-                "created_at": "2025-09-18T12:34:56",
-                "updated_at": "2025-09-18T12:34:56"
-            }
-        ]
-    )
+    inquiries: List[InquiryOut]
     total: int = Field(..., example=1)
+
+    class Config:
+        from_attributes = True   # ✅ 추가
 
 
 # 👉 삭제 응답
