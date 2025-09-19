@@ -5,26 +5,9 @@ from models.user import User
 
 class UserService:
     """
-    Service layer for managing Users (CRUD + 인증/프로필 관리).
+    Service layer for managing Users
+    (조회, 프로필 관리, 회원 탈퇴, 관리자 기능).
     """
-
-    # --------------------
-    # CREATE
-    # --------------------
-    @staticmethod
-    async def create_user(
-        email: str,
-        password_hash: str,
-        username: str,
-        birthday: str,   # ✅ 완료테이블 기준 반영
-    ) -> User:
-        """회원가입"""
-        return await UserRepository.create_user(
-            email=email,
-            password_hash=password_hash,
-            username=username,
-            birthday=birthday,
-        )
 
     # --------------------
     # READ
@@ -48,17 +31,15 @@ class UserService:
     # UPDATE
     # --------------------
     @staticmethod
-    async def verify_user(user_id: int) -> Optional[User]:
-        """이메일 인증 처리"""
-        return await UserRepository.verify_user(user_id)
-
-    @staticmethod
-    async def update_profile(user_id: int, name: Optional[str] = None,
-                             bio: Optional[str] = None,
-                             profile_image: Optional[str] = None) -> Optional[User]:
-        """프로필 수정 (명세서 기준)"""
+    async def update_profile(
+        user_id: int,
+        username: Optional[str] = None,
+        bio: Optional[str] = None,
+        profile_image: Optional[str] = None
+    ) -> Optional[User]:
+        """프로필 수정 (마이페이지)"""
         return await UserRepository.update_profile(
-            user_id,
+            user_id=user_id,
             username=username,
             bio=bio,
             profile_image=profile_image
@@ -71,3 +52,24 @@ class UserService:
     async def delete_user(user_id: int) -> bool:
         """회원 탈퇴"""
         return await UserRepository.delete_user(user_id)
+
+    # ---------------------------
+    # 관리자(Admin) 전용 메서드
+    # ---------------------------
+    @staticmethod
+    async def update_user_status(user_id: int, is_active: bool) -> Optional[User]:
+        """사용자 활성/비활성 상태 변경"""
+        user = await User.get_or_none(id=user_id)
+        if user:
+            user.is_active = is_active
+            await user.save()
+        return user
+
+    @staticmethod
+    async def set_superuser(user_id: int, is_superuser: bool) -> Optional[User]:
+        """관리자 권한 부여/회수"""
+        user = await User.get_or_none(id=user_id)
+        if user:
+            user.is_superuser = is_superuser
+            await user.save()
+        return user
