@@ -12,7 +12,6 @@ from schemas.user import (
 )
 from services.user_service import UserService
 from services.auth_service import AuthService
-from passlib.hash import bcrypt
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,20 +26,13 @@ async def register_user(request: UserCreateRequest):
     if await UserService.get_user_by_email(request.email):
         raise HTTPException(status_code=400, detail="EMAIL_ALREADY_EXISTS")
 
-    # 비밀번호 해싱
-    password_hash = bcrypt.hash(request.password)
-
-    # ✅ 수정됨: AuthService.register를 호출해서 유저 생성 + 인증번호 발송
-    user = await AuthService.register(
-        email=request.email,
-        password=request.password,  # 해싱은 내부에서 처리됨
-        username=request.username,
-        birthday=request.birthday,
-    )
+    # ✅ 수정됨: request 객체 그대로 전달
+    user = await AuthService.register(request)
     if not user:
         raise HTTPException(status_code=500, detail="USER_CREATION_FAILED")
 
-    return user
+    # ✅ 응답 스키마에 맞게 변환
+    return UserCreateResponse.from_orm(user)
 
 
 # -----------------------------
@@ -52,7 +44,6 @@ async def register_user(request: UserCreateRequest):
     responses={400: {"model": UserVerifyErrorResponse}},
 )
 async def verify_email(request: UserVerifyRequest):
-    # ✅ 수정됨: email + code 기반 검증
     result = await AuthService.verify_email_token(email=request.email, code=request.code)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error"))
@@ -68,11 +59,11 @@ async def login_user(request: UserLoginRequest):
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
 
-    return {
-        "access_token": result["access_token"],
-        "refresh_token": result["refresh_token"],
-        "token_type": "bearer",
-    }
+    return UserLoginResponse(
+        access_token=result["access_token"],
+        refresh_token=result["refresh_token"],
+        token_type="bearer",
+    )
 
 
 # -----------------------------
@@ -80,16 +71,15 @@ async def login_user(request: UserLoginRequest):
 # -----------------------------
 @router.post("/google", response_model=GoogleLoginResponse)
 async def google_login(request: GoogleLoginRequest):
-    # ⚠️ 실제 구글 OAuth 검증은 생략. access_token 값만 전달받아 처리.
     result = await AuthService.google_login(
-        google_id="dummy_google_id",  # 실제 구현 시 구글 토큰에서 추출
+        google_id="dummy_google_id",   # 실제 구현 시 구글 토큰에서 추출
         email="goturkey@example.com",  # 실제 구현 시 구글 API에서 추출
-    )   # ✅ 수정됨: nickname 제거
-    return {
-        "access_token": result["access_token"],
-        "refresh_token": result["refresh_token"],
-        "token_type": "bearer",
-    }
+    )
+    return GoogleLoginResponse(
+        access_token=result["access_token"],
+        refresh_token=result["refresh_token"],
+        token_type="bearer",
+    )
 
 
 # -----------------------------
@@ -100,11 +90,12 @@ async def refresh_token(refresh_token: str):
     new_access = await AuthService.refresh_token(refresh_token)
     if not new_access:
         raise HTTPException(status_code=400, detail="TOKEN_INVALID_OR_EXPIRED")
-    return {
-        "access_token": new_access,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+
+    return UserLoginResponse(
+        access_token=new_access,
+        refresh_token=refresh_token,
+        token_type="bearer",
+    )
 
 
 # -----------------------------
