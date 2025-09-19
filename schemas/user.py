@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
-from datetime import datetime
-
+from datetime import date, datetime
 
 # ========================
 # 요청(Request)
@@ -11,10 +10,20 @@ from datetime import datetime
 class UserCreateRequest(BaseModel):
     email: EmailStr = Field(..., example="goturkey@example.com")
     password: str = Field(..., example="password123!")
-    name: str = Field(..., example="고터키")
-    phone: Optional[str] = Field(None, example="010-1234-5678")
-    profile_image: Optional[str] = Field(None, example="https://example.com/profile.png")
+    password_check: str = Field(..., example="password123!")  # ✅ 비밀번호 재입력
+    username: str = Field(..., example="고터키")
+    birthday: date = Field(..., example="1995-05-21")  # ✅ 완료테이블 맞춤
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "goturkey@example.com",
+                "password": "password123!",
+                "password_check": "password123!",
+                "username": "고터키",
+                "birthday": "1995-05-21"
+            }
+        }
 
 # 👉 이메일 인증 요청
 class UserVerifyRequest(BaseModel):
@@ -34,9 +43,9 @@ class GoogleLoginRequest(BaseModel):
 
 # 👉 사용자 정보 수정 요청
 class UserUpdateRequest(BaseModel):
-    name: Optional[str] = Field(None, example="고터키")
-    phone: Optional[str] = Field(None, example="010-9876-5432")
-    profile_image: Optional[str] = Field(None, example="https://example.com/new.png")
+    username: Optional[str] = Field(None, example="고터키")
+    bio: Optional[str] = Field(None, example="안녕하세요!")  # ✅ 완료테이블 반영
+    profile_image: Optional[str] = Field(None, example="https://example.com/profile.png")
 
 
 # ========================
@@ -47,9 +56,8 @@ class UserUpdateRequest(BaseModel):
 class UserCreateResponse(BaseModel):
     id: int = Field(..., example=42)
     email: EmailStr = Field(..., example="goturkey@example.com")
-    name: str = Field(..., example="고터키")
-    phone: Optional[str] = Field(None, example="010-1234-5678")
-    profile_image: Optional[str] = Field(None, example="https://example.com/profile.png")
+    username: str = Field(..., example="고터키")
+    birthday: date = Field(..., example="1995-05-21")  # ✅ 완료테이블 반영
     is_verified: bool = Field(False, example=False)
     created_at: datetime = Field(..., example="2025-09-18T12:34:56")
     updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
@@ -87,9 +95,8 @@ class GoogleLoginResponse(BaseModel):
 class UserOut(BaseModel):
     id: int = Field(..., example=42)
     email: EmailStr = Field(..., example="goturkey@example.com")
-    name: str = Field(..., example="고터키")
-    phone: Optional[str] = Field(None, example="010-1234-5678")
-    profile_image: Optional[str] = Field(None, example="https://example.com/profile.png")
+    username: str = Field(..., example="고터키")
+    birthday: date = Field(..., example="1995-05-21")
     is_verified: bool = Field(False, example=False)
     created_at: datetime = Field(..., example="2025-09-18T12:34:56")
     updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
@@ -107,8 +114,8 @@ class UserListResponse(BaseModel):
 # 👉 사용자 정보 수정 응답
 class UserUpdateResponse(BaseModel):
     id: int = Field(..., example=42)
-    name: str = Field(..., example="고터키")
-    phone: Optional[str] = Field(None, example="010-9876-5432")
+    username: str = Field(..., example="고터키")
+    bio: Optional[str] = Field(None, example="안녕하세요!")  # ✅ 완료테이블 반영
     profile_image: Optional[str] = Field(None, example="https://example.com/new.png")
     updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
 
