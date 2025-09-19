@@ -1,12 +1,20 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Optional, Dict
 import jwt
+import random   # ✅ 인증번호 생성용
+import redis.asyncio as redis   # ✅ Redis 클라이언트
 from passlib.hash import bcrypt
 
 from core.config import settings
 from repositories.user_repo import UserRepository
+from core.security import send_verification_email   # ✅ 메일 발송 함수
 from repositories.token_revocations_repo import TokenRevocationsRepository
 from models.user import User
+
+
+# ✅ Redis 연결 (docker-compose 기준 redis 컨테이너, 오타 수정)
+REDIS_URL = "redis://redis:6379/0"   # ⛔ rediㅌs → ✅ redis
+redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
 
 class AuthService:
@@ -34,24 +42,27 @@ class AuthService:
     # 회원가입 (/auth/register)
     # ---------------------------
     @staticmethod
-    async def register(email: str, password: str, nickname: str) -> Optional[User]:
+    async def register(email: str, password: str, username: str, birthday: date) -> Optional[User]:
         password_hash = bcrypt.hash(password)
 
-        verification_token = jwt.encode(
-            {"email": email, "exp": datetime.utcnow() + timedelta(hours=1)},
-            settings.SECRET_KEY,
-            algorithm=settings.ALGORITHM,
-        )
+        # ✅ 인증번호(6자리) 생성 (한 번만)
+        verification_code = str(random.randint(100000, 999999))
 
+        # 유저 생성
         user = await UserRepository.create_user(
             email=email,
             password_hash=password_hash,
+            username=username,
+            birthday=birthday,
         )
-
-        # 토큰 저장 (Tortoise 모델은 await 필요)
-        user.verification_token = verification_token
         user.is_verified = False
         await user.save()
+
+        # ✅ Redis에 저장 (10분 TTL)
+        await redis_client.set(f"verify:{email}", verification_code, ex=600)
+
+        # ✅ 이메일 발송 (본문에 인증번호 포함)
+        await send_verification_email(email, verification_code)
 
         return user
 
@@ -67,14 +78,13 @@ class AuthService:
         if not bcrypt.verify(password, user.password_hash):
             return {"error": "INVALID_CREDENTIALS"}
 
-        if not user.is_verified:
+        if not user.is_email_verified:
             return {"error": "EMAIL_NOT_VERIFIED"}
 
         access_token = AuthService.create_access_token(user.id)
         refresh_token = AuthService.create_refresh_token(user.id)
 
         # 로그인 기록 갱신
-        user.login_count = (user.login_count or 0) + 1
         user.last_login_ip = "TODO: 클라이언트 IP"
         await user.save()
 
@@ -84,30 +94,33 @@ class AuthService:
     # 이메일 인증 (/auth/email/verify)
     # ---------------------------
     @staticmethod
-    async def verify_email_token(email: str, token: str) -> Dict:
+    async def verify_email_token(email: str, code: str) -> Dict:   # ✅ token → code
+        # ✅ Redis에서 인증번호 조회
+        saved_code = await redis_client.get(f"verify:{email}")
+        if not saved_code:
+            return {"success": False, "error": "CODE_EXPIRED_OR_NOT_FOUND"}
+
+        if saved_code != code:
+            return {"success": False, "error": "CODE_MISMATCH"}
+
+        # 인증 성공 → DB 업데이트
         user = await UserRepository.get_user_by_email(email)
-        if not user or not user.verification_token:
-            return {"success": False, "error": "TOKEN_INVALID"}
+        if not user:
+            return {"success": False, "error": "USER_NOT_FOUND"}
 
-        try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-            if payload.get("email") != user.email:
-                return {"success": False, "error": "TOKEN_INVALID"}
+        user.is_email_verified = True
+        await user.save()
 
-            user.is_verified = True
-            user.verification_token = None
-            await user.save()
-            return {"success": True}
-        except jwt.ExpiredSignatureError:
-            return {"success": False, "error": "TOKEN_EXPIRED"}
-        except jwt.InvalidTokenError:
-            return {"success": False, "error": "TOKEN_INVALID"}
+        # ✅ Redis에서 인증번호 삭제 (1회성)
+        await redis_client.delete(f"verify:{email}")
+
+        return {"success": True}
 
     # ---------------------------
     # 구글 로그인 (/auth/google)
     # ---------------------------
     @staticmethod
-    async def google_login(google_id: str, email: str, nickname: str) -> Dict[str, str]:
+    async def google_login(google_id: str, email: str) -> Dict[str, str]:   # ✅ nickname 제거
         """
         ⚠️ 실제 구현에서는 Google OAuth API 검증 필요.
         여기서는 social_provider='google' 로직만 반영.
@@ -118,7 +131,6 @@ class AuthService:
             user = await UserRepository.create_user(
                 email=email,
                 password_hash=bcrypt.hash("oauth_dummy_password"),  # 구글 계정은 내부 PW 필요 없음
-                nickname=nickname,
                 social_provider="google",
                 social_id=google_id,
             )
@@ -154,4 +166,12 @@ class AuthService:
     # ---------------------------
     @staticmethod
     async def logout(token: str) -> bool:
-        return await TokenRevocationsRepository.revoke_token(token)
+        try:
+            # 토큰 decode 해서 user_id 추출
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            user_id = int(payload.get("sub"))
+        except Exception:
+            return False
+
+        # user_id도 같이 넘기기
+        return await TokenRevocationsRepository.revoke_token(token, user_id)

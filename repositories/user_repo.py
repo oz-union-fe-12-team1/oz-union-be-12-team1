@@ -1,5 +1,6 @@
 from typing import Optional, List
 from tortoise.exceptions import DoesNotExist
+from datetime import date
 from models.user import User
 
 
@@ -16,7 +17,7 @@ class UserRepository:
         email: str,
         password_hash: str,
         username: str,
-        birthday: str,
+        birthday: date,
     ) -> User:
         """회원가입"""
         user = await User.create(
@@ -24,7 +25,7 @@ class UserRepository:
             password_hash=password_hash,
             username=username,
             birthday=birthday,
-            is_verified=False,  # ✅ 기본: 인증 전
+            is_email_verified=False,  # ✅ 기본: 인증 전
         )
         return user
 

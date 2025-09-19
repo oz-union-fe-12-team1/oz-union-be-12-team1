@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from schemas.user import (
     UserCreateRequest,
     UserCreateResponse,
@@ -27,16 +27,15 @@ async def register_user(request: UserCreateRequest):
     if await UserService.get_user_by_email(request.email):
         raise HTTPException(status_code=400, detail="EMAIL_ALREADY_EXISTS")
 
-
     # 비밀번호 해싱
     password_hash = bcrypt.hash(request.password)
 
-    # 유저 생성
-    user = await UserService.create_user(
+    # ✅ 수정됨: AuthService.register를 호출해서 유저 생성 + 인증번호 발송
+    user = await AuthService.register(
         email=request.email,
-        password_hash=password_hash,
+        password=request.password,  # 해싱은 내부에서 처리됨
         username=request.username,
-        birthday=request.birthday
+        birthday=request.birthday,
     )
     if not user:
         raise HTTPException(status_code=500, detail="USER_CREATION_FAILED")
@@ -45,11 +44,16 @@ async def register_user(request: UserCreateRequest):
 
 
 # -----------------------------
-# 이메일 인증
+# 이메일 인증 (코드 방식)
 # -----------------------------
-@router.post("/email/verify", response_model=UserVerifySuccessResponse, responses={400: {"model": UserVerifyErrorResponse}})
+@router.post(
+    "/email/verify",
+    response_model=UserVerifySuccessResponse,
+    responses={400: {"model": UserVerifyErrorResponse}},
+)
 async def verify_email(request: UserVerifyRequest):
-    result = await AuthService.verify_email_token(email=None, token=request.token)  # email은 토큰 안에서 꺼내옴
+    # ✅ 수정됨: email + code 기반 검증
+    result = await AuthService.verify_email_token(email=request.email, code=request.code)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error"))
     return {"success": True}
@@ -80,8 +84,7 @@ async def google_login(request: GoogleLoginRequest):
     result = await AuthService.google_login(
         google_id="dummy_google_id",  # 실제 구현 시 구글 토큰에서 추출
         email="goturkey@example.com",  # 실제 구현 시 구글 API에서 추출
-        nickname="고터키",
-    )
+    )   # ✅ 수정됨: nickname 제거
     return {
         "access_token": result["access_token"],
         "refresh_token": result["refresh_token"],
