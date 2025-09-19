@@ -46,7 +46,6 @@ class AuthService:
         user = await UserRepository.create_user(
             email=email,
             password_hash=password_hash,
-            nickname=nickname,
         )
 
         # 토큰 저장 (Tortoise 모델은 await 필요)

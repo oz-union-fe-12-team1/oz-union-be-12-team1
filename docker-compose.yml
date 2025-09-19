@@ -32,17 +32,11 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    # ✅ FastAPI 서버 실행 (개발 모드)
+    # --reload: 코드 변경 시 자동 리로드
+    # --host 0.0.0.0: 외부 접속 허용
+    # --port 8000: 포트 8000에서 실행
+    command: uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-#  pgadmin:
-#    image: dpage/pgadmin4
-
- #   container_name: pgadmin
-  #  restart: always
-  #  env_file:
-  #    - .env   # 👉 pgAdmin 로그인 계정/비번을 .env에서 읽도록 수정
-  #  ports:
-  #    - "5050:80"
-  #  depends_on:
-  #    - db     # 👉 여기 값이 비어 있던 게 문제였음. db에 의존한다고 명시해야 정상 작동
 volumes:
   pgdata:
