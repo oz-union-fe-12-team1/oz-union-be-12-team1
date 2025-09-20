@@ -13,7 +13,11 @@ async def get_current_weather(
 ):
     url = (
         f"http://api.openweathermap.org/data/2.5/weather"
+<<<<<<< HEAD
         f"?lat={lat}&lon={lon}&appid={db7f1228395d367de00a7e266352d8a9}&units=metric&lang=kr"
+=======
+        f"?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric&lang=kr"
+>>>>>>> dfd29c8 (✨ ExternalAPI)
     )
 
     async with httpx.AsyncClient(timeout=10) as client:
