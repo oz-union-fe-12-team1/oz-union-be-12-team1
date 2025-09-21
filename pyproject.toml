@@ -1,30 +1,143 @@
 [project]
-name = "app"
-version = "0.1.0"
-description = "Add your description here"
+name = "star-api"
+version = "1.0.0"
+description = "개인 일정 관리 및 AI 어시스턴트 API - Star API"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "aerich>=0.9.1",
-    "asyncpg>=0.30.0",
-    "fastapi>=0.116.1",
-    "psycopg-binary>=3.2.10",
-    "pydantic>=2.11.9",
-    "tortoise-orm>=0.25.1",
-    "uvicorn[standard]>=0.35.0",
-    "httpx>=0.27.0",
-    "feedparser>=6.0.11",
-    "gspread>=6.1.4",
-    "google-auth>=2.35.0",
+authors = [
+    {name = "Your Name", email = "your.email@example.com"},
+]
+license = {text = "MIT"}
+keywords = ["fastapi", "api", "schedule", "todo", "ai", "assistant"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License", 
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Framework :: FastAPI",
 ]
 
+dependencies = [
+    # Core Framework
+    "fastapi>=0.116.1",
+    "uvicorn[standard]>=0.35.0",
+    "pydantic>=2.11.9",
+    
+    # Database & ORM
+    "tortoise-orm>=0.25.1",
+    "aerich>=0.9.1",
+    "asyncpg>=0.30.0",
+    "psycopg-binary>=3.2.10",
+    
+    # HTTP Client
+    "httpx>=0.27.0",
+    
+    # RSS/Feed Parser
+    "feedparser>=6.0.11",
+    
+    # Google Services
+    "gspread>=6.1.4",
+    "google-auth>=2.35.0",
+    
+    # Additional utilities
+    "python-dotenv>=1.0.0",
+]
 
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx",
+    "black>=23.0",
+    "isort>=5.0",
+    "flake8>=6.0",
+]
 
+# Production dependencies 
+prod = [
+    "gunicorn>=21.0",
+]
+
+# All dependencies
+all = [
+    "star-api[dev,prod]"
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/star-api"
+Documentation = "https://github.com/yourusername/star-api#readme"
+Repository = "https://github.com/yourusername/star-api.git"
+"Bug Tracker" = "https://github.com/yourusername/star-api/issues"
+
+[project.scripts]
+star-api = "main:app"
+
+# Build System
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Database Migration (Aerich)
 [tool.aerich]
-
 tortoise_orm = "core.db.TORTOISE_ORM"
-
 location = "./migrations"
-
 src_folder = "./."
 
+# Code Quality Tools
+
+# Black (Code Formatter)
+[tool.black]
+line-length = 88
+target-version = ['py313']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+# isort (Import Sorter)
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["api", "core", "models", "services", "schemas"]
+
+# Pytest
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+
+# Coverage
+[tool.coverage.run]
+source = ["api", "core", "models", "services"]
+omit = [
+    "*/tests/*",
+    "*/migrations/*", 
+    "*/__pycache__/*",
+    "main.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
