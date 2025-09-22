@@ -3,27 +3,32 @@ from typing import Optional, List
 from datetime import datetime
 
 
-# 👉 공통 속성
+# -----------------------------
+# 공통 속성
+# -----------------------------
 class TodoBase(BaseModel):
     title: str = Field(..., example="장보기")
     description: Optional[str] = Field(None, example="우유, 계란, 빵 사오기")
-    is_completed: Optional[bool] = Field(False, example=False)
+    is_completed: bool = Field(False, example=False)  # ✅ 기본값 False로 강제 (체크박스 대응)
 
 
-# 👉 생성 요청
+# -----------------------------
+# 요청(Request)
+# -----------------------------
 class TodoCreate(TodoBase):
     schedule_id: Optional[int] = Field(None, example=1)
 
 
-# 👉 수정 요청
 class TodoUpdate(BaseModel):
     title: Optional[str] = Field(None, example="장보기 (수정됨)")
     description: Optional[str] = Field(None, example="계란 대신 두부 사오기")
-    is_completed: Optional[bool] = Field(None, example=True)
+    is_completed: Optional[bool] = Field(None, example=True)  # ✅ 수정 시에만 nullable 허용
     schedule_id: Optional[int] = Field(None, example=1)
 
 
-# 👉 단일 조회 응답
+# -----------------------------
+# 응답(Response)
+# -----------------------------
 class TodoOut(TodoBase):
     id: int = Field(..., example=5)
     user_id: int = Field(..., example=42)
@@ -32,30 +37,14 @@ class TodoOut(TodoBase):
     updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # ✅ ORM 변환 허용 (Pydantic v2)
 
 
-# 👉 리스트 조회 응답
 class TodoListOut(BaseModel):
-    todos: List[TodoOut] = Field(
-        ...,
-        example=[
-            {
-                "id": 5,
-                "user_id": 42,
-                "schedule_id": 1,
-                "title": "장보기",
-                "description": "우유, 계란, 빵 사오기",
-                "is_completed": False,
-                "created_at": "2025-09-18T12:34:56",
-                "updated_at": "2025-09-18T12:34:56"
-            }
-        ]
-    )
+    todos: List[TodoOut]
     total: int = Field(..., example=1)
 
 
-# 👉 삭제 응답
 class TodoDeleteResponse(BaseModel):
     message: str = Field(
         "Todo deleted successfully",
