@@ -123,12 +123,16 @@ class AuthService:
         user = await UserRepository.get_user_by_email(email)
 
         if not user:
+            # ✅ 기존 create_user 시그니처에 맞게 기본 username, birthday 설정
             user = await UserRepository.create_user(
                 email=email,
                 password_hash=bcrypt.hash("oauth_dummy_password"),
-                social_provider="google",
-                social_id=google_id,
+                username="소셜유저",  # 임시 기본값
+                birthday=date(2000, 1, 1),  # 임시 기본값
             )
+            # ✅ 소셜 필드 추가 설정
+            user.social_provider = "google"
+            user.social_id = google_id
             user.is_email_verified = True
             await user.save()
 

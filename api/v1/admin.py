@@ -46,17 +46,3 @@ async def update_user_status(
     if not user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
     return AdminUserOut.from_orm(user)
-
-# -----------------------------
-# 관리자 권한 부여/회수 (관리자 전용)
-# -----------------------------
-@router.patch("/users/{user_id}/superuser", response_model=AdminUserOut)
-async def set_superuser(
-    user_id: int,
-    is_superuser: bool,
-    current_admin = Depends(get_current_admin),  # ✅ 의존성 추가
-):
-    user = await UserService.set_superuser(user_id, is_superuser)
-    if not user:
-        raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
-    return AdminUserOut.from_orm(user)

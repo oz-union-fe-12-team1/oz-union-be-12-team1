@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from models.todo import Todo
 
 
@@ -37,7 +37,7 @@ class TodosRepository:
     @staticmethod
     async def get_todos_by_user(user_id: int) -> List[Todo]:
         """특정 사용자의 Todo 목록 조회 (Soft Delete 제외)"""
-        return await Todo.filter(user_id=user_id, deleted_at=None).all()
+        return await Todo.filter(user_id=user_id, deleted_at=None)
 
     # --------------------
     # UPDATE
@@ -48,7 +48,8 @@ class TodosRepository:
         todo = await Todo.get_or_none(id=todo_id, deleted_at=None)
         if todo:
             for field, value in kwargs.items():
-                setattr(todo, field, value)
+                if hasattr(todo, field) and value is not None:  # ✅ 안전하게 필드 확인 후 반영
+                    setattr(todo, field, value)
             await todo.save()
         return todo
 
@@ -60,7 +61,7 @@ class TodosRepository:
         """Soft Delete (deleted_at만 기록)"""
         todo = await Todo.get_or_none(id=todo_id, deleted_at=None)
         if todo:
-            todo.deleted_at = datetime.utcnow()
+            todo.deleted_at = datetime.now(timezone.utc)  # ✅ UTC 기준 시간
             await todo.save()
             return True
         return False

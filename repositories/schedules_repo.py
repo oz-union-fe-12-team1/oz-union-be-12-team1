@@ -1,6 +1,6 @@
 from typing import List, Optional
 from tortoise.exceptions import DoesNotExist
-from datetime import datetime
+from datetime import datetime, timezone
 from models.schedules import Schedule
 
 
@@ -34,9 +34,6 @@ class ScheduleRepository:
             end_time=end_time,
             location=location,
             all_day=all_day,
-            is_recurring=is_recurring,
-            recurrence_rule=recurrence_rule,
-            parent_schedule_id=parent_schedule_id,
         )
 
     # --------------------
@@ -45,12 +42,12 @@ class ScheduleRepository:
     @staticmethod
     async def get_schedule_by_id(schedule_id: int) -> Optional[Schedule]:
         """ID 기준 단일 일정 조회"""
-        return await Schedule.get_or_none(id=schedule_id, deleted_at=None)
+        return await Schedule.get_or_none(id=schedule_id)
 
     @staticmethod
     async def get_schedules_by_user(user_id: int) -> List[Schedule]:
         """특정 사용자의 전체 일정 조회"""
-        return await Schedule.filter(user_id=user_id, deleted_at=None).all()
+        return await Schedule.filter(user_id=user_id)
 
     @staticmethod
     async def get_schedules_by_date(user_id: int, date: datetime) -> List[Schedule]:
@@ -60,7 +57,7 @@ class ScheduleRepository:
             deleted_at=None,
             start_time__lte=date,
             end_time__gte=date
-        ).all()
+        )
 
     # --------------------
     # UPDATE
@@ -68,22 +65,24 @@ class ScheduleRepository:
     @staticmethod
     async def update_schedule(schedule_id: int, **kwargs) -> Optional[Schedule]:
         """일정 업데이트"""
-        schedule = await Schedule.get_or_none(id=schedule_id, deleted_at=None)
+        schedule = await Schedule.get_or_none(id=schedule_id)
         if schedule:
             for field, value in kwargs.items():
-                setattr(schedule, field, value)
+                if hasattr(schedule, field) and value is not None:
+                    setattr(schedule, field, value)
             await schedule.save()
         return schedule
 
     # --------------------
     # DELETE
+    # delete_at = None / soft delete
     # --------------------
     @staticmethod
     async def delete_schedule(schedule_id: int) -> bool:
         """Soft Delete (deleted_at만 기록)"""
-        schedule = await Schedule.get_or_none(id=schedule_id, deleted_at=None)
+        schedule = await Schedule.get_or_none(id=schedule_id)
         if schedule:
-            schedule.deleted_at = datetime.utcnow()
+            schedule.deleted_at = datetime.now(timezone.utc)  # ✅ UTC 권장
             await schedule.save()
             return True
         return False
