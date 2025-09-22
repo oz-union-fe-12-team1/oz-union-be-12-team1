@@ -5,7 +5,7 @@ from datetime import datetime
 
 router = APIRouter()
 
-# 🔒 보안: 환경변수에서 API 키 가져오기
+#  보안: 환경변수에서 API 키 가져오기
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY environment variable is required")
@@ -24,16 +24,15 @@ async def gemini_request(prompt: str) -> str:
         
         if res.status_code != 200:
             raise HTTPException(
-                status_code=res.status_code, 
+                status_code=res.status_code,
                 detail=f"Gemini API 오류: {res.text}"
             )
         
         data = res.json()
         
-        # API 응답 구조 검증
         if "candidates" not in data or not data["candidates"]:
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail="Gemini API 응답 형식이 올바르지 않습니다"
             )
         
@@ -47,10 +46,12 @@ async def gemini_request(prompt: str) -> str:
         raise HTTPException(status_code=500, detail=f"예상치 못한 오류: {str(e)}")
 
 
+# ======================
+# 운세 API
+# ======================
 @router.get("/fortune")
 async def get_fortune(birthday: str = Query(..., description="YYYY-MM-DD 형식")):
     """사용자 생년월일 기반 운세 제공"""
-    # 생년월일 형식 간단 검증
     try:
         datetime.strptime(birthday, "%Y-%m-%d")
     except ValueError:
@@ -77,27 +78,46 @@ async def get_fortune(birthday: str = Query(..., description="YYYY-MM-DD 형식"
     }
 
 
+# ======================
+# 브리핑 API (아침/저녁/하루)
+# ======================
 @router.get("/briefings")
-async def get_briefings(type: str = Query("morning", description="morning 또는 evening")):
-    """아침/저녁 브리핑 제공"""
-    if type not in ["morning", "evening"]:
-        raise HTTPException(status_code=400, detail="type은 'morning' 또는 'evening'이어야 합니다")
+async def get_briefings(type: str = Query("morning", description="morning / evening / daily")):
+    """아침/저녁/하루 브리핑 제공"""
+    if type not in ["morning", "evening", "daily"]:
+        raise HTTPException(status_code=400, detail="type은 'morning' | 'evening' | 'daily' 중 하나여야 합니다")
     
-    type_korean = "아침" if type == "morning" else "저녁"
-    
-    prompt = f"""
-    당신은 개인 비서입니다.
-    사용자의 {type_korean} 브리핑을 작성하세요.
-    조건:
-    - 300자 이내
-    - 아침: 오늘 날씨 + 일정 시작 + 동기부여
-    - 저녁: 오늘 일정/투두 회고 + 내일 준비
-    - 친근한 한국어, 이모지 포함
-    """
+    if type == "morning":
+        prompt = """
+        당신은 개인 비서입니다.
+        아침 브리핑을 작성하세요.
+        조건:
+        - 300자 이내
+        - 오늘 날씨 + 일정 시작 안내 + 동기부여
+        - 친근한 한국어, 이모지 포함
+        """
+    elif type == "evening":
+        prompt = """
+        당신은 개인 비서입니다.
+        저녁 브리핑을 작성하세요.
+        조건:
+        - 300자 이내
+        - 오늘 일정/투두 회고 + 내일 준비
+        - 친근한 한국어, 이모지 포함
+        """
+    else:  # daily
+        prompt = """
+        당신은 개인 비서입니다.
+        하루 요약 브리핑을 작성하세요.
+        조건:
+        - 300자 이내
+        - 오늘 일정/투두 결과 요약 + 내일 일정 미리보기
+        - 친근한 한국어, 이모지 포함
+        """
     
     briefing = await gemini_request(prompt)
     return {
-        "success": True, 
+        "success": True,
         "data": {
             "type": type,
             "summary": briefing,
@@ -106,6 +126,9 @@ async def get_briefings(type: str = Query("morning", description="morning 또는
     }
 
 
+# ======================
+# 대화 요약 API
+# ======================
 @router.get("/conversations")
 async def get_conversations(message: str = Query(..., description="사용자 요청 메시지")):
     """사용자 메시지 기반 대화형 응답"""
@@ -129,8 +152,8 @@ async def get_conversations(message: str = Query(..., description="사용자 요
     return {
         "success": True,
         "data": {
-            "type": "conversation", 
-            "summary": summary, 
+            "type": "conversation",
+            "summary": summary,
             "generated_at": datetime.now().isoformat()
         },
     }

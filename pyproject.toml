@@ -3,9 +3,9 @@ name = "star-api"
 version = "1.0.0"
 description = "개인 일정 관리 및 AI 어시스턴트 API - Star API"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"},
+    {name = "Team 4Bit", email = "contact@example.com"},
 ]
 license = {text = "MIT"}
 keywords = ["fastapi", "api", "schedule", "todo", "ai", "assistant"]
@@ -14,7 +14,8 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License", 
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Framework :: FastAPI",
 ]
 
@@ -49,7 +50,6 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21.0",
-    "httpx",
     "black>=23.0",
     "isort>=5.0",
     "flake8>=6.0",
@@ -66,13 +66,15 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/star-api"
-Documentation = "https://github.com/yourusername/star-api#readme"
-Repository = "https://github.com/yourusername/star-api.git"
-"Bug Tracker" = "https://github.com/yourusername/star-api/issues"
+Homepage = "https://github.com/oz-union-fe-12-team1/oz-union-be-12-team1"
+Documentation = "https://github.com/oz-union-fe-12-team1/oz-union-be-12-team1#readme"
+Repository = "https://github.com/oz-union-fe-12-team1/oz-union-be-12-team1.git"
+"Bug Tracker" = "https://github.com/oz-union-fe-12-team1/oz-union-be-12-team1/issues"
 
+# Uvicorn 실행은 scripts 대신 README에 안내
 [project.scripts]
-star-api = "main:app"
+# uvicorn 실행은 아래처럼 수동으로 권장:
+# uvicorn main:app --reload
 
 # Build System
 [build-system]
@@ -85,12 +87,10 @@ tortoise_orm = "core.db.TORTOISE_ORM"
 location = "./migrations"
 src_folder = "./."
 
-# Code Quality Tools
-
 # Black (Code Formatter)
 [tool.black]
 line-length = 88
-target-version = ['py313']
+target-version = ['py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -140,4 +140,15 @@ exclude_lines = [
     "def __repr__",
     "raise AssertionError",
     "raise NotImplementedError",
+]
+
+# Hatch 빌드 설정 (패키지 디렉토리 명시)
+[tool.hatch.build.targets.wheel]
+packages = [
+    "api",
+    "core",
+    "models",
+    "repositories",
+    "schemas",
+    "services"
 ]
