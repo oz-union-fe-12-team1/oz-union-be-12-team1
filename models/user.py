@@ -7,7 +7,7 @@ class User(Model):
 
     email = fields.CharField(max_length=255, unique=True, null=False)
     password_hash = fields.CharField(max_length=255, null=True)
-    username = fields.CharField(max_length=50, unique=True, null=False)
+    username = fields.CharField(max_length=50, unique=False, null=False)
 
     birthday = fields.DateField(null=True)
     profile_image = fields.CharField(max_length=500, null=True)
