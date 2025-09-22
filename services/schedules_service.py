@@ -1,11 +1,11 @@
 from typing import List, Optional
-from repositories.schedules_repo import ScheduleRepository  # ✅ 단수형으로 수정
+from repositories.schedules_repo import ScheduleRepository
 from models.schedules import Schedule
 
 
 class ScheduleService:
     """
-    Service layer for managing Schedules (CRUD + 반복 여부/하루 종일 옵션 포함).
+    Service layer for managing Schedules (CRUD).
     """
 
     # ✅ Create
@@ -18,9 +18,6 @@ class ScheduleService:
         description: Optional[str] = None,
         all_day: bool = False,
         location: Optional[str] = None,
-        is_recurring: bool = False,
-        recurrence_rule: Optional[str] = None,
-        parent_schedule_id: Optional[int] = None,
     ) -> Schedule:
         return await ScheduleRepository.create_schedule(
             user_id=user_id,
@@ -30,27 +27,33 @@ class ScheduleService:
             end_time=end_time,
             all_day=all_day,
             location=location,
-            is_recurring=is_recurring,
-            recurrence_rule=recurrence_rule,
-            parent_schedule_id=parent_schedule_id,
         )
 
-    # ✅ Read (단일 일정 조회)
+    # ✅ Read (단일 일정 조회 - todos까지 prefetch)
     @staticmethod
     async def get_schedule_by_id(schedule_id: int) -> Optional[Schedule]:
-        return await ScheduleRepository.get_schedule_by_id(schedule_id)
+        schedule = await ScheduleRepository.get_schedule_by_id(schedule_id)
+        if schedule:
+            await schedule.fetch_related("todos")  # ✅ todos 미리 로드
+        return schedule
 
-    # ✅ Read (사용자별 일정 목록 조회)
+    # ✅ Read (사용자별 일정 목록 조회 - todos까지 prefetch)
     @staticmethod
     async def get_schedules_by_user(user_id: int) -> List[Schedule]:
-        return await ScheduleRepository.get_schedules_by_user(user_id)
+        schedules = await ScheduleRepository.get_schedules_by_user(user_id)
+        for s in schedules:
+            await s.fetch_related("todos")  # ✅ todos 미리 로드
+        return schedules
 
-    # ✅ Update (일정 수정)
+    # ✅ Update
     @staticmethod
     async def update_schedule(schedule_id: int, **kwargs) -> Optional[Schedule]:
-        return await ScheduleRepository.update_schedule(schedule_id, **kwargs)
+        updated = await ScheduleRepository.update_schedule(schedule_id, **kwargs)
+        if updated:
+            await updated.fetch_related("todos")  # ✅ 업데이트 후에도 todos 로드
+        return updated
 
-    # ✅ Delete (소프트 삭제 → deleted_at 설정)
+    # ✅ Delete (소프트 삭제)
     @staticmethod
     async def delete_schedule(schedule_id: int) -> bool:
         return await ScheduleRepository.delete_schedule(schedule_id)

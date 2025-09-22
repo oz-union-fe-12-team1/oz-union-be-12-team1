@@ -1,63 +1,66 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from typing import Optional, List
 from datetime import datetime
+from schemas.todos import TodoOut  # ✅ 일정 속 투두 참조
 
 
-# 👉 공통 속성
-class TodoBase(BaseModel):
-    title: str = Field(..., example="장보기")
-    description: Optional[str] = Field(None, example="우유, 계란, 빵 사오기")
-    is_completed: Optional[bool] = Field(False, example=False)
+# -----------------------------
+# 요청(Request)
+# -----------------------------
+class ScheduleCreateRequest(BaseModel):
+    title: str = Field(..., example="회의")
+    description: Optional[str] = Field(None, example="팀 주간 회의")
+    start_time: datetime = Field(..., example="2025-09-20T10:00:00")
+    end_time: datetime = Field(..., example="2025-09-20T11:00:00")
+    all_day: bool = Field(False, example=False)
+    location: Optional[str] = Field(None, example="서울 강남구 카페")
 
 
-# 👉 생성 요청
-class TodoCreate(TodoBase):
-    schedule_id: Optional[int] = Field(None, example=1)
+class ScheduleUpdateRequest(BaseModel):
+    title: Optional[str] = Field(None, example="회의 (수정됨)")
+    description: Optional[str] = Field(None, example="주간 회의 안건 추가")
+    start_time: Optional[datetime] = Field(None, example="2025-09-20T10:30:00")
+    end_time: Optional[datetime] = Field(None, example="2025-09-20T11:30:00")
+    all_day: Optional[bool] = Field(None, example=True)
+    location: Optional[str] = Field(None, example="서울 강남구 새로운 카페")
 
 
-# 👉 수정 요청
-class TodoUpdate(BaseModel):
-    title: Optional[str] = Field(None, example="장보기 (수정됨)")
-    description: Optional[str] = Field(None, example="계란 대신 두부 사오기")
-    is_completed: Optional[bool] = Field(None, example=True)
-    schedule_id: Optional[int] = Field(None, example=1)
+# -----------------------------
+# 응답(Response)
+# -----------------------------
+class ScheduleOut(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    description: Optional[str]
+    start_time: datetime
+    end_time: datetime
+    all_day: bool
+    location: Optional[str]
+    created_at: datetime
+    updated_at: datetime
 
+    # ✅ 일정 속 투두 포함
+    todos: List[TodoOut] = Field(default_factory=list)
 
-# 👉 단일 조회 응답
-class TodoOut(TodoBase):
-    id: int = Field(..., example=5)
-    user_id: int = Field(..., example=42)
-    schedule_id: Optional[int] = Field(None, example=1)
-    created_at: datetime = Field(..., example="2025-09-18T12:34:56")
-    updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
+    # ✅ ReverseRelation → List[TodoOut] 변환
+    @field_serializer("todos")
+    def serialize_todos(self, todos):
+        if not todos:
+            return []
+        return [TodoOut.model_validate(t, from_attributes=True) for t in todos]
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # ✅ ORM 변환 허용
 
 
-# 👉 리스트 조회 응답
-class TodoListOut(BaseModel):
-    todos: List[TodoOut] = Field(
-        ...,
-        example=[
-            {
-                "id": 5,
-                "user_id": 42,
-                "schedule_id": 1,
-                "title": "장보기",
-                "description": "우유, 계란, 빵 사오기",
-                "is_completed": False,
-                "created_at": "2025-09-18T12:34:56",
-                "updated_at": "2025-09-18T12:34:56"
-            }
-        ]
-    )
+class ScheduleListOut(BaseModel):
+    schedules: List[ScheduleOut]
     total: int = Field(..., example=1)
 
 
-# 👉 삭제 응답
-class TodoDeleteResponse(BaseModel):
+class ScheduleDeleteResponse(BaseModel):
     message: str = Field(
-        "Todo deleted successfully",
-        example="Todo deleted successfully"
+        "Schedule deleted successfully",
+        example="Schedule deleted successfully"
     )
