@@ -18,4 +18,7 @@ class Settings:
     MAIL_PORT: int = int(os.getenv("MAIL_PORT", 587))
     MAIL_SERVER: str = os.getenv("MAIL_SERVER", "smtp.gmail.com")
 
+
+
+
 settings = Settings()
