@@ -131,3 +131,6 @@ class UserDeleteResponse(BaseModel):
         default="User deleted successfully",
         example="User deleted successfully",
     )
+
+class LogoutResponse(BaseModel):
+    success: bool = Field(..., example=True)

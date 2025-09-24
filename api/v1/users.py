@@ -23,7 +23,7 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
     user = await UserService.get_user_by_id(current_user.id)
     if not user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
-    return user   # ✅ 이미 UserOut 반환
+    return UserOut.model_validate(user, from_attributes=True)  # ✅ 명시적으로 스키마 변환
 
 
 # -----------------------------
@@ -44,7 +44,7 @@ async def update_my_profile(
     if not updated_user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
 
-    return updated_user   # ✅ 이미 UserUpdateResponse 반환
+    return UserUpdateResponse.model_validate(updated_user, from_attributes=True)  # ✅ 변환
 
 
 # -----------------------------
@@ -59,4 +59,4 @@ async def delete_my_account(current_user: User = Depends(get_current_user)):
     if not deleted:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
 
-    return deleted   # ✅ UserService에서 UserDeleteResponse 반환
+    return UserDeleteResponse(message="User deleted successfully")  # ✅ 명확히 스키마 생성

@@ -2,13 +2,14 @@ from typing import List, Optional, Any
 from repositories.user_locations_repo import UserLocationsRepository
 from schemas.user_locations import (
     UserLocationResponse,
+    UserLocationUpdateRequest,
     UserLocationUpdateResponse,
 )
 
 
 class UserLocationService:
     """
-    Service layer for managing user locations (조회 & 수정 전용).
+    Service layer for managing user locations
     """
 
     # ✅ 단일 조회
@@ -23,12 +24,17 @@ class UserLocationService:
     @staticmethod
     async def get_locations_by_user(user_id: int) -> List[UserLocationResponse]:
         locations = await UserLocationsRepository.get_locations_by_user(user_id)
-        return [UserLocationResponse.model_validate(loc, from_attributes=True) for loc in locations]
+        return [
+            UserLocationResponse.model_validate(loc, from_attributes=True)
+            for loc in locations
+        ]
 
-    # ✅ 수정
+    # ✅ 위치 업데이트
     @staticmethod
-    async def update_location(location_id: int, **kwargs: Any) -> Optional[UserLocationUpdateResponse]:
-        updated = await UserLocationsRepository.update_location(location_id, **kwargs)
+    async def update_location(
+        location_id: int, data: UserLocationUpdateRequest
+    ) -> Optional[UserLocationUpdateResponse]:
+        updated = await UserLocationsRepository.update_location(location_id, data.dict(exclude_unset=True))
         if not updated:
             return None
         return UserLocationUpdateResponse.model_validate(updated, from_attributes=True)

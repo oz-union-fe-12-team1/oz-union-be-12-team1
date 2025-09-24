@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, date
-from typing import Optional, Dict
+from typing import Optional
 import jwt
 import random
 import redis.asyncio as redis
@@ -10,6 +10,13 @@ from repositories.user_repo import UserRepository
 from core.security import send_verification_email
 from repositories.token_revocations_repo import TokenRevocationsRepository
 from models.user import User
+from schemas.user import (
+    UserCreateRequest,
+    UserCreateResponse,
+    UserLoginResponse,
+    GoogleLoginResponse,
+    UserVerifySuccessResponse,
+)
 
 # ✅ Redis 연결
 REDIS_URL = "redis://redis:6379/0"
@@ -41,7 +48,7 @@ class AuthService:
     # 회원가입 (/auth/register)
     # ---------------------------
     @staticmethod
-    async def register(request) -> Optional[User]:
+    async def register(request: UserCreateRequest) -> UserCreateResponse:
         password_hash = bcrypt.hash(request.password)
 
         # 인증번호 생성 (6자리)
@@ -63,22 +70,22 @@ class AuthService:
         # 이메일 발송
         await send_verification_email(request.email, verification_code)
 
-        return user
+        return UserCreateResponse.model_validate(user, from_attributes=True)
 
     # ---------------------------
     # 로그인 (/auth/login)
     # ---------------------------
     @staticmethod
-    async def login(email: str, password: str) -> Dict[str, str]:
+    async def login(email: str, password: str) -> Optional[UserLoginResponse]:
         user = await UserRepository.get_user_by_email(email)
         if not user:
-            return {"error": "USER_NOT_FOUND"}
+            return None
 
         if not bcrypt.verify(password, user.password_hash):
-            return {"error": "INVALID_CREDENTIALS"}
+            return None
 
         if not user.is_email_verified:
-            return {"error": "EMAIL_NOT_VERIFIED"}
+            return None
 
         access_token = AuthService.create_access_token(user.id)
         refresh_token = AuthService.create_refresh_token(user.id)
@@ -87,23 +94,27 @@ class AuthService:
         user.last_login_ip = "TODO: 클라이언트 IP"
         await user.save()
 
-        return {"access_token": access_token, "refresh_token": refresh_token}
+        return UserLoginResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+        )
 
     # ---------------------------
     # 이메일 인증 (/auth/email/verify)
     # ---------------------------
     @staticmethod
-    async def verify_email_token(email: str, code: str) -> Dict:
+    async def verify_email_token(email: str, code: str) -> UserVerifySuccessResponse:
         saved_code = await redis_client.get(f"verify:{email}")
         if not saved_code:
-            return {"success": False, "error": "CODE_EXPIRED_OR_NOT_FOUND"}
+            return UserVerifySuccessResponse(success=False)
 
         if saved_code != code:
-            return {"success": False, "error": "CODE_MISMATCH"}
+            return UserVerifySuccessResponse(success=False)
 
         user = await UserRepository.get_user_by_email(email)
         if not user:
-            return {"success": False, "error": "USER_NOT_FOUND"}
+            return UserVerifySuccessResponse(success=False)
 
         user.is_email_verified = True
         await user.save()
@@ -111,13 +122,13 @@ class AuthService:
         # 인증번호 삭제
         await redis_client.delete(f"verify:{email}")
 
-        return {"success": True}
+        return UserVerifySuccessResponse(success=True)
 
     # ---------------------------
     # 구글 로그인 (/auth/google)
     # ---------------------------
     @staticmethod
-    async def google_login(google_id: str, email: str) -> Dict[str, str]:
+    async def google_login(google_id: str, email: str) -> GoogleLoginResponse:
         user = await UserRepository.get_user_by_email(email)
 
         if not user:
@@ -136,13 +147,17 @@ class AuthService:
         access_token = AuthService.create_access_token(user.id)
         refresh_token = AuthService.create_refresh_token(user.id)
 
-        return {"access_token": access_token, "refresh_token": refresh_token}
+        return GoogleLoginResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+        )
 
     # ---------------------------
     # 토큰 갱신 (/auth/refresh)
     # ---------------------------
     @staticmethod
-    async def refresh_token(refresh_token: str) -> Optional[str]:
+    async def refresh_token(refresh_token: str) -> Optional[UserLoginResponse]:
         try:
             payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
             user_id = int(payload.get("sub"))
@@ -150,10 +165,13 @@ class AuthService:
             if await TokenRevocationsRepository.is_token_revoked(refresh_token):
                 return None
 
-            return AuthService.create_access_token(user_id)
-        except jwt.ExpiredSignatureError:
-            return None
-        except jwt.InvalidTokenError:
+            new_access = AuthService.create_access_token(user_id)
+            return UserLoginResponse(
+                access_token=new_access,
+                refresh_token=refresh_token,
+                token_type="bearer",
+            )
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
             return None
 
     # ---------------------------
