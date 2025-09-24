@@ -25,7 +25,7 @@ class Todo(Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
-    #deleted_at = fields.DatetimeField(null=True)
+    deleted_at = fields.DatetimeField(null=True)
     #소프트 딜리트 (삭제한 시간 저장, 이렇게 해야 복구를 할 수가 있음
 
     class Meta:
