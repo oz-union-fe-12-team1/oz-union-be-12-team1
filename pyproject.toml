@@ -54,6 +54,10 @@ src_folder = "."
 python_version = "3.13"
 ignore_missing_imports = true
 ignore_errors = true
+explicit_package_bases = true
+namespace_packages = true
+files = ["main.py", "api", "core", "models", "repositories", "schemas", "services"]
+exclude = ["migrations", "tests", ".venv", "venv", "__pycache__"]
 
 # 에러 억제 - 특정 모듈들에 대해 관대한 설정
 [[tool.mypy.overrides]]
