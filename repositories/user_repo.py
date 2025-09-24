@@ -1,5 +1,4 @@
 from typing import Optional, List
-from tortoise.exceptions import DoesNotExist
 from datetime import date
 from models.user import User
 
@@ -23,13 +22,14 @@ class UserRepository:
         회원가입
         - 신규 가입자는 기본적으로 이메일 미인증 상태
         """
-        return await User.create(
+        user: User = await User.create(
             email=email,
             password_hash=password_hash,
             username=username,
             birthday=birthday,
-            is_email_verified=False,  # ✅ 명세서: 가입 직후 인증되지 않음
+            is_email_verified=False,  # ✅ 가입 직후 인증되지 않음
         )
+        return user
 
     # --------------------
     # READ
@@ -37,12 +37,14 @@ class UserRepository:
     @staticmethod
     async def get_user_by_id(user_id: int) -> Optional[User]:
         """ID 기준 단일 조회"""
-        return await User.get_or_none(id=user_id)
+        user: Optional[User] = await User.get_or_none(id=user_id)
+        return user
 
     @staticmethod
     async def get_user_by_email(email: str) -> Optional[User]:
         """이메일 기준 단일 조회"""
-        return await User.get_or_none(email=email)
+        user: Optional[User] = await User.get_or_none(email=email)
+        return user
 
     @staticmethod
     async def get_all_users() -> List[User]:
@@ -50,7 +52,8 @@ class UserRepository:
         전체 사용자 목록 조회 (관리자 전용)
         - 최근 가입순 정렬
         """
-        return await User.all().order_by("-created_at")
+        users: List[User] = await User.all().order_by("-created_at")
+        return users
 
     # --------------------
     # UPDATE
@@ -60,7 +63,7 @@ class UserRepository:
         """
         이메일 인증 완료 → is_email_verified = True
         """
-        user = await User.get_or_none(id=user_id)
+        user: Optional[User] = await User.get_or_none(id=user_id)
         if not user:
             return None
         user.is_email_verified = True
@@ -78,7 +81,7 @@ class UserRepository:
         프로필 수정
         - username, bio, profile_image 중 선택적 업데이트
         """
-        user = await User.get_or_none(id=user_id)
+        user: Optional[User] = await User.get_or_none(id=user_id)
         if not user:
             return None
 
@@ -102,5 +105,5 @@ class UserRepository:
         - 실제 DB에서 삭제
         - 복구 불가
         """
-        deleted_count = await User.filter(id=user_id).delete()
+        deleted_count: int = await User.filter(id=user_id).delete()
         return deleted_count > 0
