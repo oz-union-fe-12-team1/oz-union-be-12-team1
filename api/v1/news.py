@@ -17,7 +17,7 @@ class NewsCategory(str, Enum):
     it_science = "it_science"
     world = "world"
 
-# ✅ 네이버 뉴스 섹션 URL 매핑
+#  네이버 뉴스 섹션 URL 매핑
 NAVER_NEWS_SECTIONS = {
     "politics": "https://news.naver.com/section/100",      # 정치
     "economy": "https://news.naver.com/section/101",       # 경제
