@@ -1,76 +1,86 @@
-from typing import Optional
-from schemas.user import (
+from typing import Optional, List
+from schemas.users import (
     UserCreateRequest,
     UserCreateResponse,
+    UserLoginRequest,
+    UserLoginResponse,
     UserOut,
     UserUpdateRequest,
     UserUpdateResponse,
     UserDeleteResponse,
-    AdminUserOut,
     UserListResponse,
-    AdminUserListResponse,
 )
 from repositories.user_repo import UserRepository
+from models.user import User
+from utils.security import hash_password, verify_password, create_tokens
 
 
 class UserService:
     """
-    Service layer for managing Users (CRUD + 관리자 기능).
-    인증/로그인은 AuthService에서 담당.
+    Service layer for managing Users (CRUD + 인증/로그인).
     """
 
     # --------------------
-    # CREATE (회원가입)
+    # CREATE
     # --------------------
     @staticmethod
     async def create_user(data: UserCreateRequest) -> UserCreateResponse:
-        user = await UserRepository.create_user(
+        password_hash: str = hash_password(data.password)
+        user: User = await UserRepository.create_user(
             email=data.email,
-            password_hash=data.password,  # ✅ 실제로는 AuthService에서 해시 후 전달
+            password_hash=password_hash,
             username=data.username,
             birthday=data.birthday,
         )
         return UserCreateResponse.model_validate(user, from_attributes=True)
 
     # --------------------
-    # READ (내 정보 / 단일 조회)
+    # READ
     # --------------------
     @staticmethod
     async def get_user_by_id(user_id: int) -> Optional[UserOut]:
-        user = await UserRepository.get_user_by_id(user_id)
+        user: Optional[User] = await UserRepository.get_user_by_id(user_id)
         if not user:
             return None
         return UserOut.model_validate(user, from_attributes=True)
 
     @staticmethod
     async def get_user_by_email(email: str) -> Optional[UserOut]:
-        user = await UserRepository.get_user_by_email(email)
+        user: Optional[User] = await UserRepository.get_user_by_email(email)
         if not user:
             return None
         return UserOut.model_validate(user, from_attributes=True)
 
-    # --------------------
-    # READ (목록 조회)
-    # --------------------
     @staticmethod
-    async def get_all_users(admin: bool = False):
-        users = await UserRepository.get_all_users()
-        if admin:
-            return AdminUserListResponse(
-                users=[AdminUserOut.model_validate(u, from_attributes=True) for u in users],
-                total=len(users),
-            )
+    async def get_all_users() -> UserListResponse:
+        users: List[User] = await UserRepository.get_all_users()
         return UserListResponse(
             users=[UserOut.model_validate(u, from_attributes=True) for u in users],
             total=len(users),
         )
 
     # --------------------
-    # UPDATE (프로필 수정)
+    # LOGIN
+    # --------------------
+    @staticmethod
+    async def login_user(data: UserLoginRequest) -> Optional[UserLoginResponse]:
+        user: Optional[User] = await UserRepository.get_user_by_email(data.email)
+        if not user or not verify_password(data.password, user.password_hash or ""):
+            return None
+
+        access_token, refresh_token = create_tokens(user.id)
+        return UserLoginResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+        )
+
+    # --------------------
+    # UPDATE
     # --------------------
     @staticmethod
     async def update_profile(user_id: int, data: UserUpdateRequest) -> Optional[UserUpdateResponse]:
-        updated = await UserRepository.update_profile(
+        updated: Optional[User] = await UserRepository.update_profile(
             user_id=user_id,
             username=data.username,
             bio=data.bio,
@@ -81,23 +91,11 @@ class UserService:
         return UserUpdateResponse.model_validate(updated, from_attributes=True)
 
     # --------------------
-    # 관리자 전용: 사용자 상태 변경
-    # --------------------
-    @staticmethod
-    async def update_user_status(user_id: int, is_active: bool) -> Optional[AdminUserOut]:
-        user = await UserRepository.get_user_by_id(user_id)
-        if not user:
-            return None
-        user.is_active = is_active
-        await user.save()
-        return AdminUserOut.model_validate(user, from_attributes=True)
-
-    # --------------------
-    # DELETE (회원 탈퇴 / 관리자 삭제)
+    # DELETE
     # --------------------
     @staticmethod
     async def delete_user(user_id: int) -> Optional[UserDeleteResponse]:
-        deleted = await UserRepository.delete_user(user_id)
+        deleted: bool = await UserRepository.delete_user(user_id)
         if not deleted:
             return None
         return UserDeleteResponse(message="User deleted successfully")

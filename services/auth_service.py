@@ -10,7 +10,7 @@ from repositories.user_repo import UserRepository
 from core.security import send_verification_email
 from repositories.token_revocations_repo import TokenRevocationsRepository
 from models.user import User
-from schemas.user import (
+from schemas.users import (  # ✅ 경로 일관성 (schemas.user → schemas.users)
     UserCreateRequest,
     UserCreateResponse,
     UserLoginResponse,
@@ -19,7 +19,7 @@ from schemas.user import (
 )
 
 # ✅ Redis 연결
-REDIS_URL = "redis://redis:6379/0"
+REDIS_URL: str = "redis://redis:6379/0"
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
 
@@ -34,14 +34,18 @@ class AuthService:
     # ---------------------------
     @staticmethod
     def create_access_token(user_id: int) -> str:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        payload = {"sub": str(user_id), "exp": expire}
+        expire: datetime = datetime.utcnow() + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+        payload: dict[str, str | datetime] = {"sub": str(user_id), "exp": expire}
         return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     @staticmethod
     def create_refresh_token(user_id: int) -> str:
-        expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-        payload = {"sub": str(user_id), "exp": expire}
+        expire: datetime = datetime.utcnow() + timedelta(
+            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+        )
+        payload: dict[str, str | datetime] = {"sub": str(user_id), "exp": expire}
         return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     # ---------------------------
@@ -49,13 +53,13 @@ class AuthService:
     # ---------------------------
     @staticmethod
     async def register(request: UserCreateRequest) -> UserCreateResponse:
-        password_hash = bcrypt.hash(request.password)
+        password_hash: str = bcrypt.hash(request.password)
 
         # 인증번호 생성 (6자리)
-        verification_code = str(random.randint(100000, 999999))
+        verification_code: str = str(random.randint(100000, 999999))
 
         # 유저 생성
-        user = await UserRepository.create_user(
+        user: User = await UserRepository.create_user(
             email=request.email,
             password_hash=password_hash,
             username=request.username,
@@ -77,8 +81,8 @@ class AuthService:
     # ---------------------------
     @staticmethod
     async def login(email: str, password: str) -> Optional[UserLoginResponse]:
-        user = await UserRepository.get_user_by_email(email)
-        if not user:
+        user: Optional[User] = await UserRepository.get_user_by_email(email)
+        if not user or not user.password_hash:
             return None
 
         if not bcrypt.verify(password, user.password_hash):
@@ -87,11 +91,11 @@ class AuthService:
         if not user.is_email_verified:
             return None
 
-        access_token = AuthService.create_access_token(user.id)
-        refresh_token = AuthService.create_refresh_token(user.id)
+        access_token: str = AuthService.create_access_token(user.id)
+        refresh_token: str = AuthService.create_refresh_token(user.id)
 
         # 로그인 기록 갱신
-        user.last_login_ip = "TODO: 클라이언트 IP"
+        user.last_login_at = datetime.utcnow()
         await user.save()
 
         return UserLoginResponse(
@@ -105,14 +109,11 @@ class AuthService:
     # ---------------------------
     @staticmethod
     async def verify_email_token(email: str, code: str) -> UserVerifySuccessResponse:
-        saved_code = await redis_client.get(f"verify:{email}")
-        if not saved_code:
+        saved_code: Optional[str] = await redis_client.get(f"verify:{email}")
+        if not saved_code or saved_code != code:
             return UserVerifySuccessResponse(success=False)
 
-        if saved_code != code:
-            return UserVerifySuccessResponse(success=False)
-
-        user = await UserRepository.get_user_by_email(email)
+        user: Optional[User] = await UserRepository.get_user_by_email(email)
         if not user:
             return UserVerifySuccessResponse(success=False)
 
@@ -129,7 +130,7 @@ class AuthService:
     # ---------------------------
     @staticmethod
     async def google_login(google_id: str, email: str) -> GoogleLoginResponse:
-        user = await UserRepository.get_user_by_email(email)
+        user: Optional[User] = await UserRepository.get_user_by_email(email)
 
         if not user:
             # 신규 사용자 생성
@@ -144,8 +145,8 @@ class AuthService:
             user.is_email_verified = True
             await user.save()
 
-        access_token = AuthService.create_access_token(user.id)
-        refresh_token = AuthService.create_refresh_token(user.id)
+        access_token: str = AuthService.create_access_token(user.id)
+        refresh_token: str = AuthService.create_refresh_token(user.id)
 
         return GoogleLoginResponse(
             access_token=access_token,
@@ -159,13 +160,15 @@ class AuthService:
     @staticmethod
     async def refresh_token(refresh_token: str) -> Optional[UserLoginResponse]:
         try:
-            payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-            user_id = int(payload.get("sub"))
+            payload: dict = jwt.decode(
+                refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
+            user_id: int = int(payload.get("sub"))
 
             if await TokenRevocationsRepository.is_token_revoked(refresh_token):
                 return None
 
-            new_access = AuthService.create_access_token(user_id)
+            new_access: str = AuthService.create_access_token(user_id)
             return UserLoginResponse(
                 access_token=new_access,
                 refresh_token=refresh_token,
@@ -180,10 +183,12 @@ class AuthService:
     @staticmethod
     async def logout(token: str) -> bool:
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-            user_id = int(payload.get("sub"))
+            payload: dict = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
+            user_id: int = int(payload.get("sub"))
 
-            jti = token
+            jti: str = token  # 여기선 토큰 자체를 JTI처럼 사용
             return await TokenRevocationsRepository.revoke_token(jti, user_id)
 
         except jwt.InvalidTokenError:

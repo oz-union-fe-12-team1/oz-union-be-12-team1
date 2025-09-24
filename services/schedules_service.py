@@ -1,85 +1,100 @@
-from typing import List, Optional
+from typing import Optional, List
+from datetime import datetime
+from schemas.schedules import (
+    ScheduleCreateRequest,
+    ScheduleCreateResponse,
+    ScheduleOut,
+    ScheduleUpdateRequest,
+    ScheduleUpdateResponse,
+    ScheduleDeleteResponse,
+    ScheduleListResponse,
+)
 from repositories.schedules_repo import ScheduleRepository
-from schemas.schedules import ScheduleOut
+from models.schedules import Schedule
 
 
 class ScheduleService:
     """
-    Service layer for managing Schedules (CRUD + soft/hard delete).
+    Service layer for managing schedules (CRUD + soft/hard delete).
     """
 
     # --------------------
     # CREATE
     # --------------------
     @staticmethod
-    async def create_schedule(**kwargs) -> ScheduleOut:
-        """새로운 일정 생성"""
-        schedule = await ScheduleRepository.create_schedule(**kwargs)
-        todos = await schedule.todos.all()
-        return ScheduleOut.model_validate(
-            {**schedule.__dict__, "todos": todos},
-            from_attributes=True,
+    async def create_schedule(data: ScheduleCreateRequest) -> ScheduleCreateResponse:
+        schedule: Schedule = await ScheduleRepository.create_schedule(
+            user_id=data.user_id,
+            title=data.title,
+            start_time=data.start_time,
+            end_time=data.end_time,
+            description=data.description,
+            location=data.location,
+            all_day=data.all_day,
+            is_recurring=data.is_recurring,
+            recurrence_rule=data.recurrence_rule,
+            parent_schedule_id=data.parent_schedule_id,
         )
+        return ScheduleCreateResponse.model_validate(schedule, from_attributes=True)
 
     # --------------------
     # READ
     # --------------------
     @staticmethod
     async def get_schedule_by_id(schedule_id: int) -> Optional[ScheduleOut]:
-        """ID 기준 단일 일정 조회 (삭제된 건 제외)"""
-        schedule = await ScheduleRepository.get_schedule_by_id(schedule_id)
+        schedule: Optional[Schedule] = await ScheduleRepository.get_schedule_by_id(schedule_id)
         if not schedule:
             return None
-        await schedule.fetch_related("todos")
-        todos = await schedule.todos.all()
-        return ScheduleOut.model_validate(
-            {**schedule.__dict__, "todos": todos},
-            from_attributes=True,
+        return ScheduleOut.model_validate(schedule, from_attributes=True)
+
+    @staticmethod
+    async def get_schedules_by_user(user_id: int) -> ScheduleListResponse:
+        schedules: List[Schedule] = await ScheduleRepository.get_schedules_by_user(user_id)
+        return ScheduleListResponse(
+            schedules=[ScheduleOut.model_validate(s, from_attributes=True) for s in schedules],
+            total=len(schedules),
         )
 
     @staticmethod
-    async def get_schedules_by_user(user_id: int) -> List[ScheduleOut]:
-        """특정 사용자의 전체 일정 조회 (삭제된 건 제외)"""
-        schedules = await ScheduleRepository.get_schedules_by_user(user_id)
-        results: List[ScheduleOut] = []
-        for s in schedules:
-            await s.fetch_related("todos")
-            todos = await s.todos.all()
-            results.append(
-                ScheduleOut.model_validate(
-                    {**s.__dict__, "todos": todos},
-                    from_attributes=True,
-                )
-            )
-        return results
+    async def get_schedules_by_date(user_id: int, date: datetime) -> ScheduleListResponse:
+        schedules: List[Schedule] = await ScheduleRepository.get_schedules_by_date(user_id, date)
+        return ScheduleListResponse(
+            schedules=[ScheduleOut.model_validate(s, from_attributes=True) for s in schedules],
+            total=len(schedules),
+        )
 
     # --------------------
     # UPDATE
     # --------------------
     @staticmethod
-    async def update_schedule(schedule_id: int, **kwargs) -> Optional[ScheduleOut]:
-        """일정 업데이트 (삭제된 건 수정 불가)"""
-        updated = await ScheduleRepository.update_schedule(schedule_id, **kwargs)
+    async def update_schedule(schedule_id: int, data: ScheduleUpdateRequest) -> Optional[ScheduleUpdateResponse]:
+        updated: Optional[Schedule] = await ScheduleRepository.update_schedule(
+            schedule_id,
+            title=data.title,
+            description=data.description,
+            start_time=data.start_time,
+            end_time=data.end_time,
+            location=data.location,
+            all_day=data.all_day,
+            is_recurring=data.is_recurring,
+            recurrence_rule=data.recurrence_rule,
+        )
         if not updated:
             return None
-        await updated.fetch_related("todos")
-        todos = await updated.todos.all()
-        return ScheduleOut.model_validate(
-            {**updated.__dict__, "todos": todos},
-            from_attributes=True,
-        )
+        return ScheduleUpdateResponse.model_validate(updated, from_attributes=True)
 
     # --------------------
     # DELETE
     # --------------------
     @staticmethod
-    async def delete_schedule(schedule_id: int, hard: bool = False) -> bool:
-        """
-        일정 삭제 (soft/hard 분기)
-        - hard=False → Soft Delete (deleted_at 기록)
-        - hard=True  → Hard Delete (DB에서 완전 삭제)
-        """
+    async def delete_schedule(schedule_id: int, hard: bool = False) -> Optional[ScheduleDeleteResponse]:
         if hard:
-            deleted_count = await ScheduleRepository.hard_delete_schedule(schedule_id)
-            return deleted_count > 0
-        return await ScheduleRepository.delete_schedule(schedule_id)
+            deleted_count: int = await ScheduleRepository.hard_delete_schedule(schedule_id)
+            if deleted_count == 0:
+                return None
+        else:
+            success: bool = await ScheduleRepository.delete_schedule(schedule_id)
+            if not success:
+                return None
+
+        return ScheduleDeleteResponse(message="Schedule deleted successfully")
