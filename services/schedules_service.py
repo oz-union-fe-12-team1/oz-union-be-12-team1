@@ -3,7 +3,6 @@ from datetime import datetime
 from schemas.schedules import (
     ScheduleCreateRequest,
     ScheduleCreateResponse,
-    ScheduleOut,
     ScheduleUpdateRequest,
     ScheduleUpdateResponse,
     ScheduleDeleteResponse,
@@ -31,9 +30,6 @@ class ScheduleService:
             description=data.description,
             location=data.location,
             all_day=data.all_day,
-            is_recurring=data.is_recurring,
-            recurrence_rule=data.recurrence_rule,
-            parent_schedule_id=data.parent_schedule_id,
         )
         return ScheduleCreateResponse.model_validate(schedule, from_attributes=True)
 
@@ -41,17 +37,17 @@ class ScheduleService:
     # READ
     # --------------------
     @staticmethod
-    async def get_schedule_by_id(schedule_id: int) -> Optional[ScheduleOut]:
+    async def get_schedule_by_id(schedule_id: int) -> Optional[ScheduleCreateResponse]:
         schedule: Optional[Schedule] = await ScheduleRepository.get_schedule_by_id(schedule_id)
         if not schedule:
             return None
-        return ScheduleOut.model_validate(schedule, from_attributes=True)
+        return ScheduleCreateResponse.model_validate(schedule, from_attributes=True)
 
     @staticmethod
     async def get_schedules_by_user(user_id: int) -> ScheduleListResponse:
         schedules: List[Schedule] = await ScheduleRepository.get_schedules_by_user(user_id)
         return ScheduleListResponse(
-            schedules=[ScheduleOut.model_validate(s, from_attributes=True) for s in schedules],
+            schedules=[ScheduleCreateResponse.model_validate(s, from_attributes=True) for s in schedules],
             total=len(schedules),
         )
 
@@ -59,7 +55,7 @@ class ScheduleService:
     async def get_schedules_by_date(user_id: int, date: datetime) -> ScheduleListResponse:
         schedules: List[Schedule] = await ScheduleRepository.get_schedules_by_date(user_id, date)
         return ScheduleListResponse(
-            schedules=[ScheduleOut.model_validate(s, from_attributes=True) for s in schedules],
+            schedules=[ScheduleCreateResponse.model_validate(s, from_attributes=True) for s in schedules],
             total=len(schedules),
         )
 
@@ -67,7 +63,9 @@ class ScheduleService:
     # UPDATE
     # --------------------
     @staticmethod
-    async def update_schedule(schedule_id: int, data: ScheduleUpdateRequest) -> Optional[ScheduleUpdateResponse]:
+    async def update_schedule(
+        schedule_id: int, data: ScheduleUpdateRequest
+    ) -> Optional[ScheduleUpdateResponse]:
         updated: Optional[Schedule] = await ScheduleRepository.update_schedule(
             schedule_id,
             title=data.title,
@@ -76,8 +74,6 @@ class ScheduleService:
             end_time=data.end_time,
             location=data.location,
             all_day=data.all_day,
-            is_recurring=data.is_recurring,
-            recurrence_rule=data.recurrence_rule,
         )
         if not updated:
             return None
@@ -87,7 +83,9 @@ class ScheduleService:
     # DELETE
     # --------------------
     @staticmethod
-    async def delete_schedule(schedule_id: int, hard: bool = False) -> Optional[ScheduleDeleteResponse]:
+    async def delete_schedule(
+        schedule_id: int, hard: bool = False
+    ) -> Optional[ScheduleDeleteResponse]:
         if hard:
             deleted_count: int = await ScheduleRepository.hard_delete_schedule(schedule_id)
             if deleted_count == 0:
