@@ -1,59 +1,78 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
-from datetime import datetime
+from typing import Optional, List, Annotated
 from enum import Enum
 
 
-# 👉 상태 Enum (명세서 기준)
-class InquiryStatus(str, Enum):
-    pending = "pending"
-    in_progress = "in_progress"
-    resolved = "resolved"
-    closed = "closed"
+# 👉 뉴스 카테고리 Enum
+class NewsCategory(str, Enum):
+    politics = "politics"
+    economy = "economy"
+    society = "society"
+    life_culture = "life_culture"
+    it_science = "it_science"
+    world = "world"
 
 
-# 👉 공통 속성
-class InquiryBase(BaseModel):
-    title: str = Field(default="", example="로그인 오류가 발생합니다")
-    message: str = Field(default="", example="구글 로그인 시 500 오류가 뜹니다.")
+# 👉 개별 뉴스 아이템
+class NewsItem(BaseModel):
+    title: Annotated[str, Field(example="Breaking News: 중요한 뉴스 제목")]
+    url: Annotated[str, Field(example="https://example.com/news/123")]
+    published: Annotated[Optional[str], Field(example="2025-09-23T10:30:00Z")] = None
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "title": "Breaking News: 중요한 뉴스 제목",
+                "url": "https://example.com/news/123",
+                "published": "2025-09-23T10:30:00Z",
+            }
+        }
+    }
 
 
-# 👉 생성 요청
-class InquiryCreate(InquiryBase):
-    pass
+# 👉 뉴스 응답
+class NewsResponse(BaseModel):
+    success: Annotated[bool, Field(example=True)]
+    category: Annotated[NewsCategory, Field(example="politics")]
+    count: Annotated[int, Field(example=6)]
+    data: List[NewsItem]
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "success": True,
+                "category": "politics",
+                "count": 6,
+                "data": [
+                    {
+                        "title": "정치 뉴스 제목 1",
+                        "url": "https://example.com/politics/1",
+                        "published": "2025-09-23T10:30:00Z",
+                    },
+                    {
+                        "title": "정치 뉴스 제목 2",
+                        "url": "https://example.com/politics/2",
+                        "published": "2025-09-23T09:15:00Z",
+                    },
+                    {
+                        "title": "정치 뉴스 제목 3",
+                        "url": "https://example.com/politics/3",
+                        "published": "2025-09-23T08:45:00Z",
+                    },
+                ],
+            }
+        }
+    }
 
 
-# 👉 수정 요청 (관리자 답변, 상태 변경 등)
-class InquiryUpdate(BaseModel):
-    status: Optional[InquiryStatus] = Field(default=None, example="resolved")
-    admin_reply: Optional[str] = Field(default=None, example="서버 설정 문제를 수정했습니다.")
-    replied_at: Optional[datetime] = Field(default=None, example="2025-09-19T15:30:00")
+# 👉 에러 응답
+class ErrorResponse(BaseModel):
+    detail: Annotated[str, Field(example="잘못된 카테고리입니다")]
 
-
-# 👉 단일 조회 응답
-class InquiryOut(InquiryBase):
-    id: int = Field(default=0, example=12)
-    user_id: int = Field(default=0, example=42)
-    status: InquiryStatus = Field(default=InquiryStatus.pending, example="pending")
-    admin_reply: Optional[str] = Field(default=None, example=None)
-    replied_at: Optional[datetime] = Field(default=None, example=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow, example="2025-09-18T12:34:56")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, example="2025-09-18T12:34:56")
-
-    model_config = {"from_attributes": True}
-
-
-# 👉 목록 조회 응답
-class InquiryListOut(BaseModel):
-    inquiries: List[InquiryOut] = Field(default_factory=list)
-    total: int = Field(default=0, example=1)
-
-    model_config = {"from_attributes": True}
-
-
-# 👉 삭제 응답
-class InquiryDeleteResponse(BaseModel):
-    message: str = Field(
-        default="Inquiry deleted successfully",
-        example="Inquiry deleted successfully"
-    )
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "detail": "잘못된 카테고리입니다"
+            }
+        }
+    }
