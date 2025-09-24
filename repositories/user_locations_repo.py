@@ -1,4 +1,5 @@
 from typing import Optional, List
+from decimal import Decimal
 from models.user_locations import UserLocation
 
 
@@ -17,7 +18,11 @@ class UserLocationsRepository:
 
     @staticmethod
     async def create_location(
-        user_id: int, latitude: float, longitude: float, label: Optional[str], is_default: bool
+        user_id: int,
+        latitude: Decimal,
+        longitude: Decimal,
+        label: Optional[str],
+        is_default: bool,
     ) -> UserLocation:
         return await UserLocation.create(
             user_id=user_id,
@@ -31,8 +36,8 @@ class UserLocationsRepository:
     async def update_location(
         user_id: int,
         location_id: int,
-        latitude: float,
-        longitude: float,
+        latitude: Decimal,
+        longitude: Decimal,
         label: Optional[str],
         is_default: bool,
     ) -> Optional[UserLocation]:
