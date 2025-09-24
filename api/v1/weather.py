@@ -4,16 +4,15 @@ from datetime import datetime
 
 router = APIRouter()
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
-if not OPENWEATHER_API_KEY:
-    raise RuntimeError("❌ OPENWEATHER_API_KEY is not set")
-
 
 @router.get("/weather")
 async def get_current_weather(lat: float = Query(...), lon: float = Query(...)):
-    url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric&lang=kr"
+    url = "http://api.openweathermap.org/data/2.5/weather"
+    params = {"lat": lat, "lon": lon, "appid": OPENWEATHER_API_KEY, "units": "metric", "lang": "kr"}
+
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            res = await client.get(url)
+            res = await client.get(url, params=params)
     except httpx.RequestError:
         raise HTTPException(status_code=500, detail="날씨 요청 실패")
 
@@ -21,13 +20,15 @@ async def get_current_weather(lat: float = Query(...), lon: float = Query(...)):
         raise HTTPException(status_code=res.status_code, detail="날씨 불러오기 실패")
 
     data = res.json()
+
     return {
         "success": True,
         "data": {
-            "city": data["name"],
-            "temperature": data["main"]["temp"],
-            "description": data["weather"][0]["description"],
-            "humidity": data["main"]["humidity"],
+            "city": data.get("name"),
+            "temperature": data.get("main", {}).get("temp"),
+            "description": data.get("weather", [{}])[0].get("description"),
+            "humidity": data.get("main", {}).get("humidity"),
+            "icon": data.get("weather", [{}])[0].get("icon"),
             "updated_at": datetime.now().isoformat(),
         },
     }

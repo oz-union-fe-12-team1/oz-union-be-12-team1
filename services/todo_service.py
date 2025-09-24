@@ -6,7 +6,7 @@ from models.todo import Todo
 
 class TodoService:
     """
-    Service layer for managing Todos (CRUD + soft delete).
+    Service layer for managing Todos (CRUD + soft/hard delete).
     """
 
     # --------------------
@@ -19,11 +19,6 @@ class TodoService:
         description: Optional[str] = None,
         schedule_id: Optional[int] = None,
     ) -> TodoOut:
-        """
-        새로운 Todo 생성
-        - schedule_id가 있으면 해당 일정에 연결
-        - schedule_id가 None이면 독립 Todo로 생성
-        """
         todo: Todo = await TodosRepository.create_todo(
             user_id=user_id,
             title=title,
@@ -37,7 +32,6 @@ class TodoService:
     # --------------------
     @staticmethod
     async def get_todo_by_id(todo_id: int) -> Optional[TodoOut]:
-        """ID 기준 단일 Todo 조회 (Soft Delete 제외)"""
         todo = await TodosRepository.get_todo_by_id(todo_id)
         if not todo:
             return None
@@ -45,7 +39,6 @@ class TodoService:
 
     @staticmethod
     async def get_todos_by_user(user_id: int) -> List[TodoOut]:
-        """특정 사용자의 Todo 목록 조회 (Soft Delete 제외)"""
         todos = await TodosRepository.get_todos_by_user(user_id)
         return [TodoOut.model_validate(t, from_attributes=True) for t in todos]
 
@@ -54,31 +47,22 @@ class TodoService:
     # --------------------
     @staticmethod
     async def update_todo(todo_id: int, **kwargs) -> Optional[TodoOut]:
-        """
-        Todo 업데이트
-        - kwargs: title, description, is_completed, schedule_id 등
-        - schedule_id=None → 일정과의 연결 해제
-        """
         updated = await TodosRepository.update_todo(todo_id, **kwargs)
         if not updated:
             return None
         return TodoOut.model_validate(updated, from_attributes=True)
 
     # --------------------
-    # DELETE
+    # DELETE (soft/hard 분기)
     # --------------------
     @staticmethod
-    async def delete_todo(todo_id: int) -> bool:
+    async def delete_todo(todo_id: int, hard: bool = False) -> bool:
         """
-        Soft Delete (deleted_at만 기록)
-        - 실제 데이터는 남아있고 복구 가능
+        삭제 기능 (soft/hard 분기)
+        - hard=False → Soft Delete (deleted_at 기록)
+        - hard=True  → Hard Delete (DB에서 완전 삭제)
         """
+        if hard:
+            deleted_count = await TodosRepository.hard_delete_todo(todo_id)
+            return deleted_count > 0
         return await TodosRepository.delete_todo(todo_id)
-
-    @staticmethod
-    async def hard_delete_todo(todo_id: int) -> int:
-        """
-        실제 DB에서 삭제 (필요 시만 사용)
-        - 되돌릴 수 없음
-        """
-        return await TodosRepository.hard_delete_todo(todo_id)
