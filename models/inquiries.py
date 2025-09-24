@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING, Optional
 from tortoise import fields
 from tortoise.models import Model
 import enum
+from datetime import datetime
+
+if TYPE_CHECKING:
+    from models.user import User
 
 
-class InquiryStatus(str, enum.Enum):  # ✅ 오타 수정 (Inquiriy → Inquiry)
+class InquiryStatus(str, enum.Enum):
     pending = "pending"
     in_progress = "in_progress"
     resolved = "resolved"
@@ -11,9 +16,9 @@ class InquiryStatus(str, enum.Enum):  # ✅ 오타 수정 (Inquiriy → Inquiry)
 
 
 class Inquiry(Model):
-    id = fields.BigIntField(pk=True)
+    id: int = fields.BigIntField(pk=True)
 
-    user = fields.ForeignKeyField(
+    user: "User" = fields.ForeignKeyField(
         "models.User",
         related_name="inquiries",
         on_delete=fields.CASCADE,
@@ -21,26 +26,19 @@ class Inquiry(Model):
     )
     # FK → 문의 작성 사용자
 
-    title = fields.CharField(max_length=255, null=False)
-    # 문의 제목
+    title: str = fields.CharField(max_length=255, null=False)
+    message: str = fields.TextField(null=False)
 
-    message = fields.TextField(null=False)
-    # 문의 내용
-
-    status = fields.CharEnumField(
-        enum_type=InquiryStatus,   # ✅ 올바른 enum 참조
-        default=InquiryStatus.pending
+    status: InquiryStatus = fields.CharEnumField(
+        enum_type=InquiryStatus,
+        default=InquiryStatus.pending,
     )
-    # 처리 상태
 
-    admin_reply = fields.TextField(null=True)
-    # 관리자 답변 내용 (NULL 가능)
+    admin_reply: Optional[str] = fields.TextField(null=True)
+    replied_at: Optional[datetime] = fields.DatetimeField(null=True)
 
-    replied_at = fields.DatetimeField(null=True)
-    # 답변 완료 시각
-
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
+    created_at: datetime = fields.DatetimeField(auto_now_add=True)
+    updated_at: datetime = fields.DatetimeField(auto_now=True)
 
     class Meta:
         table = "inquiries"
