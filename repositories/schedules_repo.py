@@ -1,6 +1,5 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from datetime import datetime, timezone
-from tortoise.exceptions import DoesNotExist
 from models.schedules import Schedule
 
 
@@ -27,8 +26,6 @@ class ScheduleRepository:
     ) -> Schedule:
         """
         새로운 일정 생성
-        - 기본적으로 반복 옵션(is_recurring, recurrence_rule)은 현재 미사용
-        - parent_schedule_id도 확장용 (현재는 null 가능)
         """
         return await Schedule.create(
             user_id=user_id,
@@ -54,29 +51,31 @@ class ScheduleRepository:
     @staticmethod
     async def get_schedules_by_user(user_id: int) -> List[Schedule]:
         """특정 사용자의 전체 일정 조회 (Soft Delete 제외)"""
-        return await Schedule.filter(user_id=user_id, deleted_at=None)
+        result: List[Schedule] = await Schedule.filter(user_id=user_id, deleted_at=None)
+        return result
 
     @staticmethod
     async def get_schedules_by_date(user_id: int, date: datetime) -> List[Schedule]:
         """특정 날짜의 일정 조회 (Soft Delete 제외)"""
-        return await Schedule.filter(
+        result: List[Schedule] = await Schedule.filter(
             user_id=user_id,
             deleted_at=None,
             start_time__lte=date,
             end_time__gte=date,
         )
+        return result
 
     # --------------------
     # UPDATE
     # --------------------
     @staticmethod
-    async def update_schedule(schedule_id: int, **kwargs) -> Optional[Schedule]:
+    async def update_schedule(schedule_id: int, **kwargs: Any) -> Optional[Schedule]:
         """
         일정 업데이트
         - kwargs에 들어온 값만 반영
         - deleted_at != None (즉, 삭제된 일정) 은 업데이트 불가
         """
-        schedule = await Schedule.get_or_none(id=schedule_id, deleted_at=None)
+        schedule: Optional[Schedule] = await Schedule.get_or_none(id=schedule_id, deleted_at=None)
         if schedule:
             for field, value in kwargs.items():
                 if hasattr(schedule, field) and value is not None:
@@ -93,7 +92,7 @@ class ScheduleRepository:
         Soft Delete (deleted_at 기록)
         - 실제 데이터는 남아있음
         """
-        schedule = await Schedule.get_or_none(id=schedule_id, deleted_at=None)
+        schedule: Optional[Schedule] = await Schedule.get_or_none(id=schedule_id, deleted_at=None)
         if schedule:
             schedule.deleted_at = datetime.now(timezone.utc)  # ✅ UTC 권장
             await schedule.save()
@@ -106,4 +105,5 @@ class ScheduleRepository:
         Hard Delete (DB에서 완전 삭제)
         - 되돌릴 수 없음
         """
-        return await Schedule.filter(id=schedule_id).delete()
+        deleted_count: int = await Schedule.filter(id=schedule_id).delete()
+        return deleted_count

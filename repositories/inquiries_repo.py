@@ -36,12 +36,14 @@ class InquiryRepository:
     @staticmethod
     async def get_inquiries_by_user(user_id: int) -> List[Inquiry]:
         """사용자별 문의 목록 조회"""
-        return await Inquiry.filter(user_id=user_id).order_by("-created_at")
+        result: List[Inquiry] = await Inquiry.filter(user_id=user_id).order_by("-created_at")
+        return result
 
     @staticmethod
     async def get_all_inquiries() -> List[Inquiry]:
         """관리자 전용 전체 문의 목록 조회"""
-        return await Inquiry.all().order_by("-created_at")
+        result: List[Inquiry] = await Inquiry.all().order_by("-created_at")
+        return result
 
     # --------------------
     # UPDATE
@@ -55,7 +57,7 @@ class InquiryRepository:
     ) -> Optional[Inquiry]:
         """관리자 답변/상태/답변시간 수정"""
         try:
-            inquiry = await Inquiry.get(id=inquiry_id)
+            inquiry: Inquiry = await Inquiry.get(id=inquiry_id)
             if status is not None:
                 inquiry.status = status
             if admin_reply is not None:
