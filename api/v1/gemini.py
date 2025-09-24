@@ -1,4 +1,6 @@
 import os, httpx
+from typing import Any
+
 from fastapi import APIRouter, Query, HTTPException
 from datetime import datetime, date, timedelta
 from models.schedules import Schedule
@@ -14,7 +16,7 @@ GEMINI_URL = (
     else None
 )
 
-async def gemini_request(prompt: str) -> str:
+async def gemini_request(prompt: str) -> Any:
     """Gemini API 호출"""
     if not GEMINI_URL:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY가 설정되지 않았습니다")
@@ -47,7 +49,7 @@ async def gemini_request(prompt: str) -> str:
 # 1️⃣ 운세 API
 # ==================================================
 @router.get("/fortune")
-async def get_fortune(birthday: str = Query(..., description="YYYY-MM-DD")):
+async def get_fortune(birthday: str = Query(..., description="YYYY-MM-DD")) -> dict[str, Any]:
     prompt = f"""
     🌅 오늘의 전반 운세
     생년월일 {birthday} 기준으로 작성하세요.
@@ -71,7 +73,7 @@ async def get_fortune(birthday: str = Query(..., description="YYYY-MM-DD")):
 # 2️ 대화 요약 API
 # ==================================================
 @router.get("/conversations")
-async def get_conversations(message: str = Query(..., description="사용자 요청 메시지")):
+async def get_conversations(message: str = Query(..., description="사용자 요청 메시지")) -> dict[str, Any]:
     prompt = f"""
     사용자가 요청: "{message}"
     사용자의 일정과 할 일을 요약하는 대화를 작성하세요.
@@ -93,7 +95,7 @@ async def get_conversations(message: str = Query(..., description="사용자 요
 # 3️⃣ 아침/점심/저녁 브리핑 (자동 판별 + 어제 미완료 이월 + 중복 방지)
 # ==================================================
 @router.get("/briefings")
-async def get_briefings():
+async def get_briefings() -> dict[str, Any]:
     now = datetime.now().hour
 
     # 자동 판별: 06~14 = morning, 14~22 = afternoon, 22~06 = evening

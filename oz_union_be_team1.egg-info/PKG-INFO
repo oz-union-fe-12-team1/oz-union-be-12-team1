@@ -1,0 +1,62 @@
+Metadata-Version: 2.4
+Name: oz-union-be-team1
+Version: 0.1.0
+Summary: OZ Union Backend Team 1
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: aerich>=0.9.1
+Requires-Dist: asyncpg>=0.30.0
+Requires-Dist: bcrypt<5.0.0,>=3.2.0
+Requires-Dist: bs4>=0.0.2
+Requires-Dist: fastapi>=0.116.1
+Requires-Dist: fastapi-mail>=1.5.0
+Requires-Dist: feedparser>=6.0.12
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: mypy>=1.18.2
+Requires-Dist: openpyxl>=3.1.5
+Requires-Dist: pandas>=2.3.2
+Requires-Dist: passlib[bcrypt]<2.0.0,>=1.7.4
+Requires-Dist: pre-commit>=4.3.0
+Requires-Dist: psycopg-binary>=3.2.10
+Requires-Dist: pydantic-settings>=2.10.1
+Requires-Dist: pydantic[email]>=2.11.9
+Requires-Dist: pyjwt>=2.10.1
+Requires-Dist: redis>=6.4.0
+Requires-Dist: tomlkit>=0.13.3
+Requires-Dist: tortoise-orm>=0.25.1
+Requires-Dist: uvicorn[standard]>=0.35.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.24.0; extra == "dev"
+Requires-Dist: httpx>=0.28.1; extra == "dev"
+Requires-Dist: pytest-cov>=5.0.0; extra == "dev"
+
+## 시작하기 (Docker + Tortoise ORM + Aerich)
+
+### 1) 저장소 클론
+```bash
+git clone <REPO_URL>
+cd oz-union-be-12-team1
+```
+
+### 3) Docker로 서비스 기동
+```bash
+docker compose up -d --build
+```
+
+### 4) DB 마이그레이션 (Aerich)
+컨테이너 안에서 Tortoise ORM 설정(`core.db.TORTOISE_ORM`)을 사용해 Aerich을 초기화하고 마이그레이션을 적용합니다.
+```bash
+docker compose exec api uv run aerich init -t core.db.TORTOISE_ORM
+docker compose exec api uv run aerich init-db
+docker compose exec api uv run aerich migrate
+docker compose exec api uv run aerich upgrade
+```
+
+### 5) 서버 접속
+- 로컬 브라우저: `http://localhost:8000/`
+- 문서: `http://localhost:8000/docs`
+
+### 6) 참고 사항
+- Tortoise ORM 연결 및 라이프사이클은 `core/db.py`, `main.py`에 구성되어 있습니다.
+- 모델이 Tortoise 기반으로 정리되는 중입니다. 마이그레이션 전, 변경된 모델을 반영하세요.

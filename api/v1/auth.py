@@ -20,7 +20,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 # 회원가입
 # -----------------------------
 @router.post("/register", response_model=UserCreateResponse)
-async def register_user(request: UserCreateRequest):
+async def register_user(request: UserCreateRequest) -> UserCreateResponse:
 
     # 이메일 중복 확인
     if await UserService.get_user_by_email(request.email):
@@ -32,7 +32,7 @@ async def register_user(request: UserCreateRequest):
         raise HTTPException(status_code=500, detail="USER_CREATION_FAILED")
 
     # ✅ 응답 스키마에 맞게 변환
-    return UserCreateResponse.from_orm(user)
+    return UserCreateResponse.model_validate(user)
 
 
 # -----------------------------
@@ -43,7 +43,7 @@ async def register_user(request: UserCreateRequest):
     response_model=UserVerifySuccessResponse,
     responses={400: {"model": UserVerifyErrorResponse}},
 )
-async def verify_email(request: UserVerifyRequest):
+async def verify_email(request: UserVerifyRequest) -> dict[str, bool]:
     result = await AuthService.verify_email_token(email=request.email, code=request.code)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error"))
@@ -54,7 +54,7 @@ async def verify_email(request: UserVerifyRequest):
 # 로그인
 # -----------------------------
 @router.post("/login", response_model=UserLoginResponse)
-async def login_user(request: UserLoginRequest):
+async def login_user(request: UserLoginRequest) -> UserLoginResponse:
     result = await AuthService.login(request.email, request.password)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
@@ -70,7 +70,7 @@ async def login_user(request: UserLoginRequest):
 # 구글 로그인
 # -----------------------------
 @router.post("/google", response_model=GoogleLoginResponse)
-async def google_login(request: GoogleLoginRequest):
+async def google_login(request: GoogleLoginRequest) -> GoogleLoginResponse:
     result = await AuthService.google_login(
         google_id="dummy_google_id",   # 실제 구현 시 구글 토큰에서 추출
         email="goturkey@example.com",  # 실제 구현 시 구글 API에서 추출
@@ -86,7 +86,7 @@ async def google_login(request: GoogleLoginRequest):
 # 토큰 갱신
 # -----------------------------
 @router.post("/refresh", response_model=UserLoginResponse)
-async def refresh_token(refresh_token: str):
+async def refresh_token(refresh_token: str) -> UserLoginResponse:
     new_access = await AuthService.refresh_token(refresh_token)
     if not new_access:
         raise HTTPException(status_code=400, detail="TOKEN_INVALID_OR_EXPIRED")
@@ -102,7 +102,7 @@ async def refresh_token(refresh_token: str):
 # 로그아웃
 # -----------------------------
 @router.post("/logout")
-async def logout_user(token: str):
+async def logout_user(token: str) -> dict[str, bool]:
     revoked = await AuthService.logout(token)
     if not revoked:
         raise HTTPException(status_code=400, detail="LOGOUT_FAILED")

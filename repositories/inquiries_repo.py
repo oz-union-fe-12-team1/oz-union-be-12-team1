@@ -49,7 +49,7 @@ class InquiryRepository:
     @staticmethod
     async def update_inquiry(
         inquiry_id: int,
-        status: Optional[InquiryStatus] = None,
+        status: Optional[str] = None,
         admin_reply: Optional[str] = None,
         replied_at: Optional[datetime] = None,
     ) -> Optional[Inquiry]:
@@ -57,7 +57,7 @@ class InquiryRepository:
         try:
             inquiry = await Inquiry.get(id=inquiry_id)
             if status is not None:
-                inquiry.status = status
+                inquiry.status = InquiryStatus(status)
             if admin_reply is not None:
                 inquiry.admin_reply = admin_reply
             if replied_at is not None:

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from repositories.todos_repo import TodosRepository
 from schemas.todos import TodoOut
 from models.todo import Todo
@@ -46,7 +46,7 @@ class TodoService:
     # UPDATE
     # --------------------
     @staticmethod
-    async def update_todo(todo_id: int, **kwargs) -> Optional[TodoOut]:
+    async def update_todo(todo_id: int, **kwargs: Any) -> Optional[TodoOut]:
         updated = await TodosRepository.update_todo(todo_id, **kwargs)
         if not updated:
             return None

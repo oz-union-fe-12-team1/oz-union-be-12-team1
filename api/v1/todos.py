@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from models.user import User
 from core.security import get_current_user
@@ -20,7 +22,7 @@ router = APIRouter(prefix="/todos", tags=["todos"])
 async def create_todo(
     request: TodoCreate,
     current_user: User = Depends(get_current_user),
-):
+) -> TodoOut:
     return await TodoService.create_todo(
         user_id=current_user.id,
         title=request.title,
@@ -33,16 +35,16 @@ async def create_todo(
 # 2. 내 Todo 전체 조회
 # -----------------------------
 @router.get("", response_model=TodoListOut)
-async def get_my_todos(current_user: User = Depends(get_current_user)):
+async def get_my_todos(current_user: User = Depends(get_current_user)) -> TodoListOut:
     todos = await TodoService.get_todos_by_user(current_user.id)
-    return {"todos": todos, "total": len(todos)}
+    return TodoListOut(todos=todos, total=len(todos))
 
 
 # -----------------------------
 # 3. 특정 Todo 조회
 # -----------------------------
 @router.get("/{todo_id}", response_model=TodoOut)
-async def get_todo(todo_id: int, current_user: User = Depends(get_current_user)):
+async def get_todo(todo_id: int, current_user: User = Depends(get_current_user)) -> TodoOut:
     todo = await TodoService.get_todo_by_id(todo_id)
     if not todo:
         raise HTTPException(status_code=404, detail="TODO_NOT_FOUND")
@@ -59,7 +61,7 @@ async def update_todo(
     todo_id: int,
     request: TodoUpdate,
     current_user: User = Depends(get_current_user),
-):
+) -> Optional[TodoOut]:
     todo = await TodoService.get_todo_by_id(todo_id)
     if not todo:
         raise HTTPException(status_code=404, detail="TODO_NOT_FOUND")
@@ -81,7 +83,7 @@ async def delete_todo(
     todo_id: int,
     hard: bool = Query(False, description="True면 완전 삭제, False면 소프트 삭제"),
     current_user: User = Depends(get_current_user),
-):
+) -> TodoDeleteResponse:
     todo = await TodoService.get_todo_by_id(todo_id)
     if not todo:
         raise HTTPException(status_code=404, detail="TODO_NOT_FOUND")

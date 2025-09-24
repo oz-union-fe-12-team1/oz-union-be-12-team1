@@ -45,7 +45,7 @@ class InquiryService:
     @staticmethod
     async def update_inquiry(
         inquiry_id: int,
-        status: Optional[InquiryStatus] = None,
+        status: Optional[str] = None,
         admin_reply: Optional[str] = None,
         replied_at: Optional[datetime] = None,
     ) -> Optional[Inquiry]:

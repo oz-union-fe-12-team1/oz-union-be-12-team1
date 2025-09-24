@@ -1,11 +1,17 @@
-from tortoise import fields
+from typing import Optional
+
+from tortoise import fields, ForeignKeyFieldInstance
 from tortoise.models import Model
+
+from models.schedules import Schedule
+from models.todo import Todo
+from models.user import User
 
 
 class Notification(Model):
     id = fields.BigIntField(pk=True)  # SERIAL → BigIntField
 
-    user = fields.ForeignKeyField(
+    user: ForeignKeyFieldInstance[User] = fields.ForeignKeyField(
         "models.User",
         related_name="notifications",
         on_delete=fields.CASCADE,
@@ -13,7 +19,7 @@ class Notification(Model):
     )
     # FK → 알림 수신 사용자
 
-    schedule = fields.ForeignKeyField(
+    schedule: Optional[ForeignKeyFieldInstance[Schedule]] = fields.ForeignKeyField(
         "models.Schedule",
         related_name="notifications",
         null=True,
@@ -21,7 +27,7 @@ class Notification(Model):
     )
     # FK → 관련 일정 (NULL 가능)
 
-    todo = fields.ForeignKeyField(
+    todo: Optional[ForeignKeyFieldInstance[Todo]] = fields.ForeignKeyField(
         "models.Todo",
         related_name="notifications",
         null=True,

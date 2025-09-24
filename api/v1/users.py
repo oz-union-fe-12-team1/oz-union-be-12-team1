@@ -15,11 +15,12 @@ router = APIRouter(prefix="/users", tags=["users"])
 # 내 프로필 조회
 # -----------------------------
 @router.get("/me", response_model=UserOut)
-async def get_my_profile(current_user: User = Depends(get_current_user)):
+async def get_my_profile(current_user: User = Depends(get_current_user)) -> UserOut:
     """
     로그인한 사용자 본인의 프로필 조회
     """
-    return UserOut.from_orm(current_user)
+    return UserOut.model_validate(
+        current_user)
 
 
 # -----------------------------
@@ -29,7 +30,7 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
 async def update_my_profile(
     request: UserUpdateRequest,
     current_user: User = Depends(get_current_user),
-):
+) -> UserUpdateResponse:
     """
     로그인한 사용자 본인의 프로필 수정
     """
@@ -42,14 +43,14 @@ async def update_my_profile(
     if not updated_user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
 
-    return UserUpdateResponse.from_orm(updated_user)   # ✅ 스키마 매핑 통일
+    return UserUpdateResponse.model_validate(updated_user)   # ✅ 스키마 매핑 통일
 
 
 # -----------------------------
 # 회원 탈퇴
 # -----------------------------
 @router.delete("/me", response_model=UserDeleteResponse)
-async def delete_my_account(current_user: User = Depends(get_current_user)):
+async def delete_my_account(current_user: User = Depends(get_current_user)) -> UserDeleteResponse:
     """
     로그인한 사용자 본인 계정 삭제
     """

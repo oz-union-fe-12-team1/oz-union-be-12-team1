@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from repositories.schedules_repo import ScheduleRepository
 from schemas.schedules import ScheduleOut
 
@@ -10,7 +10,7 @@ class ScheduleService:
 
     # ✅ Create
     @staticmethod
-    async def create_schedule(**kwargs) -> ScheduleOut:
+    async def create_schedule(**kwargs: Any) -> ScheduleOut:
         schedule = await ScheduleRepository.create_schedule(**kwargs)
         todos = await schedule.todos.all()
         return ScheduleOut.model_validate(
@@ -49,7 +49,7 @@ class ScheduleService:
 
     # ✅ Update
     @staticmethod
-    async def update_schedule(schedule_id: int, **kwargs) -> Optional[ScheduleOut]:
+    async def update_schedule(schedule_id: int, **kwargs: Any) -> Optional[ScheduleOut]:
         updated = await ScheduleRepository.update_schedule(schedule_id, **kwargs)
         if not updated:
             return None

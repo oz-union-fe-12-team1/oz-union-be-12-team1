@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from tortoise.exceptions import DoesNotExist
 from models.user_locations import UserLocation
 
@@ -23,7 +23,7 @@ class UserLocationsRepository:
 
     # ✅ Update (위치 정보 수정)
     @staticmethod
-    async def update_location(location_id: int, **kwargs) -> Optional[UserLocation]:
+    async def update_location(location_id: int, **kwargs: Any) -> Optional[UserLocation]:
         """
         kwargs: 수정할 필드 전달 (latitude, longitude, name 등)
         """
