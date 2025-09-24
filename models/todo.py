@@ -1,38 +1,34 @@
-from typing import TYPE_CHECKING, Optional, List
 from tortoise import fields
 from tortoise.models import Model
 from datetime import datetime
-
-if TYPE_CHECKING:
-    from models.user import User
-    from models.todos import Todo
-    from models.notifications import Notification
+from typing import Optional
 
 
-class Schedule(Model):
-    id: int = fields.BigIntField(pk=True)
+class Todo(Model):
+    id: int = fields.BigIntField(pk=True)  # SERIAL → BigIntField
 
     user: "User" = fields.ForeignKeyField(
         "models.User",
-        related_name="schedules",
+        related_name="todos",
         on_delete=fields.CASCADE,
+    )
+
+    schedule: Optional["Schedule"] = fields.ForeignKeyField(
+        "models.Schedule",
+        related_name="todos",
+        null=True,
+        on_delete=fields.SET_NULL,
     )
 
     title: str = fields.CharField(max_length=255, null=False)
     description: Optional[str] = fields.TextField(null=True)
 
-    start_time: datetime = fields.DatetimeField(null=False)
-    end_time: datetime = fields.DatetimeField(null=False)
-    all_day: bool = fields.BooleanField(default=False)
-    location: Optional[str] = fields.CharField(max_length=255, null=True)
+    is_completed: bool = fields.BooleanField(default=False)
 
     created_at: datetime = fields.DatetimeField(auto_now_add=True)
     updated_at: datetime = fields.DatetimeField(auto_now=True)
-
-    # 관계 설정
-    todos: fields.ReverseRelation["Todo"]
-    notifications: fields.ReverseRelation["Notification"]
+    deleted_at: Optional[datetime] = fields.DatetimeField(null=True)
+    # 소프트 딜리트 (삭제 시간 기록 → 복구 가능)
 
     class Meta:
-        table = "schedules"
-        indexes = (("user_id", "start_time"),)
+        table = "todos"
