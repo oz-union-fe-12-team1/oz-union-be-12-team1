@@ -3,14 +3,14 @@ from typing import TYPE_CHECKING
 from tortoise import fields
 from tortoise.models import Model
 
-if TYPE_CHECKING:  # mypy 전용
+if TYPE_CHECKING:  # mypy 전용 (런타임 영향 없음)
     from models.user import User
 
 
 class UserLocation(Model):
     id = fields.BigIntField(pk=True)
 
-    user: "User" = fields.ForeignKeyField(   # 🔑 타입힌트 추가
+    user: "User" = fields.ForeignKeyField(   # 🔑 FK만 타입힌트
         "models.User",
         related_name="locations",
         on_delete=fields.CASCADE,

@@ -12,25 +12,25 @@ if TYPE_CHECKING:  # mypy 전용
 class Schedule(Model):
     id = fields.BigIntField(pk=True)
 
-    user: "User" = fields.ForeignKeyField(   # 🔑 타입힌트 추가
+    user: "User" = fields.ForeignKeyField(   # 🔑 FK만 타입힌트
         "models.User",
         related_name="schedules",
         on_delete=fields.CASCADE,
     )
     # FK → 사용자
 
-    title: str = fields.CharField(max_length=255, null=False)
-    description: str | None = fields.TextField(null=True)
+    title = fields.CharField(max_length=255, null=False)
+    description = fields.TextField(null=True)
 
     start_time = fields.DatetimeField(null=False)
     end_time = fields.DatetimeField(null=False)
-    all_day: bool = fields.BooleanField(default=False)
-    location: str | None = fields.CharField(max_length=255, null=True)
+    all_day = fields.BooleanField(default=False)
+    location = fields.CharField(max_length=255, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
-    # Reverse 관계 (mypy 친화적 타입 주석)
+    # Reverse 관계 (여기는 타입 주석 허용)
     todos: fields.ReverseRelation["Todo"]
     notifications: fields.ReverseRelation["Notification"]
 

@@ -11,14 +11,14 @@ if TYPE_CHECKING:  # mypy 전용 (런타임에는 영향 없음)
 class Todo(Model):
     id = fields.BigIntField(pk=True)
 
-    user: "User" = fields.ForeignKeyField(   # 🔑 타입힌트 추가
+    user: "User" = fields.ForeignKeyField(   # 🔑 FK만 타입힌트
         "models.User",
         related_name="todos",
         on_delete=fields.CASCADE,
     )
     # FK → 사용자
 
-    schedule: "Schedule" | None = fields.ForeignKeyField(  # 🔑 타입힌트 추가
+    schedule: "Schedule" | None = fields.ForeignKeyField(  # 🔑 FK만 타입힌트
         "models.Schedule",
         related_name="todos",
         null=True,
@@ -26,10 +26,10 @@ class Todo(Model):
     )
     # FK → 일정 (선택)
 
-    title: str = fields.CharField(max_length=255, null=False)
-    description: str | None = fields.TextField(null=True)
+    title = fields.CharField(max_length=255, null=False)
+    description = fields.TextField(null=True)
 
-    is_completed: bool = fields.BooleanField(default=False)
+    is_completed = fields.BooleanField(default=False)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

@@ -18,7 +18,7 @@ class InquiryStatus(str, enum.Enum):
 class Inquiry(Model):
     id = fields.BigIntField(pk=True)
 
-    user: "User" = fields.ForeignKeyField(   # 🔑 타입힌트 추가
+    user: "User" = fields.ForeignKeyField(   # 🔑 FK만 타입힌트
         "models.User",
         related_name="inquiries",
         on_delete=fields.CASCADE,
@@ -26,16 +26,16 @@ class Inquiry(Model):
     )
     # FK → 문의 작성 사용자
 
-    title: str = fields.CharField(max_length=255, null=False)
-    message: str = fields.TextField(null=False)
+    title = fields.CharField(max_length=255, null=False)
+    message = fields.TextField(null=False)
 
-    status: InquiryStatus = fields.CharEnumField(
+    status = fields.CharEnumField(
         enum_type=InquiryStatus,
         default=InquiryStatus.pending,
     )
     # 처리 상태
 
-    admin_reply: str | None = fields.TextField(null=True)
+    admin_reply = fields.TextField(null=True)
     replied_at = fields.DatetimeField(null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
