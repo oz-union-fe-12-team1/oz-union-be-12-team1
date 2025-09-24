@@ -234,6 +234,3 @@ logs/
 /repositories/schedules_repo.py
 /repositories/todos_repo.py
 
-# 1. 파일을 .gitignore에 추가
-echo "google-credentials.json" >> .gitignore
-echo "*.json" >> .gitignore  # 모든 JSON 파일 제외 (선택사항)

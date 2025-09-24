@@ -7,7 +7,7 @@ from models.todo import Todo
 
 router = APIRouter(prefix="/gemini", tags=["gemini"])
 
-# Gemini API 설정 - 수정된 모델명
+# Gemini API 설정
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
@@ -44,7 +44,7 @@ async def gemini_request(prompt: str) -> str:
     except Exception:
         raise HTTPException(status_code=500, detail="Gemini API 응답 파싱 실패")
 
-# 운세 API
+# ✅ 운세 API
 @router.get("/fortune")
 async def get_fortune(birthday: str = Query(..., description="YYYY-MM-DD")):
     prompt = f"""
@@ -64,9 +64,20 @@ async def get_fortune(birthday: str = Query(..., description="YYYY-MM-DD")):
         },
     }
 
-# ✅ 아침/저녁 브리핑
+#  아침/저녁 브리핑 (자동 판별 추가)
 @router.get("/briefings")
-async def get_briefings(type: str = Query("morning", description="morning/evening")):
+async def get_briefings(
+    type: str = Query(None, description="morning/evening (없으면 자동 판별)")
+):
+    now = datetime.now().hour
+
+    # 자동 판별: 06~17시는 morning, 18~05시는 evening
+    if not type:
+        if 6 <= now < 18:
+            type = "morning"
+        else:
+            type = "evening"
+
     today = date.today()
     tomorrow = today + timedelta(days=1)
 
@@ -93,9 +104,7 @@ async def get_briefings(type: str = Query("morning", description="morning/evenin
         
     except Exception as e:
         print(f"DB Query Error: {e}")
-        schedules = []
-        todos = []
-        tomorrow_schedules = []
+        schedules, todos, tomorrow_schedules = [], [], []
 
     schedule_text = "\n".join([f"{s.start_time.strftime('%H:%M')} {s.title}" for s in schedules]) or "일정 없음"
     todo_text = "\n".join([f"{'✔' if t.is_completed else '☐'} {t.title}" for t in todos]) or "투두 없음"
@@ -139,7 +148,7 @@ async def get_briefings(type: str = Query("morning", description="morning/evenin
         "generated_at": datetime.now().isoformat(),
     }
 
-# 대화 요약
+#  대화 요약
 @router.get("/conversations")
 async def get_conversations(message: str = Query(..., description="사용자 요청 메시지")):
     prompt = f"""

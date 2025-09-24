@@ -1,34 +1,24 @@
-import os, random, gspread
+import os
+import random
+import pandas as pd
 from fastapi import APIRouter, HTTPException
-from google.oauth2.service_account import Credentials
-from dotenv import load_dotenv
 
-load_dotenv()
 router = APIRouter(prefix="/quiz", tags=["quiz"])
 
-SERVICE_ACCOUNT_FILE = os.getenv("GOOGLE_CREDENTIALS_FILE", "google-credentials.json")
-SPREADSHEET_ID = os.getenv("GOOGLE_SPREADSHEET_ID")
-SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME", "quiz")
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+#  환경변수에서 엑셀 경로 불러오기 (없으면 기본값 quiz.xlsx)
+EXCEL_FILE = os.getenv("QUIZ_FILE", "quiz.xlsx")
 
-# Google 인증 (앱 실행 시 실패해도 서버 전체가 죽지 않도록 Lazy 로딩 방식으로 변경)
-def get_gspread_client():
-    try:
-        creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-        return gspread.authorize(creds)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Google Sheets 인증 실패: {e}")
-
-
+#  엑셀 로드 함수
 def load_quizzes():
     try:
-        client = get_gspread_client()
-        sheet = client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
-        return sheet.get_all_records()
+        # pandas로 엑셀 읽기
+        df = pd.read_excel(EXCEL_FILE)
+        # DataFrame → 리스트[dict]
+        return df.to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"퀴즈 로드 실패: {e}")
 
-
+#  랜덤 퀴즈 API
 @router.get("/")
 async def get_quiz():
     quizzes = load_quizzes()
@@ -36,12 +26,16 @@ async def get_quiz():
         raise HTTPException(status_code=404, detail="퀴즈가 없습니다")
 
     quiz = random.choice(quizzes)
+
     return {
         "success": True,
         "data": {
             "id": quiz.get("id", 0),
             "question": quiz.get("question"),
-            "options": [quiz.get(f"option{i}") for i in range(1, 5) if quiz.get(f"option{i}")],
+            #  option1 ~ option4 형태를 배열로 변환
+            "options": [
+                quiz.get(f"option{i}") for i in range(1, 5) if quiz.get(f"option{i}")
+            ],
             "answer": quiz.get("answer"),
         },
     }
