@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Annotated, List, Optional
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
 
@@ -15,30 +15,30 @@ class NewsCategory(str, Enum):
 
 # 👉 개별 뉴스 아이템
 class NewsItem(BaseModel):
-    title: str = Field(..., example="Breaking News: 중요한 뉴스 제목")
-    url: str = Field(..., example="https://example.com/news/123")
-    published: Optional[str] = Field(None, example="2025-09-23T10:30:00Z")
+    title: Annotated[str, Field(example="Breaking News: 중요한 뉴스 제목")]
+    url: Annotated[str, Field(example="https://example.com/news/123")]
+    published: Optional[str] = Field(default=None, example="2025-09-23T10:30:00Z")
 
-    model_config = {
-        "json_schema_extra": {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "title": "Breaking News: 중요한 뉴스 제목",
                 "url": "https://example.com/news/123",
                 "published": "2025-09-23T10:30:00Z"
             }
         }
-    }
+    )
 
 
 # 👉 뉴스 응답
 class NewsResponse(BaseModel):
-    success: bool = Field(..., example=True)
-    category: NewsCategory = Field(..., example="politics")
-    count: int = Field(..., example=3)
+    success: Annotated[bool, Field(example=True)]
+    category: Annotated[NewsCategory, Field(example="politics")]
+    count: Annotated[int, Field(example=3)]
     data: List[NewsItem]
 
-    model_config = {
-        "json_schema_extra": {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "category": "politics",
@@ -62,17 +62,17 @@ class NewsResponse(BaseModel):
                 ]
             }
         }
-    }
+    )
 
 
 # 👉 에러 응답
 class ErrorResponse(BaseModel):
-    detail: str = Field(..., example="잘못된 카테고리입니다")
+    detail: Annotated[str, Field(example="잘못된 카테고리입니다")]
 
-    model_config = {
-        "json_schema_extra": {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "detail": "잘못된 카테고리입니다"
             }
         }
-    }
+    )
