@@ -1,41 +1,34 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from repositories.user_locations_repo import UserLocationsRepository
 from schemas.user_locations import (
     UserLocationResponse,
-    UserLocationUpdateRequest,
     UserLocationUpdateResponse,
 )
 
 
-class LocationService:
+class UserLocationService:
     """
-    Service layer for user locations.
-    - 비즈니스 로직 담당
-    - Repository 호출 후 응답을 스키마로 변환
+    Service layer for managing user locations (조회 & 수정 전용).
     """
 
-    def __init__(self, repo: UserLocationsRepository):
-        self.repo = repo
-
-    # ✅ 단일 위치 조회
-    async def get_location(self, location_id: int) -> Optional[UserLocationResponse]:
-        location = await self.repo.get_location_by_id(location_id)
+    # ✅ 단일 조회
+    @staticmethod
+    async def get_location_by_id(location_id: int) -> Optional[UserLocationResponse]:
+        location = await UserLocationsRepository.get_location_by_id(location_id)
         if not location:
             return None
-        return UserLocationResponse.model_validate(location)
+        return UserLocationResponse.model_validate(location, from_attributes=True)
 
-    # ✅ 사용자 위치 목록 조회
-    async def get_user_locations(self, user_id: int) -> List[UserLocationResponse]:
-        locations = await self.repo.get_locations_by_user(user_id)
-        return [UserLocationResponse.model_validate(loc) for loc in locations]
+    # ✅ 사용자별 전체 조회
+    @staticmethod
+    async def get_locations_by_user(user_id: int) -> List[UserLocationResponse]:
+        locations = await UserLocationsRepository.get_locations_by_user(user_id)
+        return [UserLocationResponse.model_validate(loc, from_attributes=True) for loc in locations]
 
-    # ✅ 위치 수정
-    async def update_location(
-        self, location_id: int, update_data: UserLocationUpdateRequest
-    ) -> Optional[UserLocationUpdateResponse]:
-        # 요청에서 실제 들어온 필드만 반영
-        data = update_data.model_dump(exclude_unset=True)
-        location = await self.repo.update_location(location_id, **data)
-        if not location:
+    # ✅ 수정
+    @staticmethod
+    async def update_location(location_id: int, **kwargs: Any) -> Optional[UserLocationUpdateResponse]:
+        updated = await UserLocationsRepository.update_location(location_id, **kwargs)
+        if not updated:
             return None
-        return UserLocationUpdateResponse.model_validate(location)
+        return UserLocationUpdateResponse.model_validate(updated, from_attributes=True)

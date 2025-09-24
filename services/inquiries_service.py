@@ -1,7 +1,12 @@
 from typing import List, Optional
 from repositories.inquiries_repo import InquiryRepository
+from schemas.inquiries import (
+    InquiryCreateRequest,
+    InquiryOut,
+    InquiryListOut,
+    InquiryUpdateRequest,
+)
 from models.inquiries import Inquiry, InquiryStatus
-from datetime import datetime
 
 
 class InquiryService:
@@ -13,54 +18,69 @@ class InquiryService:
     # CREATE
     # --------------------
     @staticmethod
-    async def create_inquiry(user_id: int, title: str, message: str) -> Inquiry:
+    async def create_inquiry(user_id: int, request: InquiryCreateRequest) -> InquiryOut:
         """새 문의 작성"""
-        return await InquiryRepository.create_inquiry(
+        inquiry: Inquiry = await InquiryRepository.create_inquiry(
             user_id=user_id,
-            title=title,
-            message=message,
+            title=request.title,
+            message=request.message,
         )
+        return InquiryOut.model_validate(inquiry, from_attributes=True)
 
     # --------------------
     # READ
     # --------------------
     @staticmethod
-    async def get_inquiry_by_id(inquiry_id: int) -> Optional[Inquiry]:
+    async def get_inquiry_by_id(inquiry_id: int) -> Optional[InquiryOut]:
         """단일 문의 조회"""
-        return await InquiryRepository.get_inquiry_by_id(inquiry_id)
+        inquiry = await InquiryRepository.get_inquiry_by_id(inquiry_id)
+        if not inquiry:
+            return None
+        return InquiryOut.model_validate(inquiry, from_attributes=True)
 
     @staticmethod
-    async def get_inquiries_by_user(user_id: int) -> List[Inquiry]:
-        """사용자별 문의 목록"""
-        return await InquiryRepository.get_inquiries_by_user(user_id)
+    async def get_inquiries_by_user(user_id: int) -> InquiryListOut:
+        """특정 사용자의 문의 목록 조회"""
+        inquiries: List[Inquiry] = await InquiryRepository.get_inquiries_by_user(user_id)
+        return InquiryListOut(
+            inquiries=[InquiryOut.model_validate(i, from_attributes=True) for i in inquiries],
+            total=len(inquiries),
+        )
 
     @staticmethod
-    async def get_all_inquiries() -> List[Inquiry]:
-        """관리자 전용 전체 문의 목록"""
-        return await InquiryRepository.get_all_inquiries()
+    async def get_all_inquiries() -> InquiryListOut:
+        """관리자 전용 전체 문의 목록 조회"""
+        inquiries: List[Inquiry] = await InquiryRepository.get_all_inquiries()
+        return InquiryListOut(
+            inquiries=[InquiryOut.model_validate(i, from_attributes=True) for i in inquiries],
+            total=len(inquiries),
+        )
 
     # --------------------
     # UPDATE
     # --------------------
     @staticmethod
-    async def update_inquiry(
-        inquiry_id: int,
-        status: Optional[InquiryStatus] = None,
-        admin_reply: Optional[str] = None,
-        replied_at: Optional[datetime] = None,
-    ) -> Optional[Inquiry]:
-        """관리자 답변 / 상태 / 답변시간 수정"""
-        return await InquiryRepository.update_inquiry(
+    async def update_inquiry(inquiry_id: int, request: InquiryUpdateRequest) -> Optional[InquiryOut]:
+        """
+        관리자 답변/상태/답변시간 수정
+        - status: InquiryStatus
+        - admin_reply: str
+        - replied_at: datetime
+        """
+        inquiry = await InquiryRepository.update_inquiry(
             inquiry_id=inquiry_id,
-            status=status,
-            admin_reply=admin_reply,
-            replied_at=replied_at,
+            status=request.status,
+            admin_reply=request.admin_reply,
+            replied_at=request.replied_at,
         )
+        if not inquiry:
+            return None
+        return InquiryOut.model_validate(inquiry, from_attributes=True)
 
     # --------------------
     # DELETE
     # --------------------
     @staticmethod
     async def delete_inquiry(inquiry_id: int) -> bool:
-        """문의 삭제 (사용자 or 관리자)"""
+        """사용자 요청에 따른 문의 삭제"""
         return await InquiryRepository.delete_inquiry(inquiry_id)

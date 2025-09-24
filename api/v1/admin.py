@@ -1,48 +1,105 @@
-from fastapi import APIRouter, HTTPException, Depends
-from services.user_service import UserService
-from schemas.user import AdminUserOut, AdminUserListResponse, UserDeleteResponse
-from core.security import get_current_admin   # ✅ 관리자 권한 의존성 가져오기
+from typing import Optional
+from schemas.user import (
+    UserCreateRequest,
+    UserCreateResponse,
+    UserOut,
+    UserUpdateRequest,
+    UserUpdateResponse,
+    UserDeleteResponse,
+    AdminUserOut,
+    UserListResponse,
+    AdminUserListResponse,
+)
+from repositories.user_repo import UserRepository
 
-router = APIRouter(prefix="/admin", tags=["admin"])
 
-# -----------------------------
-# 전체 사용자 조회 (관리자 전용)
-# -----------------------------
-@router.get("/users", response_model=AdminUserListResponse)
-async def get_all_users(current_admin = Depends(get_current_admin)):  # ✅ 관리자 권한 검사 의존성 추가
-    users = await UserService.get_all_users()
-    return {"users": [AdminUserOut.from_orm(u) for u in users], "total": len(users)}
+class UserService:
+    """
+    Service layer for managing Users (CRUD + 관리자 기능).
+    인증/로그인은 AuthService에서 담당.
+    """
 
-# -----------------------------
-# 특정 사용자 조회 (관리자 전용)
-# -----------------------------
-@router.get("/users/{user_id}", response_model=AdminUserOut)
-async def get_user(user_id: int, current_admin = Depends(get_current_admin)):  # ✅ 의존성 추가
-    user = await UserService.get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
-    return AdminUserOut.from_orm(user)
+    # --------------------
+    # CREATE (회원가입)
+    # --------------------
+    @staticmethod
+    async def create_user(data: UserCreateRequest) -> UserCreateResponse:
+        user = await UserRepository.create_user(
+            email=data.email,
+            password_hash=data.password,  # ✅ 실제로는 AuthService에서 해시 후 전달
+            username=data.username,
+            birthday=data.birthday,
+        )
+        return UserCreateResponse.model_validate(user, from_attributes=True)
 
-# -----------------------------
-# 사용자 삭제 (관리자 전용)
-# -----------------------------
-@router.delete("/users/{user_id}", response_model=UserDeleteResponse)
-async def delete_user(user_id: int, current_admin = Depends(get_current_admin)):  # ✅ 의존성 추가
-    deleted = await UserService.delete_user(user_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
-    return {"message": "User deleted successfully"}
+    # --------------------
+    # READ (내 정보 / 단일 조회)
+    # --------------------
+    @staticmethod
+    async def get_user_by_id(user_id: int, admin: bool = False):
+        user = await UserRepository.get_user_by_id(user_id)
+        if not user:
+            return None
+        if admin:
+            return AdminUserOut.model_validate(user, from_attributes=True)
+        return UserOut.model_validate(user, from_attributes=True)
 
-# -----------------------------
-# 사용자 활성/비활성 상태 변경 (관리자 전용)
-# -----------------------------
-@router.patch("/users/{user_id}/status", response_model=AdminUserOut)
-async def update_user_status(
-    user_id: int,
-    is_active: bool,
-    current_admin = Depends(get_current_admin),  # ✅ 의존성 추가
-):
-    user = await UserService.update_user_status(user_id, is_active)
-    if not user:
-        raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
-    return AdminUserOut.from_orm(user)
+    @staticmethod
+    async def get_user_by_email(email: str) -> Optional[UserOut]:
+        user = await UserRepository.get_user_by_email(email)
+        if not user:
+            return None
+        return UserOut.model_validate(user, from_attributes=True)
+
+    # --------------------
+    # READ (목록 조회)
+    # --------------------
+    @staticmethod
+    async def get_all_users(admin: bool = False):
+        users = await UserRepository.get_all_users()
+        if admin:
+            return AdminUserListResponse(
+                users=[AdminUserOut.model_validate(u, from_attributes=True) for u in users],
+                total=len(users),
+            )
+        return UserListResponse(
+            users=[UserOut.model_validate(u, from_attributes=True) for u in users],
+            total=len(users),
+        )
+
+    # --------------------
+    # UPDATE (프로필 수정)
+    # --------------------
+    @staticmethod
+    async def update_profile(user_id: int, data: UserUpdateRequest) -> Optional[UserUpdateResponse]:
+        updated = await UserRepository.update_profile(
+            user_id=user_id,
+            username=data.username,
+            bio=data.bio,
+            profile_image=data.profile_image,
+        )
+        if not updated:
+            return None
+        return UserUpdateResponse.model_validate(updated, from_attributes=True)
+
+    # --------------------
+    # 관리자 전용: 사용자 상태 변경
+    # --------------------
+    @staticmethod
+    async def update_user_status(user_id: int, is_active: bool) -> Optional[AdminUserOut]:
+        user = await UserRepository.get_user_by_id(user_id)
+        if not user:
+            return None
+        user.is_active = is_active
+        await user.save()
+        return AdminUserOut.model_validate(user, from_attributes=True)  # ✅ 통일
+
+    # --------------------
+    # DELETE (회원 탈퇴 / 관리자 삭제)
+    # --------------------
+    @staticmethod
+    async def delete_user(user_id: int) -> Optional[UserDeleteResponse]:
+        deleted = await UserRepository.delete_user(user_id)
+        if not deleted:
+            return None
+        return UserDeleteResponse(message="User deleted successfully")  # ✅ 통일

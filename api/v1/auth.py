@@ -10,8 +10,8 @@ from schemas.user import (
     GoogleLoginRequest,
     GoogleLoginResponse,
 )
-from services.user_service import UserService
 from services.auth_service import AuthService
+from repositories.user_repo import UserRepository  # ✅ UserService 대신 직접 Repo 호출
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -21,18 +21,16 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 # -----------------------------
 @router.post("/register", response_model=UserCreateResponse)
 async def register_user(request: UserCreateRequest):
-
-    # 이메일 중복 확인
-    if await UserService.get_user_by_email(request.email):
+    # ✅ 이메일 중복 확인
+    existing_user = await UserRepository.get_user_by_email(request.email)
+    if existing_user:
         raise HTTPException(status_code=400, detail="EMAIL_ALREADY_EXISTS")
 
-    # ✅ 수정됨: request 객체 그대로 전달
     user = await AuthService.register(request)
     if not user:
         raise HTTPException(status_code=500, detail="USER_CREATION_FAILED")
 
-    # ✅ 응답 스키마에 맞게 변환
-    return UserCreateResponse.from_orm(user)
+    return UserCreateResponse.model_validate(user, from_attributes=True)
 
 
 # -----------------------------
@@ -47,7 +45,7 @@ async def verify_email(request: UserVerifyRequest):
     result = await AuthService.verify_email_token(email=request.email, code=request.code)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error"))
-    return {"success": True}
+    return UserVerifySuccessResponse(success=True)
 
 
 # -----------------------------
@@ -56,8 +54,8 @@ async def verify_email(request: UserVerifyRequest):
 @router.post("/login", response_model=UserLoginResponse)
 async def login_user(request: UserLoginRequest):
     result = await AuthService.login(request.email, request.password)
-    if "error" in result:
-        raise HTTPException(status_code=400, detail=result["error"])
+    if not result or "error" in result:
+        raise HTTPException(status_code=400, detail=result.get("error", "LOGIN_FAILED"))
 
     return UserLoginResponse(
         access_token=result["access_token"],
@@ -71,9 +69,10 @@ async def login_user(request: UserLoginRequest):
 # -----------------------------
 @router.post("/google", response_model=GoogleLoginResponse)
 async def google_login(request: GoogleLoginRequest):
+    # 실제 구현에서는 request.access_token → 구글 API로 검증 후 google_id, email 추출
     result = await AuthService.google_login(
-        google_id="dummy_google_id",   # 실제 구현 시 구글 토큰에서 추출
-        email="goturkey@example.com",  # 실제 구현 시 구글 API에서 추출
+        google_id="dummy_google_id",   # TODO: 구글 OAuth로 교체
+        email="goturkey@example.com",  # TODO: 구글 API로 교체
     )
     return GoogleLoginResponse(
         access_token=result["access_token"],

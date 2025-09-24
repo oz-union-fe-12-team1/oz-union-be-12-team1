@@ -1,26 +1,25 @@
 from datetime import datetime, timedelta, date
 from typing import Optional, Dict
 import jwt
-import random   # ✅ 인증번호 생성용
-import redis.asyncio as redis   # ✅ Redis 클라이언트
+import random
+import redis.asyncio as redis
 from passlib.hash import bcrypt
 
 from core.config import settings
 from repositories.user_repo import UserRepository
-from core.security import send_verification_email   # ✅ 메일 발송 함수
+from core.security import send_verification_email
 from repositories.token_revocations_repo import TokenRevocationsRepository
 from models.user import User
 
-
-# ✅ Redis 연결 (docker-compose 기준 redis 컨테이너)
+# ✅ Redis 연결
 REDIS_URL = "redis://redis:6379/0"
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
 
 class AuthService:
     """
-    Authentication & Authorization service.
-    API 명세서 + 완료테이블 기반 (Tortoise ORM 맞춤형)
+    Authentication & Authorization Service
+    (회원가입/로그인/토큰/인증)
     """
 
     # ---------------------------
@@ -43,10 +42,9 @@ class AuthService:
     # ---------------------------
     @staticmethod
     async def register(request) -> Optional[User]:
-        """유저 생성 + 인증번호 발송"""
         password_hash = bcrypt.hash(request.password)
 
-        # 인증번호(6자리) 생성
+        # 인증번호 생성 (6자리)
         verification_code = str(random.randint(100000, 999999))
 
         # 유저 생성
@@ -56,7 +54,7 @@ class AuthService:
             username=request.username,
             birthday=request.birthday,
         )
-        user.is_email_verified = False   # ✅ 완료테이블 기준 반영
+        user.is_email_verified = False
         await user.save()
 
         # Redis에 인증번호 저장 (10분 TTL)
@@ -71,7 +69,7 @@ class AuthService:
     # 로그인 (/auth/login)
     # ---------------------------
     @staticmethod
-    async def login(email: str, password: str) -> Optional[Dict[str, str]]:
+    async def login(email: str, password: str) -> Dict[str, str]:
         user = await UserRepository.get_user_by_email(email)
         if not user:
             return {"error": "USER_NOT_FOUND"}
@@ -79,7 +77,7 @@ class AuthService:
         if not bcrypt.verify(password, user.password_hash):
             return {"error": "INVALID_CREDENTIALS"}
 
-        if not user.is_email_verified:   # ✅ 수정됨
+        if not user.is_email_verified:
             return {"error": "EMAIL_NOT_VERIFIED"}
 
         access_token = AuthService.create_access_token(user.id)
@@ -107,10 +105,10 @@ class AuthService:
         if not user:
             return {"success": False, "error": "USER_NOT_FOUND"}
 
-        user.is_email_verified = True   # ✅ 완료테이블 기준 반영
+        user.is_email_verified = True
         await user.save()
 
-        # 인증번호 삭제 (1회성)
+        # 인증번호 삭제
         await redis_client.delete(f"verify:{email}")
 
         return {"success": True}
@@ -123,14 +121,13 @@ class AuthService:
         user = await UserRepository.get_user_by_email(email)
 
         if not user:
-            # ✅ 기존 create_user 시그니처에 맞게 기본 username, birthday 설정
+            # 신규 사용자 생성
             user = await UserRepository.create_user(
                 email=email,
                 password_hash=bcrypt.hash("oauth_dummy_password"),
-                username="소셜유저",  # 임시 기본값
-                birthday=date(2000, 1, 1),  # 임시 기본값
+                username="소셜유저",
+                birthday=date(2000, 1, 1),
             )
-            # ✅ 소셜 필드 추가 설정
             user.social_provider = "google"
             user.social_id = google_id
             user.is_email_verified = True
@@ -165,18 +162,10 @@ class AuthService:
     @staticmethod
     async def logout(token: str) -> bool:
         try:
-            # ✅ 토큰 디코드해서 user_id 추출
-            payload = jwt.decode(
-                token,
-                settings.SECRET_KEY,
-                algorithms=[settings.ALGORITHM]
-            )
-            user_id = int(payload.get("sub"))   # ✅ sub → user_id
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            user_id = int(payload.get("sub"))
 
-            # ✅ jti는 토큰 전체 문자열로 저장
             jti = token
-
-            # ✅ repository에 jti와 user_id 전달
             return await TokenRevocationsRepository.revoke_token(jti, user_id)
 
         except jwt.InvalidTokenError:

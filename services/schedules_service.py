@@ -8,9 +8,12 @@ class ScheduleService:
     Service layer for managing Schedules (CRUD + soft/hard delete).
     """
 
-    # ✅ Create
+    # --------------------
+    # CREATE
+    # --------------------
     @staticmethod
     async def create_schedule(**kwargs) -> ScheduleOut:
+        """새로운 일정 생성"""
         schedule = await ScheduleRepository.create_schedule(**kwargs)
         todos = await schedule.todos.all()
         return ScheduleOut.model_validate(
@@ -18,9 +21,12 @@ class ScheduleService:
             from_attributes=True,
         )
 
-    # ✅ Read (단일 일정 조회)
+    # --------------------
+    # READ
+    # --------------------
     @staticmethod
     async def get_schedule_by_id(schedule_id: int) -> Optional[ScheduleOut]:
+        """ID 기준 단일 일정 조회 (삭제된 건 제외)"""
         schedule = await ScheduleRepository.get_schedule_by_id(schedule_id)
         if not schedule:
             return None
@@ -31,9 +37,9 @@ class ScheduleService:
             from_attributes=True,
         )
 
-    # ✅ Read (사용자별 일정 목록)
     @staticmethod
     async def get_schedules_by_user(user_id: int) -> List[ScheduleOut]:
+        """특정 사용자의 전체 일정 조회 (삭제된 건 제외)"""
         schedules = await ScheduleRepository.get_schedules_by_user(user_id)
         results: List[ScheduleOut] = []
         for s in schedules:
@@ -47,9 +53,12 @@ class ScheduleService:
             )
         return results
 
-    # ✅ Update
+    # --------------------
+    # UPDATE
+    # --------------------
     @staticmethod
     async def update_schedule(schedule_id: int, **kwargs) -> Optional[ScheduleOut]:
+        """일정 업데이트 (삭제된 건 수정 불가)"""
         updated = await ScheduleRepository.update_schedule(schedule_id, **kwargs)
         if not updated:
             return None
@@ -60,11 +69,13 @@ class ScheduleService:
             from_attributes=True,
         )
 
-    # ✅ Delete (soft/hard 분기)
+    # --------------------
+    # DELETE
+    # --------------------
     @staticmethod
     async def delete_schedule(schedule_id: int, hard: bool = False) -> bool:
         """
-        삭제 기능 (soft/hard 분기)
+        일정 삭제 (soft/hard 분기)
         - hard=False → Soft Delete (deleted_at 기록)
         - hard=True  → Hard Delete (DB에서 완전 삭제)
         """

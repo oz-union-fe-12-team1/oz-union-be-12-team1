@@ -19,15 +19,17 @@ class UserRepository:
         username: str,
         birthday: date,
     ) -> User:
-        """회원가입"""
-        user = await User.create(
+        """
+        회원가입
+        - 신규 가입자는 기본적으로 이메일 미인증 상태
+        """
+        return await User.create(
             email=email,
             password_hash=password_hash,
             username=username,
             birthday=birthday,
-            is_email_verified=False,  # ✅ 기본: 인증 전
+            is_email_verified=False,  # ✅ 명세서: 가입 직후 인증되지 않음
         )
-        return user
 
     # --------------------
     # READ
@@ -35,22 +37,19 @@ class UserRepository:
     @staticmethod
     async def get_user_by_id(user_id: int) -> Optional[User]:
         """ID 기준 단일 조회"""
-        try:
-            return await User.get(id=user_id)
-        except DoesNotExist:
-            return None
+        return await User.get_or_none(id=user_id)
 
     @staticmethod
     async def get_user_by_email(email: str) -> Optional[User]:
         """이메일 기준 단일 조회"""
-        try:
-            return await User.get(email=email)
-        except DoesNotExist:
-            return None
+        return await User.get_or_none(email=email)
 
     @staticmethod
     async def get_all_users() -> List[User]:
-        """관리자 전용 전체 사용자 조회"""
+        """
+        전체 사용자 목록 조회 (관리자 전용)
+        - 최근 가입순 정렬
+        """
         return await User.all().order_by("-created_at")
 
     # --------------------
@@ -58,11 +57,13 @@ class UserRepository:
     # --------------------
     @staticmethod
     async def verify_user(user_id: int) -> Optional[User]:
-        """이메일 인증 완료 → is_email_verified=True 로 변경"""
+        """
+        이메일 인증 완료 → is_email_verified = True
+        """
         user = await User.get_or_none(id=user_id)
         if not user:
             return None
-        user.is_email_verified = True   # ✅ 명세서 기준 필드
+        user.is_email_verified = True
         await user.save()
         return user
 
@@ -73,7 +74,10 @@ class UserRepository:
         bio: Optional[str] = None,
         profile_image: Optional[str] = None,
     ) -> Optional[User]:
-        """프로필 수정 (username, bio, profile_image)"""
+        """
+        프로필 수정
+        - username, bio, profile_image 중 선택적 업데이트
+        """
         user = await User.get_or_none(id=user_id)
         if not user:
             return None
@@ -82,7 +86,7 @@ class UserRepository:
             user.username = username
         if bio is not None:
             user.bio = bio
-        if profile_image is not None:  # ✅ 사진이 들어왔을 때만 업데이트
+        if profile_image is not None:
             user.profile_image = profile_image
 
         await user.save()
@@ -93,9 +97,10 @@ class UserRepository:
     # --------------------
     @staticmethod
     async def delete_user(user_id: int) -> bool:
-        """회원 탈퇴"""
-        user = await User.get_or_none(id=user_id)
-        if not user:
-            return False
-        await user.delete()
-        return True
+        """
+        회원 탈퇴
+        - 실제 DB에서 삭제
+        - 복구 불가
+        """
+        deleted_count = await User.filter(id=user_id).delete()
+        return deleted_count > 0

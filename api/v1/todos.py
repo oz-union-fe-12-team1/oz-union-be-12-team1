@@ -13,9 +13,7 @@ from schemas.todos import (
 router = APIRouter(prefix="/todos", tags=["todos"])
 
 
-# -----------------------------
 # 1. Todo 생성
-# -----------------------------
 @router.post("", response_model=TodoOut)
 async def create_todo(
     request: TodoCreate,
@@ -29,18 +27,14 @@ async def create_todo(
     )
 
 
-# -----------------------------
 # 2. 내 Todo 전체 조회
-# -----------------------------
 @router.get("", response_model=TodoListOut)
 async def get_my_todos(current_user: User = Depends(get_current_user)):
     todos = await TodoService.get_todos_by_user(current_user.id)
     return {"todos": todos, "total": len(todos)}
 
 
-# -----------------------------
 # 3. 특정 Todo 조회
-# -----------------------------
 @router.get("/{todo_id}", response_model=TodoOut)
 async def get_todo(todo_id: int, current_user: User = Depends(get_current_user)):
     todo = await TodoService.get_todo_by_id(todo_id)
@@ -51,9 +45,7 @@ async def get_todo(todo_id: int, current_user: User = Depends(get_current_user))
     return todo
 
 
-# -----------------------------
 # 4. Todo 수정
-# -----------------------------
 @router.put("/{todo_id}", response_model=TodoOut)
 async def update_todo(
     todo_id: int,
@@ -67,19 +59,16 @@ async def update_todo(
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
 
     updated = await TodoService.update_todo(
-        todo_id,
-        **request.model_dump(exclude_unset=True)  # ✅ v2 방식
+        todo_id, **request.dict(exclude_unset=True)
     )
     return updated
 
 
-# -----------------------------
 # 5. Todo 삭제 (soft/hard 분기)
-# -----------------------------
 @router.delete("/{todo_id}", response_model=TodoDeleteResponse)
 async def delete_todo(
     todo_id: int,
-    hard: bool = Query(False, description="True면 완전 삭제, False면 소프트 삭제"),
+    hard: bool = Query(False, description="true면 완전 삭제, false면 소프트 삭제"),
     current_user: User = Depends(get_current_user),
 ):
     todo = await TodoService.get_todo_by_id(todo_id)
@@ -92,6 +81,6 @@ async def delete_todo(
     if not deleted:
         raise HTTPException(status_code=500, detail="DELETE_FAILED")
 
-    return TodoDeleteResponse(
-        message="Todo permanently deleted" if hard else "Todo soft deleted successfully"
-    )
+    return {
+        "message": "Todo hard deleted successfully" if hard else "Todo soft deleted successfully"
+    }

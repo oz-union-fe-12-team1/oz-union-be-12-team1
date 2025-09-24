@@ -7,9 +7,10 @@ from schemas.user import (
 )
 from services.user_service import UserService
 from models.user import User
-from core.security import get_current_user   # ✅ core/security.py 의 인증 유틸 사용
+from core.security import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
+
 
 # -----------------------------
 # 내 프로필 조회
@@ -19,7 +20,10 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
     """
     로그인한 사용자 본인의 프로필 조회
     """
-    return UserOut.from_orm(current_user)
+    user = await UserService.get_user_by_id(current_user.id)
+    if not user:
+        raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
+    return user   # ✅ 이미 UserOut 반환
 
 
 # -----------------------------
@@ -35,14 +39,12 @@ async def update_my_profile(
     """
     updated_user = await UserService.update_profile(
         user_id=current_user.id,
-        username=request.username,
-        bio=request.bio,
-        profile_image=request.profile_image,
+        data=request,
     )
     if not updated_user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
 
-    return UserUpdateResponse.from_orm(updated_user)   # ✅ 스키마 매핑 통일
+    return updated_user   # ✅ 이미 UserUpdateResponse 반환
 
 
 # -----------------------------
@@ -57,4 +59,4 @@ async def delete_my_account(current_user: User = Depends(get_current_user)):
     if not deleted:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
 
-    return UserDeleteResponse(message="User deleted successfully")  # ✅ 응답 스키마 통일
+    return deleted   # ✅ UserService에서 UserDeleteResponse 반환

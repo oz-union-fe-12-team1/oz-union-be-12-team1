@@ -74,12 +74,12 @@ async def update_schedule(
 
 
 # -----------------------------
-# 5. 일정 삭제 (soft/hard 선택)
+# 5. 일정 삭제 (soft/hard 분기)
 # -----------------------------
 @router.delete("/{schedule_id}", response_model=ScheduleDeleteResponse)
 async def delete_schedule(
     schedule_id: int,
-    hard: bool = Query(False, description="True면 완전 삭제, False면 소프트 삭제"),
+    hard: bool = Query(False, description="true면 완전 삭제, false면 소프트 삭제"),
     current_user: User = Depends(get_current_user),
 ):
     schedule = await ScheduleService.get_schedule_by_id(schedule_id)
@@ -89,14 +89,10 @@ async def delete_schedule(
     if schedule.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
 
-    if hard:
-        deleted = await ScheduleService.delete_schedule(schedule_id, hard=hard)  # ✅ 분기 포함
-        if not deleted:
-            raise HTTPException(status_code=500, detail="HARD_DELETE_FAILED")
-        return ScheduleDeleteResponse(message="Schedule permanently deleted")
+    deleted = await ScheduleService.delete_schedule(schedule_id, hard=hard)
+    if not deleted:
+        raise HTTPException(status_code=500, detail="DELETE_FAILED")
 
-    else:
-        deleted = await ScheduleService.delete_schedule(schedule_id)
-        if not deleted:
-            raise HTTPException(status_code=500, detail="SOFT_DELETE_FAILED")
-        return ScheduleDeleteResponse(message="Schedule deleted successfully")
+    return {
+        "message": "Schedule hard deleted successfully" if hard else "Schedule soft deleted successfully"
+    }

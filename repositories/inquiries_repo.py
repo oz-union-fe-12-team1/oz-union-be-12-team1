@@ -73,5 +73,5 @@ class InquiryRepository:
     @staticmethod
     async def delete_inquiry(inquiry_id: int) -> bool:
         """사용자 요청에 따라 문의 삭제"""
-        deleted_count = await Inquiry.filter(id=inquiry_id).delete()
+        deleted_count: int = await Inquiry.filter(id=inquiry_id).delete()
         return deleted_count > 0
