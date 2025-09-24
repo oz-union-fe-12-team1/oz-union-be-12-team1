@@ -1,167 +1,10 @@
-[build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
+# 현재 브랜치 확인
+git status
 
-[project]
-name = "oz-union-be-team1"
-version = "0.1.0"
-description = "OZ Union Backend Team 1"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "aerich>=0.9.1",
-    "asyncpg>=0.30.0",
-    "bcrypt<4.0.0",
-    "fastapi>=0.116.1",
-    "fastapi-mail>=1.5.0",
-    "feedparser>=6.0.12",
-    "httpx>=0.28.1",
-    "mypy>=1.18.2",
-    "openpyxl>=3.1.5",
-    "pandas>=2.3.2",
-    "passlib[bcrypt]<4.0.0",
-    "pre-commit>=4.3.0",
-    "psycopg-binary>=3.2.10",
-    "pydantic[email]>=2.11.9",
-    "pyjwt>=2.10.1",
-    "redis>=6.4.0",
-    "tomlkit>=0.13.3",
-    "tortoise-orm>=0.25.1",
-    "uvicorn[standard]>=0.35.0",
-]
+# pyproject.toml 파일을 완전히 새로 생성
+rm pyproject.toml
 
-[tool.setuptools]
-packages = ["api", "core", "models", "repositories", "schemas", "services"]
-
-[tool.aerich]
-tortoise_orm = "core.db.TORTOISE_ORM"
-location = "./migrations"
-src_folder = "."
-
-[tool.mypy]
-plugins = ["pydantic.mypy"]
-python_version = "3.13"
-ignore_missing_imports = true
-ignore_errors = false
-namespace_packages = true
-explicit_package_bases = true
-
-files = [
-    "main.py",
-    "api/",
-    "core/",
-    "models/",
-    "repositories/",
-    "schemas/",
-    "services/"
-]
-
-exclude = [
-    "^build/",
-    "^dist/", 
-    "^\\.venv/",
-    "^venv/",
-    "^migrations/",
-    "^__pycache__/",
-    "^\\.git/",
-    "^app\\.egg-info/"
-]
-
-warn_return_any = false
-warn_unused_configs = false
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-check_untyped_defs = false
-disallow_untyped_decorators = false
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
-EOFcat > pyproject.toml << 'EOF'
-[build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "oz-union-be-team1"
-version = "0.1.0"
-description = "OZ Union Backend Team 1"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "aerich>=0.9.1",
-    "asyncpg>=0.30.0",
-    "bcrypt<4.0.0",
-    "fastapi>=0.116.1",
-    "fastapi-mail>=1.5.0",
-    "feedparser>=6.0.12",
-    "httpx>=0.28.1",
-    "mypy>=1.18.2",
-    "openpyxl>=3.1.5",
-    "pandas>=2.3.2",
-    "passlib[bcrypt]<4.0.0",
-    "pre-commit>=4.3.0",
-    "psycopg-binary>=3.2.10",
-    "pydantic[email]>=2.11.9",
-    "pyjwt>=2.10.1",
-    "redis>=6.4.0",
-    "tomlkit>=0.13.3",
-    "tortoise-orm>=0.25.1",
-    "uvicorn[standard]>=0.35.0",
-]
-
-[tool.setuptools]
-packages = ["api", "core", "models", "repositories", "schemas", "services"]
-
-[tool.aerich]
-tortoise_orm = "core.db.TORTOISE_ORM"
-location = "./migrations"
-src_folder = "."
-
-[tool.mypy]
-plugins = ["pydantic.mypy"]
-python_version = "3.13"
-ignore_missing_imports = true
-ignore_errors = false
-namespace_packages = true
-explicit_package_bases = true
-
-files = [
-    "main.py",
-    "api/",
-    "core/",
-    "models/",
-    "repositories/",
-    "schemas/",
-    "services/"
-]
-
-exclude = [
-    "^build/",
-    "^dist/", 
-    "^\\.venv/",
-    "^venv/",
-    "^migrations/",
-    "^__pycache__/",
-    "^\\.git/",
-    "^app\\.egg-info/"
-]
-
-warn_return_any = false
-warn_unused_configs = false
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-check_untyped_defs = false
-disallow_untyped_decorators = false
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
-EOFgit add pyproject.toml
-cat > pyproject.toml << 'EOF'
-cat > pyproject.toml << 'EOF'
+# 올바른 내용으로 새로 생성
 cat > pyproject.toml << 'EOF'
 [build-system]
 requires = ["setuptools>=45", "wheel"]
@@ -243,3 +86,10 @@ disallow_untyped_decorators = false
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+EOF
+
+# 파일이 올바르게 생성되었는지 확인 (마지막 몇 줄 확인)
+tail -5 pyproject.toml
+
+# 구문 오류가 있는지 확인
+python -c "import tomllib; f=open('pyproject.toml','rb'); tomllib.load(f); print('TOML 구문 OK')"
