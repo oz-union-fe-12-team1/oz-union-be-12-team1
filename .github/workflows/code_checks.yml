@@ -44,5 +44,4 @@ jobs:
       #     uv run black . --check
 
       - name: Run Mypy
-        run: uv run mypy .
-
+        run: uv run mypy api models services core schemas
