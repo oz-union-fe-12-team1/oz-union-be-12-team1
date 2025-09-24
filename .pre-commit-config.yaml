@@ -27,5 +27,7 @@ repos:
       - id: mypy
         name: starting mypy
         language: system
-        entry: uv run mypy
+        entry: uv run python -m mypy --explicit-package-bases .
         files: \.py$
+        pass_filenames: false
+        always_run: true

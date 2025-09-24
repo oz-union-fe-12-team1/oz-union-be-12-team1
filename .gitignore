@@ -226,6 +226,7 @@ logs/
 .cache/
 
 .idea/
+.mypy_cache/
 
 #연우
 /api/v1/schedules.py
