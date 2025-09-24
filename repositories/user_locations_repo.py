@@ -1,48 +1,54 @@
-from typing import List, Optional, Any
-from tortoise.exceptions import DoesNotExist
+from typing import Optional, List
 from models.user_locations import UserLocation
 
 
 class UserLocationsRepository:
     """
-    Repository for managing user locations (조회 & 수정 전용).
+    Repository for managing user locations in DB.
     """
 
-    # --------------------
-    # READ (단일 위치 조회)
-    # --------------------
-    @staticmethod
-    async def get_location_by_id(location_id: int) -> Optional[UserLocation]:
-        try:
-            location: UserLocation = await UserLocation.get(id=location_id)
-            return location
-        except DoesNotExist:
-            return None
-
-    # --------------------
-    # READ (사용자별 위치 목록 조회)
-    # --------------------
     @staticmethod
     async def get_locations_by_user(user_id: int) -> List[UserLocation]:
-        locations: List[UserLocation] = (
-            await UserLocation.filter(user_id=user_id).order_by("-created_at")
-        )
-        return locations
+        return await UserLocation.filter(user_id=user_id).all()
 
-    # --------------------
-    # UPDATE (위치 정보 수정)
-    # --------------------
     @staticmethod
-    async def update_location(location_id: int, **kwargs: Any) -> Optional[UserLocation]:
-        """
-        kwargs: 수정할 필드 전달 (latitude, longitude, label, is_default 등)
-        """
-        try:
-            location: UserLocation = await UserLocation.get(id=location_id)
-            for field, value in kwargs.items():
-                if hasattr(location, field) and value is not None:  # ✅ 안전하게 반영
-                    setattr(location, field, value)
-            await location.save()
-            return location
-        except DoesNotExist:
+    async def get_location_by_id(user_id: int, location_id: int) -> Optional[UserLocation]:
+        return await UserLocation.filter(id=location_id, user_id=user_id).first()
+
+    @staticmethod
+    async def create_location(
+        user_id: int, latitude: float, longitude: float, label: Optional[str], is_default: bool
+    ) -> UserLocation:
+        return await UserLocation.create(
+            user_id=user_id,
+            latitude=latitude,
+            longitude=longitude,
+            label=label,
+            is_default=is_default,
+        )
+
+    @staticmethod
+    async def update_location(
+        user_id: int,
+        location_id: int,
+        latitude: float,
+        longitude: float,
+        label: Optional[str],
+        is_default: bool,
+    ) -> Optional[UserLocation]:
+        location = await UserLocation.filter(id=location_id, user_id=user_id).first()
+        if not location:
             return None
+
+        location.latitude = latitude
+        location.longitude = longitude
+        location.label = label
+        location.is_default = is_default
+        await location.save()
+
+        return location
+
+    @staticmethod
+    async def delete_location(user_id: int, location_id: int) -> bool:
+        deleted_count = await UserLocation.filter(id=location_id, user_id=user_id).delete()
+        return deleted_count > 0

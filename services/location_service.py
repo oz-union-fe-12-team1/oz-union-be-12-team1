@@ -1,40 +1,29 @@
-from typing import List, Optional, Any
+from typing import Optional, List
 from repositories.user_locations_repo import UserLocationsRepository
-from schemas.user_locations import (
-    UserLocationResponse,
-    UserLocationUpdateRequest,
-    UserLocationUpdateResponse,
-)
+from schemas.user_locations import LocationUpdateRequest, LocationResponse
+from models.user_locations import UserLocation
 
 
-class UserLocationService:
+class LocationService:
     """
-    Service layer for managing user locations
+    Service layer for managing User Locations.
     """
 
-    # ✅ 단일 조회
-    @staticmethod
-    async def get_location_by_id(location_id: int) -> Optional[UserLocationResponse]:
-        location = await UserLocationsRepository.get_location_by_id(location_id)
-        if not location:
-            return None
-        return UserLocationResponse.model_validate(location, from_attributes=True)
-
-    # ✅ 사용자별 전체 조회
-    @staticmethod
-    async def get_locations_by_user(user_id: int) -> List[UserLocationResponse]:
-        locations = await UserLocationsRepository.get_locations_by_user(user_id)
-        return [
-            UserLocationResponse.model_validate(loc, from_attributes=True)
-            for loc in locations
-        ]
-
-    # ✅ 위치 업데이트
     @staticmethod
     async def update_location(
-        location_id: int, data: UserLocationUpdateRequest
-    ) -> Optional[UserLocationUpdateResponse]:
-        updated = await UserLocationsRepository.update_location(location_id, data.dict(exclude_unset=True))
+        user_id: int, location_id: int, data: LocationUpdateRequest
+    ) -> Optional[LocationResponse]:
+        """
+        사용자 위치 수정
+        """
+        updated: Optional[UserLocation] = await UserLocationsRepository.update_location(
+            user_id=user_id,
+            location_id=location_id,
+            latitude=data.latitude,
+            longitude=data.longitude,
+            label=data.label,
+            is_default=data.is_default,
+        )
         if not updated:
             return None
-        return UserLocationUpdateResponse.model_validate(updated, from_attributes=True)
+        return LocationResponse.model_validate(updated, from_attributes=True)
