@@ -35,3 +35,5 @@ src_folder = "."
 plugins = ["pydantic.mypy"]
 python_version = 3.13
 strict = true
+files = ["api", "models", "services", "schemas", "core"]
+ignore_missing_imports = true
