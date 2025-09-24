@@ -5,7 +5,6 @@ from models.schedules import Schedule
 from models.todo import Todo
 
 router = APIRouter(prefix="/gemini", tags=["gemini"])
-
 # ================= Gemini API 설정 =================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_URL = (
@@ -228,4 +227,3 @@ async def get_briefings():
             "todos": todo_text,
         },
         "generated_at": datetime.now().isoformat(),
-    } 
