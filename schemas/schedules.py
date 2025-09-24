@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_serializer, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from schemas.todos import TodoOut
@@ -41,12 +41,6 @@ class ScheduleOut(BaseModel):
     updated_at: datetime
     todos: List[TodoOut] = Field(default_factory=list)
 
-    @field_serializer("todos")
-    def serialize_todos(self, todos):
-        if not todos:
-            return []
-        return [TodoOut.model_validate(t, from_attributes=True) for t in todos]
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -54,9 +48,13 @@ class ScheduleListOut(BaseModel):
     schedules: List[ScheduleOut]
     total: int = Field(..., example=1)
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ScheduleDeleteResponse(BaseModel):
     message: str = Field(
         "Schedule deleted successfully",
         example="Schedule deleted successfully"
     )
+
+    model_config = ConfigDict(from_attributes=True)

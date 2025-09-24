@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
@@ -23,25 +23,15 @@ class TokenRevocationOut(TokenRevocationBase):
     id: int = Field(..., example=1)
     user_id: int = Field(..., example=42)
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # 👉 목록 조회 응답
 class TokenRevocationListOut(BaseModel):
-    revocations: List[TokenRevocationOut] = Field(
-        ...,
-        example=[
-            {
-                "id": 1,
-                "user_id": 42,
-                "token": "eyJhbGciOiJIUzI1NiIs...",
-                "revoked_at": "2025-09-19T10:30:00",
-                "expires_at": "2025-09-20T10:30:00"
-            }
-        ]
-    )
+    revocations: List[TokenRevocationOut]
     total: int = Field(..., example=1)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # 👉 삭제 응답 (관리자 전용, 선택적)

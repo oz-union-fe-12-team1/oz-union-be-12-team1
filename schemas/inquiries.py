@@ -1,9 +1,11 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
+from enum import Enum
+
 
 # 👉 상태 Enum (명세서 기준)
-class InquiryStatus(str):
+class InquiryStatus(str, Enum):
     pending = "pending"
     in_progress = "in_progress"
     resolved = "resolved"
@@ -23,7 +25,7 @@ class InquiryCreate(InquiryBase):
 
 # 👉 수정 요청 (관리자 답변, 상태 변경 등)
 class InquiryUpdate(BaseModel):
-    status: Optional[str] = Field(None, example="resolved")
+    status: Optional[InquiryStatus] = Field(None, example="resolved")
     admin_reply: Optional[str] = Field(None, example="서버 설정 문제를 수정했습니다.")
     replied_at: Optional[datetime] = Field(None, example="2025-09-19T15:30:00")
 
@@ -32,14 +34,13 @@ class InquiryUpdate(BaseModel):
 class InquiryOut(InquiryBase):
     id: int = Field(..., example=12)
     user_id: int = Field(..., example=42)
-    status: str = Field(..., example="pending")
+    status: InquiryStatus = Field(..., example="pending")
     admin_reply: Optional[str] = Field(None, example=None)
     replied_at: Optional[datetime] = Field(None, example=None)
     created_at: datetime = Field(..., example="2025-09-18T12:34:56")
     updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
 
-    class Config:
-        from_attributes = True   # ✅ Pydantic v2 필수
+    model_config = {"from_attributes": True}   # ✅ v2 방식
 
 
 # 👉 목록 조회 응답
@@ -47,13 +48,12 @@ class InquiryListOut(BaseModel):
     inquiries: List[InquiryOut]
     total: int = Field(..., example=1)
 
-    class Config:
-        from_attributes = True   # ✅ 추가
+    model_config = {"from_attributes": True}   # ✅ v2 방식
 
 
 # 👉 삭제 응답
 class InquiryDeleteResponse(BaseModel):
     message: str = Field(
-        "Inquiry deleted successfully",
+        default="Inquiry deleted successfully",
         example="Inquiry deleted successfully"
     )

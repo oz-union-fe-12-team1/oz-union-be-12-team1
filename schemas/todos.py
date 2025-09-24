@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
@@ -9,7 +9,7 @@ from datetime import datetime
 class TodoBase(BaseModel):
     title: str = Field(..., example="장보기")
     description: Optional[str] = Field(None, example="우유, 계란, 빵 사오기")
-    is_completed: bool = Field(False, example=False)  # ✅ 기본값 False로 강제 (체크박스 대응)
+    is_completed: bool = Field(default=False, example=False)  # ✅ 기본값 명확히 지정
 
 
 # -----------------------------
@@ -39,13 +39,14 @@ class TodoOut(TodoBase):
     created_at: datetime = Field(..., example="2025-09-18T12:34:56")
     updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
 
-    class Config:
-        from_attributes = True  # ✅ ORM 변환 허용 (Pydantic v2)
+    model_config = ConfigDict(from_attributes=True)  # ✅ ORM 변환 허용
 
 
 class TodoListOut(BaseModel):
     todos: List[TodoOut]
     total: int = Field(..., example=1)
+
+    model_config = ConfigDict(from_attributes=True)  # ✅ 일관성 확보
 
 
 class TodoDeleteResponse(BaseModel):
@@ -53,3 +54,5 @@ class TodoDeleteResponse(BaseModel):
         "Todo deleted successfully",
         example="Todo deleted successfully"
     )
+
+    model_config = ConfigDict(from_attributes=True)
