@@ -26,23 +26,43 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       DATABASE_URL: ${DATABASE_URL}
       PYTHONUNBUFFERED: "1"
     ports:
       - "8000:8000"
     restart: unless-stopped
+    command: uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./quiz.xlsx:/app/quiz.xlsx   # ✅ 로컬 quiz.xlsx를 컨테이너 /app/quiz.xlsx 로 마운트
 
-#  pgadmin:
-#    image: dpage/pgadmin4
+  redis:
+    image: redis:7
+    container_name: redis-1
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
- #   container_name: pgadmin
-  #  restart: always
-  #  env_file:
-  #    - .env   # 👉 pgAdmin 로그인 계정/비번을 .env에서 읽도록 수정
-  #  ports:
-  #    - "5050:80"
-  #  depends_on:
-  #    - db     # 👉 여기 값이 비어 있던 게 문제였음. db에 의존한다고 명시해야 정상 작동
+  pgadmin:
+    image: dpage/pgadmin4
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"   # 브라우저에서 http://localhost:5050 접속
+    depends_on:
+      - db
+
 volumes:
   pgdata:
+  redisdata:
