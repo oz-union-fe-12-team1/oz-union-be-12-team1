@@ -71,7 +71,7 @@ class AuthService:
     # 로그인 (/auth/login)
     # ---------------------------
     @staticmethod
-    async def login(email: str, password: str) -> Optional[Dict[str, str]]:
+    async def login(email: str, password: str) -> Dict[str, str]:
         user = await UserRepository.get_user_by_email(email)
         if not user:
             return {"error": "USER_NOT_FOUND"}
