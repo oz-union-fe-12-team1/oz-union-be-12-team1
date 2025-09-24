@@ -58,12 +58,12 @@ files = [
 exclude = [
     "^build/",
     "^dist/", 
-    "^\\.venv/",
+    "^\.venv/",
     "^venv/",
     "^migrations/",
     "^__pycache__/",
-    "^\\.git/",
-    "^app\\.egg-info/"
+    "^\.git/",
+    "^app\.egg-info/"
 ]
 
 warn_return_any = false
