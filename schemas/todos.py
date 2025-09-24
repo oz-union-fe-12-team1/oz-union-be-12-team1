@@ -16,6 +16,7 @@ class TodoBase(BaseModel):
 # 요청(Request)
 # -----------------------------
 class TodoCreate(TodoBase):
+    # ✅ 일정과 연결할 때 사용하는 schedule_id (없으면 독립 Todo)
     schedule_id: Optional[int] = Field(None, example=1)
 
 
@@ -23,6 +24,7 @@ class TodoUpdate(BaseModel):
     title: Optional[str] = Field(None, example="장보기 (수정됨)")
     description: Optional[str] = Field(None, example="계란 대신 두부 사오기")
     is_completed: Optional[bool] = Field(None, example=True)  # ✅ 수정 시에만 nullable 허용
+    # ✅ 일정 변경 가능 (None이면 일정과 분리하거나 그대로 유지)
     schedule_id: Optional[int] = Field(None, example=1)
 
 
@@ -32,6 +34,7 @@ class TodoUpdate(BaseModel):
 class TodoOut(TodoBase):
     id: int = Field(..., example=5)
     user_id: int = Field(..., example=42)
+    # ✅ 연결된 일정 ID (없을 수도 있음)
     schedule_id: Optional[int] = Field(None, example=1)
     created_at: datetime = Field(..., example="2025-09-18T12:34:56")
     updated_at: datetime = Field(..., example="2025-09-18T12:34:56")

@@ -65,3 +65,5 @@ class Settings:
 
 # 전역 인스턴스
 settings = Settings()
+
+

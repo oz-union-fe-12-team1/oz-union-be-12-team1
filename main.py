@@ -8,13 +8,16 @@ from api.v1 import (
     admin,
     users,
     todos,
-    schedules,   #  새로 추가
+    schedules,
+    notifications,
     inquiries,
+    user_location,
     weather,
     quiz,
     news,
     gemini,
 )
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -33,10 +36,15 @@ app.include_router(users.router)
 app.include_router(schedules.router)  #  일정 API 추가
 app.include_router(todos.router)      #  할 일 API 추가
 app.include_router(inquiries.router)
+app.include_router(schedules.router)
+app.include_router(todos.router)
+app.include_router(user_location.router)
+
 app.include_router(weather.router)
 app.include_router(quiz.router)       # 퀴즈 API
 app.include_router(news.router)       # 뉴스 API
 app.include_router(gemini.router)     # 제미나이 API
+
 
 @app.get("/")
 def root():

@@ -24,7 +24,7 @@ class Schedule(Model):
     updated_at = fields.DatetimeField(auto_now=True)
 
     # Soft Delete (복구 가능)
-    #deleted_at = fields.DatetimeField(null=True)
+    deleted_at = fields.DatetimeField(null=True)
 
     # 역참조 (문자열 참조만으로 충분)
     todos: fields.ReverseRelation["Todo"]

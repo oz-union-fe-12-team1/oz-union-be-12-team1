@@ -1,7 +1,7 @@
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field, field_serializer, ConfigDict
 from typing import Optional, List
 from datetime import datetime
-from schemas.todos import TodoOut  # ✅ 일정 속 투두 참조
+from schemas.todos import TodoOut
 
 
 # -----------------------------
@@ -39,19 +39,15 @@ class ScheduleOut(BaseModel):
     location: Optional[str]
     created_at: datetime
     updated_at: datetime
-
-    # ✅ 일정 속 투두 포함
     todos: List[TodoOut] = Field(default_factory=list)
 
-    # ✅ ReverseRelation → List[TodoOut] 변환
     @field_serializer("todos")
     def serialize_todos(self, todos):
         if not todos:
             return []
         return [TodoOut.model_validate(t, from_attributes=True) for t in todos]
 
-    class Config:
-        from_attributes = True  # ✅ ORM 변환 허용
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScheduleListOut(BaseModel):
