@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional, List
+from typing import Optional, List, Annotated
 from datetime import date, datetime
 
 
@@ -8,11 +8,11 @@ from datetime import date, datetime
 # ========================
 
 class UserCreateRequest(BaseModel):
-    email: EmailStr = Field(default="", example="goturkey@example.com")
-    password: str = Field(default="", example="password123!")
-    password_check: str = Field(default="", example="password123!")  # ✅ 비밀번호 재입력
-    username: str = Field(default="", example="고터키")
-    birthday: date = Field(default_factory=date.today, example="1995-05-21")
+    email: Annotated[EmailStr, Field(example="goturkey@example.com")]
+    password: Annotated[str, Field(example="password123!")]
+    password_check: Annotated[str, Field(example="password123!")]  # ✅ 비밀번호 재입력
+    username: Annotated[str, Field(example="고터키")]
+    birthday: Annotated[date, Field(example="1995-05-21")]
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -28,23 +28,23 @@ class UserCreateRequest(BaseModel):
 
 
 class UserVerifyRequest(BaseModel):
-    email: EmailStr = Field(default="", example="goturkey@example.com")
-    code: str = Field(default="", example="123456")
+    email: Annotated[EmailStr, Field(example="goturkey@example.com")]
+    code: Annotated[str, Field(example="123456")]
 
 
 class UserLoginRequest(BaseModel):
-    email: EmailStr = Field(default="", example="goturkey@example.com")
-    password: str = Field(default="", example="password123!")
+    email: Annotated[EmailStr, Field(example="goturkey@example.com")]
+    password: Annotated[str, Field(example="password123!")]
 
 
 class GoogleLoginRequest(BaseModel):
-    access_token: str = Field(default="", example="ya29.A0ARrdaM...")
+    access_token: Annotated[str, Field(example="ya29.A0ARrdaM...")]
 
 
 class UserUpdateRequest(BaseModel):
-    username: Optional[str] = Field(default=None, example="고터키")
-    bio: Optional[str] = Field(default=None, example="안녕하세요!")
-    profile_image: Optional[str] = Field(default=None, example="https://example.com/profile.png")
+    username: Annotated[Optional[str], Field(example="고터키")] = None
+    bio: Annotated[Optional[str], Field(example="안녕하세요!")] = None
+    profile_image: Annotated[Optional[str], Field(example="https://example.com/profile.png")] = None
 
 
 # ========================
@@ -52,85 +52,83 @@ class UserUpdateRequest(BaseModel):
 # ========================
 
 class UserCreateResponse(BaseModel):
-    id: int = Field(default=0, example=42)
-    email: EmailStr = Field(default="", example="goturkey@example.com")
-    username: str = Field(default="", example="고터키")
-    birthday: date = Field(default_factory=date.today, example="1995-05-21")
-    is_email_verified: bool = Field(default=False, example=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow, example="2025-09-18T12:34:56")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, example="2025-09-18T12:34:56")
+    id: Annotated[int, Field(example=42)]
+    email: Annotated[EmailStr, Field(example="goturkey@example.com")]
+    username: Annotated[str, Field(example="고터키")]
+    birthday: Annotated[date, Field(example="1995-05-21")]
+    is_email_verified: Annotated[bool, Field(example=False)]
+    created_at: Annotated[datetime, Field(example="2025-09-18T12:34:56")]
+    updated_at: Annotated[datetime, Field(example="2025-09-18T12:34:56")]
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserVerifySuccessResponse(BaseModel):
-    success: bool = Field(default=True, example=True)
+    success: Annotated[bool, Field(example=True)]
 
 
 class UserVerifyErrorResponse(BaseModel):
-    errors: List[str] = Field(default_factory=list, example=["CODE_INVALID", "CODE_EXPIRED"])
-    status: List[int] = Field(default_factory=list, example=[400])
+    errors: Annotated[List[str], Field(example=["CODE_INVALID", "CODE_EXPIRED"])]
+    status: Annotated[List[int], Field(example=[400])]
 
 
 class UserLoginResponse(BaseModel):
-    access_token: str = Field(default="", example="eyJhbGciOiJIUzI1NiIs...")
-    refresh_token: str = Field(default="", example="eyJhbGciOiJIUzI1NiIs...")
-    token_type: str = Field(default="bearer", example="bearer")
+    access_token: Annotated[str, Field(example="eyJhbGciOiJIUzI1NiIs...")]
+    refresh_token: Annotated[str, Field(example="eyJhbGciOiJIUzI1NiIs...")]
+    token_type: Annotated[str, Field(example="bearer")] = "bearer"
 
 
 class GoogleLoginResponse(BaseModel):
-    access_token: str = Field(default="", example="eyJhbGciOiJIUzI1NiIs...")
-    refresh_token: str = Field(default="", example="eyJhbGciOiJIUzI1NiIs...")
-    token_type: str = Field(default="bearer", example="bearer")
+    access_token: Annotated[str, Field(example="eyJhbGciOiJIUzI1NiIs...")]
+    refresh_token: Annotated[str, Field(example="eyJhbGciOiJIUzI1NiIs...")]
+    token_type: Annotated[str, Field(example="bearer")] = "bearer"
 
 
 class UserOut(BaseModel):
-    id: int = Field(default=0, example=42)
-    email: EmailStr = Field(default="", example="goturkey@example.com")
-    username: str = Field(default="", example="고터키")
-    birthday: date = Field(default_factory=date.today, example="1995-05-21")
-    is_email_verified: bool = Field(default=False, example=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow, example="2025-09-18T12:34:56")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, example="2025-09-18T12:34:56")
+    id: Annotated[int, Field(example=42)]
+    email: Annotated[EmailStr, Field(example="goturkey@example.com")]
+    username: Annotated[str, Field(example="고터키")]
+    birthday: Annotated[date, Field(example="1995-05-21")]
+    is_email_verified: Annotated[bool, Field(example=False)]
+    created_at: Annotated[datetime, Field(example="2025-09-18T12:34:56")]
+    updated_at: Annotated[datetime, Field(example="2025-09-18T12:34:56")]
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class AdminUserOut(UserOut):
-    is_superuser: bool = Field(default=False, example=False)
+    is_superuser: Annotated[bool, Field(example=False)] = False
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserListResponse(BaseModel):
-    users: List[UserOut] = Field(default_factory=list)
-    total: int = Field(default=0, example=1)
+    users: List[UserOut]
+    total: Annotated[int, Field(example=1)]
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class AdminUserListResponse(BaseModel):
-    users: List[AdminUserOut] = Field(default_factory=list)
-    total: int = Field(default=0, example=1)
+    users: List[AdminUserOut]
+    total: Annotated[int, Field(example=1)]
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserUpdateResponse(BaseModel):
-    id: int = Field(default=0, example=42)
-    username: str = Field(default="", example="고터키")
-    bio: Optional[str] = Field(default=None, example="안녕하세요!")
-    profile_image: Optional[str] = Field(default=None, example="https://example.com/profile.png")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, example="2025-09-18T12:34:56")
+    id: Annotated[int, Field(example=42)]
+    username: Annotated[str, Field(example="고터키")]
+    bio: Annotated[Optional[str], Field(example="안녕하세요!")] = None
+    profile_image: Annotated[Optional[str], Field(example="https://example.com/profile.png")] = None
+    updated_at: Annotated[datetime, Field(example="2025-09-18T12:34:56")]
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserDeleteResponse(BaseModel):
-    message: str = Field(
-        default="User deleted successfully",
-        example="User deleted successfully",
-    )
+    message: Annotated[str, Field(example="User deleted successfully")] = "User deleted successfully"
+
 
 class LogoutResponse(BaseModel):
-    success: bool = Field(..., example=True)
+    success: Annotated[bool, Field(example=True)]
