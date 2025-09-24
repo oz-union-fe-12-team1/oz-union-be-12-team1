@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from models.user import User
 from core.security import get_current_user
 from services.todo_service import TodoService
@@ -21,13 +21,12 @@ async def create_todo(
     request: TodoCreate,
     current_user: User = Depends(get_current_user),
 ):
-    todo = await TodoService.create_todo(
+    return await TodoService.create_todo(
         user_id=current_user.id,
         title=request.title,
         description=request.description,
         schedule_id=request.schedule_id,
     )
-    return TodoOut.from_orm(todo)
 
 
 # -----------------------------
@@ -36,10 +35,7 @@ async def create_todo(
 @router.get("", response_model=TodoListOut)
 async def get_my_todos(current_user: User = Depends(get_current_user)):
     todos = await TodoService.get_todos_by_user(current_user.id)
-    return {
-        "todos": [TodoOut.from_orm(t) for t in todos],
-        "total": len(todos),
-    }
+    return {"todos": todos, "total": len(todos)}
 
 
 # -----------------------------
@@ -52,7 +48,7 @@ async def get_todo(todo_id: int, current_user: User = Depends(get_current_user))
         raise HTTPException(status_code=404, detail="TODO_NOT_FOUND")
     if todo.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
-    return TodoOut.from_orm(todo)
+    return todo
 
 
 # -----------------------------
@@ -70,30 +66,32 @@ async def update_todo(
     if todo.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
 
-    # ✅ None 값 제외하고 업데이트
     updated = await TodoService.update_todo(
         todo_id,
-        title=request.title,
-        description=request.description,
-        is_completed=request.is_completed,
-        schedule_id=request.schedule_id,
+        **request.model_dump(exclude_unset=True)  # ✅ v2 방식
     )
-    return TodoOut.from_orm(updated)
+    return updated
 
 
 # -----------------------------
-# 5. Todo 삭제
+# 5. Todo 삭제 (soft/hard 분기)
 # -----------------------------
 @router.delete("/{todo_id}", response_model=TodoDeleteResponse)
-async def delete_todo(todo_id: int, current_user: User = Depends(get_current_user)):
+async def delete_todo(
+    todo_id: int,
+    hard: bool = Query(False, description="True면 완전 삭제, False면 소프트 삭제"),
+    current_user: User = Depends(get_current_user),
+):
     todo = await TodoService.get_todo_by_id(todo_id)
     if not todo:
         raise HTTPException(status_code=404, detail="TODO_NOT_FOUND")
     if todo.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
 
-    deleted = await TodoService.delete_todo(todo_id)
+    deleted = await TodoService.delete_todo(todo_id, hard=hard)
     if not deleted:
         raise HTTPException(status_code=500, detail="DELETE_FAILED")
 
-    return {"message": "Todo deleted successfully"}
+    return TodoDeleteResponse(
+        message="Todo permanently deleted" if hard else "Todo soft deleted successfully"
+    )

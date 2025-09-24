@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from models.user import User
 from core.security import get_current_user
 from services.schedules_service import ScheduleService
@@ -23,7 +23,7 @@ async def create_schedule(
 ):
     return await ScheduleService.create_schedule(
         user_id=current_user.id,
-        **request.dict()
+        **request.model_dump()
     )
 
 
@@ -68,16 +68,20 @@ async def update_schedule(
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
 
     updated = await ScheduleService.update_schedule(
-        schedule_id, **request.dict(exclude_unset=True)
+        schedule_id, **request.model_dump(exclude_unset=True)
     )
     return updated
 
 
 # -----------------------------
-# 5. 일정 삭제
+# 5. 일정 삭제 (soft/hard 선택)
 # -----------------------------
 @router.delete("/{schedule_id}", response_model=ScheduleDeleteResponse)
-async def delete_schedule(schedule_id: int, current_user: User = Depends(get_current_user)):
+async def delete_schedule(
+    schedule_id: int,
+    hard: bool = Query(False, description="True면 완전 삭제, False면 소프트 삭제"),
+    current_user: User = Depends(get_current_user),
+):
     schedule = await ScheduleService.get_schedule_by_id(schedule_id)
     if not schedule:
         raise HTTPException(status_code=404, detail="SCHEDULE_NOT_FOUND")
@@ -85,8 +89,14 @@ async def delete_schedule(schedule_id: int, current_user: User = Depends(get_cur
     if schedule.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
 
-    deleted = await ScheduleService.delete_schedule(schedule_id)
-    if not deleted:
-        raise HTTPException(status_code=500, detail="DELETE_FAILED")
+    if hard:
+        deleted = await ScheduleService.delete_schedule(schedule_id, hard=hard)  # ✅ 분기 포함
+        if not deleted:
+            raise HTTPException(status_code=500, detail="HARD_DELETE_FAILED")
+        return ScheduleDeleteResponse(message="Schedule permanently deleted")
 
-    return {"message": "Schedule deleted successfully"}
+    else:
+        deleted = await ScheduleService.delete_schedule(schedule_id)
+        if not deleted:
+            raise HTTPException(status_code=500, detail="SOFT_DELETE_FAILED")
+        return ScheduleDeleteResponse(message="Schedule deleted successfully")
