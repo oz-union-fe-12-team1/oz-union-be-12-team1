@@ -3,7 +3,7 @@
 ### 1) 저장소 클론
 ```bash
 git clone <REPO_URL>
-cd oz-union-be-12-team1
+cd oz_union_be_12_team1
 ```
 
 ### 3) Docker로 서비스 기동
