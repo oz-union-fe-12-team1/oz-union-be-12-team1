@@ -2,9 +2,10 @@ from __future__ import annotations  # 🔑 forward reference
 from typing import TYPE_CHECKING
 from tortoise import fields
 from tortoise.models import Model
+from tortoise.fields import ForeignKeyRelation  # ✅ 타입힌트 전용
 import enum
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # mypy 전용
     from models.user import User
 
 
@@ -18,7 +19,7 @@ class InquiryStatus(str, enum.Enum):
 class Inquiry(Model):
     id = fields.BigIntField(pk=True)
 
-    user: "User" = fields.ForeignKeyField(   # 🔑 FK만 타입힌트
+    user: ForeignKeyRelation["User"] = fields.ForeignKeyField(  # ✅ FK 타입 안정
         "models.User",
         related_name="inquiries",
         on_delete=fields.CASCADE,

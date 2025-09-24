@@ -2,6 +2,7 @@ from __future__ import annotations  # 🔑 forward reference
 from typing import TYPE_CHECKING
 from tortoise import fields
 from tortoise.models import Model
+from tortoise.fields import ForeignKeyRelation, ReverseRelation  # ✅ 타입힌트 전용
 
 if TYPE_CHECKING:  # mypy 전용
     from models.user import User
@@ -12,7 +13,7 @@ if TYPE_CHECKING:  # mypy 전용
 class Schedule(Model):
     id = fields.BigIntField(pk=True)
 
-    user: "User" = fields.ForeignKeyField(   # 🔑 FK만 타입힌트
+    user: ForeignKeyRelation["User"] = fields.ForeignKeyField(  # ✅ FK 타입 안정
         "models.User",
         related_name="schedules",
         on_delete=fields.CASCADE,
@@ -30,9 +31,9 @@ class Schedule(Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
-    # Reverse 관계 (여기는 타입 주석 허용)
-    todos: fields.ReverseRelation["Todo"]
-    notifications: fields.ReverseRelation["Notification"]
+    # ✅ 역참조 관계 (mypy 친화적)
+    todos: ReverseRelation["Todo"]
+    notifications: ReverseRelation["Notification"]
 
     class Meta:
         table = "schedules"

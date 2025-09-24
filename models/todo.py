@@ -2,8 +2,9 @@ from __future__ import annotations  # 🔑 forward reference
 from typing import TYPE_CHECKING
 from tortoise import fields
 from tortoise.models import Model
+from tortoise.fields import ForeignKeyRelation  # ✅ 타입힌트 전용
 
-if TYPE_CHECKING:  # mypy 전용 (런타임에는 영향 없음)
+if TYPE_CHECKING:  # mypy 전용 (런타임 영향 없음)
     from models.user import User
     from models.schedules import Schedule
 
@@ -11,14 +12,14 @@ if TYPE_CHECKING:  # mypy 전용 (런타임에는 영향 없음)
 class Todo(Model):
     id = fields.BigIntField(pk=True)
 
-    user: "User" = fields.ForeignKeyField(   # 🔑 FK만 타입힌트
+    user: ForeignKeyRelation["User"] = fields.ForeignKeyField(  # ✅ FK 타입 안정
         "models.User",
         related_name="todos",
         on_delete=fields.CASCADE,
     )
     # FK → 사용자
 
-    schedule: "Schedule" | None = fields.ForeignKeyField(  # 🔑 FK만 타입힌트
+    schedule: ForeignKeyRelation["Schedule"] | None = fields.ForeignKeyField(  # ✅ FK 타입 안정
         "models.Schedule",
         related_name="todos",
         null=True,
