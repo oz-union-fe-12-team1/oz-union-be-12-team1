@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from datetime import datetime, timezone
 from models.todo import Todo
 
@@ -53,7 +53,7 @@ class TodosRepository:
     # UPDATE
     # --------------------
     @staticmethod
-    async def update_todo(todo_id: int, **kwargs) -> Optional[Todo]:
+    async def update_todo(todo_id: int, **kwargs: Any) -> Optional[Todo]:
         """
         Todo 업데이트
         - kwargs: title, description, is_completed, schedule_id 등

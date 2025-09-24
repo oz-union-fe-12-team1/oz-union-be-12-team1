@@ -2,7 +2,7 @@ from tortoise import Tortoise
 import os
 
 
-def _build_database_url():
+def _build_database_url() -> str:
     database_url = os.getenv("DATABASE_URL")
     if database_url:
         return database_url
@@ -38,9 +38,8 @@ TORTOISE_ORM = {
 }
 
 
-async def init_db():
+async def init_db() -> None:
     await Tortoise.init(config=TORTOISE_ORM)
 
-
-async def close_db():
+async def close_db() -> None:
     await Tortoise.close_connections()

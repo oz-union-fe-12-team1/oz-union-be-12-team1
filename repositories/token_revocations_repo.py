@@ -1,6 +1,4 @@
-from typing import Optional
 from models.token_revocations import TokenRevocation
-from tortoise.exceptions import DoesNotExist
 from datetime import datetime
 
 
@@ -33,7 +31,7 @@ class TokenRevocationsRepository:
 
     # ✅ Read (사용자별 무효화 토큰 조회)
     @staticmethod
-    async def get_revoked_tokens_by_user(user_id: int):
+    async def get_revoked_tokens_by_user(user_id: int) -> list[TokenRevocation]:
         return await TokenRevocation.filter(user_id=user_id).all()
 
     # ✅ Delete (무효화 토큰 기록 삭제 – 보통 유지하지만, 관리 차원에서 필요 시)

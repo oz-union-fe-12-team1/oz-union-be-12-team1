@@ -1,16 +1,21 @@
-from tortoise import fields
+from typing import Optional
+
+from tortoise import fields, ForeignKeyFieldInstance
 from tortoise.models import Model
+
+from models.schedules import Schedule
+from models.user import User
 
 
 class Todo(Model):
     id = fields.BigIntField(pk=True)  # SERIAL → BigIntField
 
-    user = fields.ForeignKeyField(
+    user: ForeignKeyFieldInstance[User] = fields.ForeignKeyField(
         "models.User",
         related_name="todos",
         on_delete=fields.CASCADE
     )
-    schedule = fields.ForeignKeyField(
+    schedule: Optional[ForeignKeyFieldInstance[Schedule]] = fields.ForeignKeyField(
         "models.Schedule",
         related_name="todos",
         null=True,

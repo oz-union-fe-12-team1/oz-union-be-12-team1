@@ -1,6 +1,8 @@
-from tortoise import fields
+from tortoise import fields, ForeignKeyFieldInstance
 from tortoise.models import Model
 import enum
+
+from models.user import User
 
 
 class InquiryStatus(str, enum.Enum):  # ✅ 오타 수정 (Inquiriy → Inquiry)
@@ -12,8 +14,7 @@ class InquiryStatus(str, enum.Enum):  # ✅ 오타 수정 (Inquiriy → Inquiry)
 
 class Inquiry(Model):
     id = fields.BigIntField(pk=True)
-
-    user = fields.ForeignKeyField(
+    user: ForeignKeyFieldInstance[User] = fields.ForeignKeyField(
         "models.User",
         related_name="inquiries",
         on_delete=fields.CASCADE,

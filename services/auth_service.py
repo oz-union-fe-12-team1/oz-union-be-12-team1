@@ -6,11 +6,12 @@ import redis.asyncio as redis   # ✅ Redis 클라이언트
 from passlib.hash import bcrypt
 
 from core.config import settings
+from models.token_revocations import TokenRevocation
 from repositories.user_repo import UserRepository
 from core.security import send_verification_email   # ✅ 메일 발송 함수
 from repositories.token_revocations_repo import TokenRevocationsRepository
 from models.user import User
-
+from schemas.user import UserCreateRequest
 
 # ✅ Redis 연결 (docker-compose 기준 redis 컨테이너)
 REDIS_URL = "redis://redis:6379/0"
@@ -42,7 +43,7 @@ class AuthService:
     # 회원가입 (/auth/register)
     # ---------------------------
     @staticmethod
-    async def register(request) -> Optional[User]:
+    async def register(request: UserCreateRequest) -> User:
         """유저 생성 + 인증번호 발송"""
         password_hash = bcrypt.hash(request.password)
 
@@ -163,7 +164,7 @@ class AuthService:
     # 로그아웃 (/auth/logout)
     # ---------------------------
     @staticmethod
-    async def logout(token: str) -> bool:
+    async def logout(token: str) -> Optional[TokenRevocation]:
         try:
             # ✅ 토큰 디코드해서 user_id 추출
             payload = jwt.decode(
@@ -180,4 +181,4 @@ class AuthService:
             return await TokenRevocationsRepository.revoke_token(jti, user_id)
 
         except jwt.InvalidTokenError:
-            return False
+            return None

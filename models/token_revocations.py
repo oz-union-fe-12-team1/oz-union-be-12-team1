@@ -1,11 +1,13 @@
-from tortoise import fields
+from tortoise import fields, ForeignKeyFieldInstance
 from tortoise.models import Model
+
+from models.user import User
 
 
 class TokenRevocation(Model):
     id = fields.BigIntField(pk=True)
 
-    user = fields.ForeignKeyField(
+    user: ForeignKeyFieldInstance[User] = fields.ForeignKeyField(
         "models.User",
         related_name="revoked_tokens",
         on_delete=fields.CASCADE,
