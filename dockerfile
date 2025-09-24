@@ -22,7 +22,7 @@ COPY pyproject.toml uv.lock* ./
 RUN uv venv /opt/venv && . /opt/venv/bin/activate && uv sync --frozen --no-dev
 ENV PATH="/opt/venv/bin:${PATH}"
 
-# 애플리케이션 전체 복사 (✅ 루트의 모든 폴더/파일)
+# 애플리케이션 전체 복사 ( 루트의 모든 폴더/파일)
 COPY . .
 
 EXPOSE 8000
