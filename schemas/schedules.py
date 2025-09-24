@@ -1,5 +1,5 @@
-from typing import Annotated, Optional, List
 from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, List
 from datetime import datetime
 from schemas.todos import TodoOut
 
@@ -8,11 +8,11 @@ from schemas.todos import TodoOut
 # 요청(Request)
 # -----------------------------
 class ScheduleCreateRequest(BaseModel):
-    title: Annotated[str, Field(example="회의")]
+    title: str = Field(default="", example="회의")
     description: Optional[str] = Field(default=None, example="팀 주간 회의")
-    start_time: Annotated[datetime, Field(example="2025-09-20T10:00:00")]
-    end_time: Annotated[datetime, Field(example="2025-09-20T11:00:00")]
-    all_day: Annotated[bool, Field(default=False, example=False)]
+    start_time: datetime = Field(default_factory=datetime.utcnow, example="2025-09-20T10:00:00")
+    end_time: datetime = Field(default_factory=datetime.utcnow, example="2025-09-20T11:00:00")
+    all_day: bool = Field(default=False, example=False)
     location: Optional[str] = Field(default=None, example="서울 강남구 카페")
 
 
@@ -29,32 +29,32 @@ class ScheduleUpdateRequest(BaseModel):
 # 응답(Response)
 # -----------------------------
 class ScheduleOut(BaseModel):
-    id: Annotated[int, Field(example=1)]
-    user_id: Annotated[int, Field(example=42)]
-    title: Annotated[str, Field(example="회의")]
+    id: int = Field(default=0, example=1)
+    user_id: int = Field(default=0, example=42)
+    title: str = Field(default="", example="회의")
     description: Optional[str] = Field(default=None, example="팀 주간 회의")
-    start_time: Annotated[datetime, Field(example="2025-09-20T10:00:00")]
-    end_time: Annotated[datetime, Field(example="2025-09-20T11:00:00")]
-    all_day: Annotated[bool, Field(example=False)]
+    start_time: datetime = Field(default_factory=datetime.utcnow, example="2025-09-20T10:00:00")
+    end_time: datetime = Field(default_factory=datetime.utcnow, example="2025-09-20T11:00:00")
+    all_day: bool = Field(default=False, example=False)
     location: Optional[str] = Field(default=None, example="서울 강남구 카페")
-    created_at: Annotated[datetime, Field(example="2025-09-18T12:34:56")]
-    updated_at: Annotated[datetime, Field(example="2025-09-18T12:34:56")]
+    created_at: datetime = Field(default_factory=datetime.utcnow, example="2025-09-18T12:34:56")
+    updated_at: datetime = Field(default_factory=datetime.utcnow, example="2025-09-18T12:34:56")
     todos: List[TodoOut] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ScheduleListOut(BaseModel):
-    schedules: List[ScheduleOut]
-    total: Annotated[int, Field(example=1)]
+    schedules: List[ScheduleOut] = Field(default_factory=list)
+    total: int = Field(default=0, example=1)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ScheduleDeleteResponse(BaseModel):
-    message: Annotated[str, Field(
+    message: str = Field(
         default="Schedule deleted successfully",
         example="Schedule deleted successfully"
-    )]
+    )
 
     model_config = ConfigDict(from_attributes=True)
