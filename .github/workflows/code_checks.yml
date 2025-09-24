@@ -44,4 +44,4 @@ jobs:
       #     uv run black . --check
 
       - name: Run Mypy
-        run: uv run mypy app --explicit-package-bases
+        run: uv run mypy oz-union-be-12-team1/app --explicit-package-bases
