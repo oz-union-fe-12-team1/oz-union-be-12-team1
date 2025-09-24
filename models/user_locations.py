@@ -1,6 +1,5 @@
 from __future__ import annotations  # 🔑 forward reference
 from typing import TYPE_CHECKING
-from datetime import datetime
 from tortoise import fields
 from tortoise.models import Model
 
@@ -11,7 +10,7 @@ if TYPE_CHECKING:  # mypy 전용
 class UserLocation(Model):
     id = fields.BigIntField(pk=True)
 
-    user = fields.ForeignKeyField(
+    user: "User" = fields.ForeignKeyField(   # 🔑 타입힌트 추가
         "models.User",
         related_name="locations",
         on_delete=fields.CASCADE,

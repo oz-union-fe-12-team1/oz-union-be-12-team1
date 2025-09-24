@@ -1,6 +1,5 @@
 from __future__ import annotations  # 🔑 forward reference
-from typing import TYPE_CHECKING, Optional
-from datetime import datetime
+from typing import TYPE_CHECKING
 from tortoise import fields
 from tortoise.models import Model
 import enum
@@ -19,7 +18,7 @@ class InquiryStatus(str, enum.Enum):
 class Inquiry(Model):
     id = fields.BigIntField(pk=True)
 
-    user = fields.ForeignKeyField(
+    user: "User" = fields.ForeignKeyField(   # 🔑 타입힌트 추가
         "models.User",
         related_name="inquiries",
         on_delete=fields.CASCADE,
@@ -27,16 +26,16 @@ class Inquiry(Model):
     )
     # FK → 문의 작성 사용자
 
-    title = fields.CharField(max_length=255, null=False)
-    message = fields.TextField(null=False)
+    title: str = fields.CharField(max_length=255, null=False)
+    message: str = fields.TextField(null=False)
 
-    status = fields.CharEnumField(
+    status: InquiryStatus = fields.CharEnumField(
         enum_type=InquiryStatus,
         default=InquiryStatus.pending,
     )
     # 처리 상태
 
-    admin_reply = fields.TextField(null=True)
+    admin_reply: str | None = fields.TextField(null=True)
     replied_at = fields.DatetimeField(null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)

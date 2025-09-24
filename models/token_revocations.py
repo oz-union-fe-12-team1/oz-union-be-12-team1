@@ -10,7 +10,7 @@ if TYPE_CHECKING:  # mypy 전용 (런타임 영향 없음)
 class TokenRevocation(Model):
     id = fields.BigIntField(pk=True)
 
-    user = fields.ForeignKeyField(
+    user: "User" = fields.ForeignKeyField(   # 🔑 타입힌트 추가
         "models.User",
         related_name="revoked_tokens",
         on_delete=fields.CASCADE,
@@ -18,10 +18,10 @@ class TokenRevocation(Model):
     )
     # FK → 사용자
 
-    jti = fields.CharField(max_length=128, unique=True, null=False)
+    jti: str = fields.CharField(max_length=128, unique=True, null=False)
     # 토큰 고유 ID
 
-    reason = fields.CharField(max_length=200, null=True)
+    reason: str | None = fields.CharField(max_length=200, null=True)
     # 블랙리스트 사유 (선택)
 
     revoked_at = fields.DatetimeField(auto_now_add=True)
