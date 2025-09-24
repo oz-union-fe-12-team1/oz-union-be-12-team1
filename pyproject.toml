@@ -1,14 +1,74 @@
+[build-system]
+requires = ["setuptools>=70.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oz-union-be-team1"
+version = "0.1.0"
+description = "OZ Union Backend Team 1"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aerich>=0.9.1",
+    "asyncpg>=0.30.0",
+    "bcrypt>=3.2.0,<5.0.0",
+    "fastapi>=0.116.1",
+    "fastapi-mail>=1.5.0",
+    "feedparser>=6.0.12",
+    "httpx>=0.28.1",
+    "mypy>=1.18.2",
+    "openpyxl>=3.1.5",
+    "pandas>=2.3.2",
+    "passlib[bcrypt]>=1.7.4,<2.0.0",
+    "pre-commit>=4.3.0",
+    "psycopg-binary>=3.2.10",
+    "pydantic[email]>=2.11.9",
+    "pyjwt>=2.10.1",
+    "redis>=6.4.0",
+    "tomlkit>=0.13.3",
+    "tortoise-orm>=0.25.1",
+    "uvicorn[standard]>=0.35.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.28.1",
+    "pytest-cov>=5.0.0",
+]
+
+[tool.setuptools]
+# 단순하게 패키지 목록만 지정
+packages = ["api", "core", "models", "repositories", "schemas", "services"]
+
+[tool.aerich]
+tortoise_orm = "core.db.TORTOISE_ORM"
+location = "./migrations"
+src_folder = "."
+
 [tool.mypy]
+# Pydantic 플러그인
 plugins = ["pydantic.mypy"]
+
+# Python 버전
 python_version = "3.13"
-# strict = true  # 일단 주석처리 - CI 통과를 위해
+
+# 기본 설정
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
 
 # 패키지 관련 설정
 namespace_packages = true
 explicit_package_bases = true
 ignore_missing_imports = true
 
-# 체크할 파일/디렉토리 - 현재 프로젝트 구조에 맞게 수정
+# 검사할 파일들
 files = [
     "main.py",
     "api/",
@@ -19,27 +79,64 @@ files = [
     "services/"
 ]
 
-# 제외할 패턴
+# 제외할 경로들
 exclude = [
     "^build/",
-    "^dist/", 
+    "^dist/",
     "^\\.venv/",
     "^venv/",
     "^migrations/",
     "^__pycache__/",
     "^\\.git/",
-    "^app\\.egg-info/"
+    ".*\\.egg-info/",
+    "^tests/",
 ]
 
-# 실용적인 설정
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false  # 너무 엄격하므로 false로 변경
-check_untyped_defs = true
-disallow_untyped_decorators = false
+# 에러 억제
+[[tool.mypy.overrides]]
+module = [
+    "aerich.*",
+    "tortoise.*",
+    "redis.*",
+    "feedparser.*",
+    "openpyxl.*",
+]
+ignore_missing_imports = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["api", "core", "models", "repositories", "schemas", "services"]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/__pycache__/*",
+    ".venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
