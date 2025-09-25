@@ -99,3 +99,4 @@ class UserRepository:
             return False
         await user.delete()
         return True
+

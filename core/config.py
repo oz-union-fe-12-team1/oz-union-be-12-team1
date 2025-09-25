@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     # ==============================
     PYTHONUNBUFFERED: int = Field(1)
 
+    # 구글 로그인
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REDIRECT_URI: str
+
     # ==============================
     # Pydantic Settings Config
     # ==============================

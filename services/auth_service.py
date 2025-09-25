@@ -4,6 +4,10 @@ import jwt
 import random   # ✅ 인증번호 생성용
 import redis.asyncio as redis   # ✅ Redis 클라이언트
 from passlib.hash import bcrypt
+import httpx
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
 
 from core.config import settings
 from models.token_revocations import TokenRevocation
@@ -11,7 +15,7 @@ from repositories.user_repo import UserRepository
 from core.security import send_verification_email   # ✅ 메일 발송 함수
 from repositories.token_revocations_repo import TokenRevocationsRepository
 from models.user import User
-from schemas.user import UserCreateRequest
+from schemas.user import UserCreateRequest, GoogleCallbackResponse
 
 # ✅ Redis 연결 (docker-compose 기준 redis 컨테이너)
 REDIS_URL = "redis://redis:6379/0"
@@ -117,30 +121,61 @@ class AuthService:
         return {"success": True}
 
     # ---------------------------
-    # 구글 로그인 (/auth/google)
+    # 구글 로그인 (/auth/google/callback)
     # ---------------------------
     @staticmethod
-    async def google_login(google_id: str, email: str) -> Dict[str, str]:
-        user = await UserRepository.get_user_by_email(email)
+    async def google_callback(code: str) -> dict[str, str]:
+        token_url = "https://oauth2.googleapis.com/token"
+        data = {
+            "code": code,
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+            "grant_type": "authorization_code",
+        }
 
+        # 1. 구글에 access_token + id_token 요청
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(token_url, data=data)
+            token_data = resp.json()
+
+        if "id_token" not in token_data:
+            raise Exception("GOOGLE_TOKEN_INVALID")
+
+        # 2. id_token 검증 → 사용자 정보 추출
+        idinfo = id_token.verify_oauth2_token(
+            token_data["id_token"],
+            requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+
+        google_id = idinfo["sub"]
+        email = idinfo["email"]
+        name = idinfo.get("name")
+
+        # 3. DB 조회 (기존 유저 여부 확인)
+        user = await UserRepository.get_user_by_email(email)
         if not user:
-            # ✅ 기존 create_user 시그니처에 맞게 기본 username, birthday 설정
+            # 신규 사용자 생성
             user = await UserRepository.create_user(
                 email=email,
-                password_hash=bcrypt.hash("oauth_dummy_password"),
-                username="소셜유저",  # 임시 기본값
-                birthday=date(2000, 1, 1),  # 임시 기본값
+                password_hash="",  # 소셜 로그인은 비밀번호 불필요
+                username=name or "구글사용자",
+                birthday=date(2000, 1, 1),  # 기본값
             )
-            # ✅ 소셜 필드 추가 설정
-            user.social_provider = "google"
-            user.social_id = google_id
+            user.google_id = google_id
             user.is_email_verified = True
             await user.save()
 
+        # 4. JWT 토큰 발급
         access_token = AuthService.create_access_token(user.id)
         refresh_token = AuthService.create_refresh_token(user.id)
 
-        return {"access_token": access_token, "refresh_token": refresh_token}
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+        }
 
     # ---------------------------
     # 토큰 갱신 (/auth/refresh)

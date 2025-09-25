@@ -11,7 +11,6 @@ from api.v1 import (
     users,
     todos,
     schedules,
-    notifications,
     inquiries,
     user_location,
     weather,
@@ -41,7 +40,6 @@ app.include_router(inquiries.router)
 app.include_router(schedules.router)
 app.include_router(todos.router)
 app.include_router(user_location.router)
-
 app.include_router(weather.router)
 app.include_router(quiz.router)       # 퀴즈 API
 app.include_router(news.router)       # 뉴스 API

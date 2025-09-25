@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException
+
+import core.google_handler
 from schemas.user import (
     UserCreateRequest,
     UserCreateResponse,
@@ -7,9 +9,10 @@ from schemas.user import (
     UserVerifyErrorResponse,
     UserLoginRequest,
     UserLoginResponse,
-    GoogleLoginRequest,
-    GoogleLoginResponse,
+    GoogleCallbackResponse,
+    GoogleLoginErrorResponse,
 )
+from fastapi.responses import RedirectResponse
 from services.user_service import UserService
 from services.auth_service import AuthService
 
@@ -67,20 +70,31 @@ async def login_user(request: UserLoginRequest) -> UserLoginResponse:
 
 
 # -----------------------------
-# 구글 로그인
+# 구글 로그인 관련
 # -----------------------------
-@router.post("/google", response_model=GoogleLoginResponse)
-async def google_login(request: GoogleLoginRequest) -> GoogleLoginResponse:
-    result = await AuthService.google_login(
-        google_id="dummy_google_id",   # 실제 구현 시 구글 토큰에서 추출
-        email="goturkey@example.com",  # 실제 구현 시 구글 API에서 추출
+@router.get("/google/login")
+async def google_login() -> RedirectResponse:
+    google_auth_url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        "?response_type=code"
+        f"&client_id={core.google_handler.GOOGLE_CLIENT_ID}"
+        f"&redirect_uri={core.google_handler.GOOGLE_CALLBACK_URI}"
+        "&scope=openid%20email%20profile"
     )
-    return GoogleLoginResponse(
-        access_token=result["access_token"],
-        refresh_token=result["refresh_token"],
-        token_type="bearer",
-    )
+    return RedirectResponse(url=google_auth_url)
 
+
+@router.get(
+    "/google/callback",
+    response_model=GoogleCallbackResponse,
+    responses={400: {"model": GoogleLoginErrorResponse}},
+)
+async def google_callback(code: str) -> GoogleCallbackResponse | GoogleLoginErrorResponse:
+    try:
+        data = await AuthService.google_callback(code)  # dict
+        return GoogleCallbackResponse(**data)           # 스키마 변환
+    except Exception:
+        return GoogleLoginErrorResponse(errors=["GOOGLE_TOKEN_INVALID"], status=[400])
 
 # -----------------------------
 # 토큰 갱신

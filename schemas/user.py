@@ -2,7 +2,6 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import date, datetime
 
-
 # ========================
 # 요청(Request)
 # ========================
@@ -55,18 +54,6 @@ class UserLoginRequest(BaseModel):
     }
 
 
-class GoogleLoginRequest(BaseModel):
-    access_token: str
-
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "access_token": "ya29.A0ARrdaM...",
-            }
-        }
-    }
-
-
 class UserUpdateRequest(BaseModel):
     username: Optional[str] = None
     bio: Optional[str] = None
@@ -96,15 +83,13 @@ class UserCreateResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = {"from_attributes": True}   # ✅ Pydantic v2
+    model_config = {"from_attributes": True}
 
 
 class UserVerifySuccessResponse(BaseModel):
     success: bool
 
-    model_config = {
-        "json_schema_extra": {"example": {"success": True}}
-    }
+    model_config = {"json_schema_extra": {"example": {"success": True}}}
 
 
 class UserVerifyErrorResponse(BaseModel):
@@ -136,8 +121,20 @@ class UserLoginResponse(BaseModel):
         }
     }
 
+#구글 로그인
+class GoogleCallbackRequest(BaseModel):
+    code: str
 
-class GoogleLoginResponse(BaseModel):
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "code": "4/0AfJohXyZ_example_code_from_google"
+            }
+        }
+    }
+
+
+class GoogleCallbackResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -153,6 +150,19 @@ class GoogleLoginResponse(BaseModel):
     }
 
 
+class GoogleLoginErrorResponse(BaseModel):
+    errors: List[str]
+    status: List[int]
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "errors": ["GOOGLE_TOKEN_INVALID", "GOOGLE_ID_CONFLICT"],
+                "status": [401, 409],
+            }
+        }
+    }
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr
@@ -161,26 +171,6 @@ class UserOut(BaseModel):
     is_email_verified: bool
     created_at: datetime
     updated_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class AdminUserOut(UserOut):
-    is_superuser: bool = False
-
-    model_config = {"from_attributes": True}
-
-
-class UserListResponse(BaseModel):
-    users: List[UserOut]
-    total: int
-
-    model_config = {"from_attributes": True}
-
-
-class AdminUserListResponse(BaseModel):
-    users: List[AdminUserOut]
-    total: int
 
     model_config = {"from_attributes": True}
 
@@ -196,10 +186,46 @@ class UserUpdateResponse(BaseModel):
 
 
 class UserDeleteResponse(BaseModel):
-    message: str = "User deleted successfully"
+    success: bool
 
     model_config = {
         "json_schema_extra": {
-            "example": {"message": "User deleted successfully"}
+            "example": {"success": True}
         }
     }
+#관리자
+class AdminUserOut(BaseModel):
+        id: int
+        email: EmailStr
+        username: str
+        is_active: bool
+        is_email_verified: bool
+        created_at: datetime
+        updated_at: datetime
+        is_superuser: bool = False  # ✅ 관리자 여부 (기본값 False)
+
+        model_config = {"from_attributes": True}
+
+class AdminUserListResponse(BaseModel):
+        users: List[AdminUserOut]
+        total: int
+
+        model_config = {
+            "json_schema_extra": {
+                "example": {
+                    "users": [
+                        {
+                            "id": 1,
+                            "email": "admin@example.com",
+                            "username": "관리자",
+                            "is_active": True,
+                            "is_email_verified": True,
+                            "created_at": "2025-09-25T12:00:00",
+                            "updated_at": "2025-09-25T12:00:00",
+                            "is_superuser": True,
+                        }
+                    ],
+                    "total": 1,
+                }
+            }
+        }

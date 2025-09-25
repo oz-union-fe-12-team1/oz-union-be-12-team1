@@ -2,6 +2,7 @@ README.md
 pyproject.toml
 core/config.py
 core/db.py
+core/google_handler.py
 core/security.py
 models/__init__.py
 models/inquiries.py
