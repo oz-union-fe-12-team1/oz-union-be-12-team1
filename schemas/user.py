@@ -95,7 +95,7 @@ class UserVerifySuccessResponse(BaseModel):
 
 class UserVerifyErrorResponse(BaseModel):
     errors: List[str]
-    status: List[int]
+    status: int
 
     model_config = {
         "json_schema_extra": {

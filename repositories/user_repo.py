@@ -19,13 +19,13 @@ class UserRepository:
         username: str,
         birthday: date,
     ) -> User:
-        """회원가입"""
+        """회원가입 (이메일 인증 후 최종 가입)"""
         user = await User.create(
             email=email,
             password_hash=password_hash,
             username=username,
             birthday=birthday,
-            is_email_verified=False,  # ✅ 기본: 인증 전
+            is_email_verified=True,  # ✅ 인증 완료 상태로 저장
         )
         return user
 
@@ -60,11 +60,15 @@ class UserRepository:
     # --------------------
     @staticmethod
     async def verify_user(user_id: int) -> Optional[User]:
-        """이메일 인증 완료 → is_email_verified=True 로 변경"""
+        """
+        (보조용) 이메일 인증 완료 상태로 업데이트.
+        현재 플로우에서는 잘 안 쓰이지만,
+        관리자가 수동으로 인증 처리할 때 사용 가능.
+        """
         user = await User.get_or_none(id=user_id)
         if not user:
             return None
-        user.is_email_verified = True   # ✅ 명세서 기준 필드
+        user.is_email_verified = True
         await user.save()
         return user
 
@@ -75,7 +79,7 @@ class UserRepository:
         bio: Optional[str] = None,
         profile_image: Optional[str] = None,
     ) -> Optional[User]:
-        """프로필 수정 (username, bio, profile_image)"""
+        """프로필 수정"""
         user = await User.get_or_none(id=user_id)
         if not user:
             return None
@@ -84,7 +88,7 @@ class UserRepository:
             user.username = username
         if bio is not None:
             user.bio = bio
-        if profile_image is not None:  # ✅ 사진이 들어왔을 때만 업데이트
+        if profile_image is not None:
             user.profile_image = profile_image
 
         await user.save()
@@ -101,4 +105,3 @@ class UserRepository:
             return False
         await user.delete()
         return True
-
