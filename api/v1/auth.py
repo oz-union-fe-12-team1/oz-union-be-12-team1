@@ -68,6 +68,39 @@ async def verify_email(request: UserVerifyRequest) -> Dict[str, bool]:
             raise HTTPException(status_code=400, detail=error)
     return {"success": True}
 
+#----------------------------
+# 비밀번호 재설정
+#----------------------------
+@router.post(
+    "/password/reset-request",
+    response_model=UserVerifySuccessResponse,
+    responses={404: {"model": UserVerifyErrorResponse}},
+)
+async def password_reset_request(email: str) -> dict[str, bool]:
+    result = await AuthService.request_password_reset(email)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return {"success": True}
+
+
+@router.post(
+    "/password/reset-confirm",
+    response_model=UserVerifySuccessResponse,
+    responses={400: {"model": UserVerifyErrorResponse}, 404: {"model": UserVerifyErrorResponse}},
+)
+async def password_reset_confirm(
+    email: str,
+    new_password: str,
+    new_password_check: str,
+) -> dict[str, bool]:
+    result = await AuthService.confirm_password_reset(email, new_password, new_password_check)
+    if not result.get("success"):
+        error = result.get("error")
+        if error == "USER_NOT_FOUND":
+            raise HTTPException(status_code=404, detail=error)
+        elif error == "PASSWORD_MISMATCH":
+            raise HTTPException(status_code=400, detail=error)
+    return {"success": True}
 
 # ---------------------------
 # 회원가입 (/auth/register)
@@ -99,8 +132,6 @@ async def login_user(request: UserLoginRequest) -> UserLoginResponse:
         refresh_token=result["refresh_token"],
         token_type="bearer",
     )
-
-
 # -----------------------------
 # 구글 로그인 관련
 # -----------------------------
