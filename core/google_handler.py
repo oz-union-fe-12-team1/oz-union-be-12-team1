@@ -3,8 +3,8 @@ import httpx
 from fastapi import HTTPException
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_SECRET")
-GOOGLE_CALLBACK_URI = os.getenv("GOOGLE_CALLBACK_URI", "http://localhost:8000/auth/google/callback")
+GOOGLE_SECRET = os.getenv("GOOGLE_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
 
 
 async def auth_google(code: str) -> dict[str, str]:
@@ -20,10 +20,10 @@ async def auth_google(code: str) -> dict[str, str]:
             token_url,
             data={
                 "client_id": GOOGLE_CLIENT_ID,
-                "client_secret": GOOGLE_CLIENT_SECRET,
+                "client_secret": GOOGLE_SECRET,
                 "code": code,
                 "grant_type": "authorization_code",
-                "redirect_uri": GOOGLE_CALLBACK_URI,
+                "redirect_uri": GOOGLE_REDIRECT_URI,
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )

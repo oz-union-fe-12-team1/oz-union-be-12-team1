@@ -1,5 +1,4 @@
 from typing import Any
-
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
@@ -21,14 +20,7 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = Field("postgres")
     POSTGRES_HOST: str = Field("db")
     POSTGRES_PORT: int = Field(5432)
-    DATABASE_URL: str | None = None  # env에 직접 DATABASE_URL 설정 가능
-
-    # ==============================
-    # Google Sheets
-    # ==============================
-    GOOGLE_CREDENTIALS_FILE: str = Field("google-credentials.json")
-    GOOGLE_SPREADSHEET_ID: str = Field("")
-    GOOGLE_SHEET_NAME: str = Field("quiz")
+    DATABASE_URL: str | None = None
 
     # ==============================
     # Gemini
@@ -41,11 +33,11 @@ class Settings(BaseSettings):
     OPENWEATHER_API_KEY: str = Field("")
 
     # ==============================
-    # Mail (FastAPI-Mail)
+    # Mail
     # ==============================
     MAIL_USERNAME: str = Field("example@example.com")
     MAIL_PASSWORD: str = Field("examplepassword")
-    MAIL_FROM: str | None = None  # 기본값은 MAIL_USERNAME로 아래 init에서 설정
+    MAIL_FROM: str | None = None
     MAIL_PORT: int = Field(587)
     MAIL_SERVER: str = Field("smtp.gmail.com")
     MAIL_STARTTLS: bool = Field(True)
@@ -54,26 +46,31 @@ class Settings(BaseSettings):
     VALIDATE_CERTS: bool = Field(True)
 
     # ==============================
-    # 앱 환경 설정
+    # 앱 환경
     # ==============================
     PYTHONUNBUFFERED: int = Field(1)
 
     # 구글 로그인
     GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
+    GOOGLE_SECRET: str
     GOOGLE_REDIRECT_URI: str
+
+    model_config = {
+        "env_file": ".env",
+        "extra": "ignore",
+    }
 
     # ==============================
     # Pydantic Settings Config
     # ==============================
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True,
+    }
 
-    def __init__(self, **values: Any) -> None:
-        super().__init__(**values)
-        # DATABASE_URL 없으면 기본 구성으로 생성
+    def model_post_init(self, __context: Any) -> None:
+        # DATABASE_URL 기본값 생성
         if not self.DATABASE_URL:
             self.DATABASE_URL = (
                 f"postgresql://{self.POSTGRES_USER}:"
@@ -81,10 +78,9 @@ class Settings(BaseSettings):
                 f"{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/"
                 f"{self.POSTGRES_DB}"
             )
-        # MAIL_FROM 없으면 MAIL_USERNAME 사용
+        # MAIL_FROM 기본값 설정
         if self.MAIL_FROM is None:
             self.MAIL_FROM = self.MAIL_USERNAME
 
 
-# 전역 인스턴스
 settings = Settings()
