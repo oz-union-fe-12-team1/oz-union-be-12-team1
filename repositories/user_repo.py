@@ -46,6 +46,11 @@ class UserRepository:
         return await User.filter(email=email).first()
 
     @staticmethod
+    async def get_user_by_username(username: str) -> Optional[User]:
+        """이름 기준 단일 조회"""
+        return await User.filter(username=username).first()
+
+    @staticmethod
     async def get_all_users() -> List[User]:
         """관리자 전용 전체 사용자 조회"""
         return await User.all().order_by("-created_at")

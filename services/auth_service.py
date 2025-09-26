@@ -6,7 +6,7 @@ import redis.asyncio as redis   # ✅ Redis 클라이언트
 from passlib.hash import bcrypt
 import httpx
 from google.oauth2 import id_token
-from google.auth.transport import requests
+import requests
 
 
 from core.config import settings
@@ -141,10 +141,12 @@ class AuthService:
                 # token_data = resp.json()
 
                 access_token = resp.json()['access_token']
-                user_info = f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={access_token}"
-                print(1)
-                user_response = requests.get(user_info)
-                print(2)
+                user_info = f"https://www.googleapis.com/oauth2/v1/userinfo"
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                }
+                user_response = requests.get(user_info, headers=headers)
+
 
                 if user_response.status_code != 200:
                     raise Exception
@@ -153,11 +155,10 @@ class AuthService:
             raise Exception("google oauth error")
 
         info = user_response.json()
-        print(3)
         name=info.get('name')
         email=info.get('email')
-        google_id=info.get('id')
-        print(4)
+        google_id=info.get('id_token')
+        print(name, email, google_id)
 
         # if "id_token" not in token_data:
         #     raise Exception("GOOGLE_TOKEN_INVALID")

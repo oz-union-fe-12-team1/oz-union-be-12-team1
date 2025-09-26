@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from typing import Union
 
 import core.google_handler
 from schemas.user import (
@@ -88,10 +89,10 @@ async def google_login() -> RedirectResponse:
 
 @router.get(
     "/google/callback",
-    response_model=GoogleCallbackResponse|GoogleCallbackResponse,
+    response_model=GoogleCallbackResponse,
     responses={400: {"model": GoogleLoginErrorResponse}},
 )
-async def google_callback(code: str) -> GoogleCallbackResponse:
+async def google_callback(code: str) -> Union[GoogleCallbackResponse,GoogleLoginErrorResponse]:
     try:
         data = await AuthService.google_callback(code)  # dict
         return GoogleCallbackResponse(**data)           # 스키마 변환

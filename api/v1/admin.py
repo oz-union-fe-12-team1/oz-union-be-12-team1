@@ -23,14 +23,19 @@ async def get_all_users(
 # -----------------------------
 # 특정 사용자 조회 (관리자 전용)
 # -----------------------------
-@router.get("/users/{user_id}", response_model=AdminUserOut)
-async def get_user(
-    user_id: int,
+@router.get("/users/{search}", response_model=AdminUserOut)
+async def search_user(
+    search: str,
     current_admin: User = Depends(get_current_admin),  # ✅ 의존성 추가
 ) -> AdminUserOut:
-    user = await UserService.get_user_by_id(user_id)
+    if "@" in search:
+        user = await UserService.get_user_by_email(search)  # 이메일 검색
+    else:
+        user = await UserService.get_user_by_username(search)  # 닉네임 검색
+
     if not user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
+
     return AdminUserOut.model_validate(user)
 
 # -----------------------------
