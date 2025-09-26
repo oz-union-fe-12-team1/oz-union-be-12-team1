@@ -108,20 +108,15 @@ class UserVerifyErrorResponse(BaseModel):
 
 
 class UserLoginResponse(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
+    success: bool
 
     model_config = {
         "json_schema_extra": {
             "example": {
-                "access_token": "eyJhbGciOiJIUzI1NiIs...",
-                "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
-                "token_type": "bearer",
+                "success": True
             }
         }
     }
-
 #구글 로그인
 class GoogleCallbackRequest(BaseModel):
     code: str
