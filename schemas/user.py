@@ -63,6 +63,7 @@ class UserUpdateRequest(BaseModel):
         "json_schema_extra": {
             "example": {
                 "username": "고터키",
+                "birthday": "1995-05-21",
                 "bio": "안녕하세요!",
                 "profile_image": "https://example.com/profile.png",
             }
@@ -94,7 +95,7 @@ class UserVerifySuccessResponse(BaseModel):
 
 class UserVerifyErrorResponse(BaseModel):
     errors: List[str]
-    status: List[int]
+    status: int
 
     model_config = {
         "json_schema_extra": {

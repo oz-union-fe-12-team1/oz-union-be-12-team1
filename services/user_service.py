@@ -23,6 +23,11 @@ class UserService:
         return await UserRepository.get_user_by_email(email)
 
     @staticmethod
+    async def get_user_by_username(username: str) -> Optional[User]:
+        """이메일 기준 단일 유저 조회"""
+        return await UserRepository.get_user_by_username(username)
+
+    @staticmethod
     async def get_all_users() -> List[User]:
         """전체 유저 목록 (관리자 전용)"""
         return await UserRepository.get_all_users()
