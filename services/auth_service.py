@@ -129,7 +129,7 @@ class AuthService:
         data = {
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
-            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "client_secret": settings.GOOGLE_SECRET,
             "redirect_uri": settings.GOOGLE_REDIRECT_URI,
             "grant_type": "authorization_code",
         }
