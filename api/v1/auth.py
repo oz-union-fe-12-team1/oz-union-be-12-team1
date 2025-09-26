@@ -79,17 +79,19 @@ async def google_login() -> RedirectResponse:
         "?response_type=code"
         f"&client_id={core.google_handler.GOOGLE_CLIENT_ID}"
         f"&redirect_uri={core.google_handler.GOOGLE_REDIRECT_URI}"
-        "&scope=openid%20email%20profile"
+        "&scope=openid email profile"
     )
+
+    print(google_auth_url)
     return RedirectResponse(url=google_auth_url)
 
 
 @router.get(
     "/google/callback",
-    response_model=GoogleCallbackResponse,
+    response_model=GoogleCallbackResponse|GoogleCallbackResponse,
     responses={400: {"model": GoogleLoginErrorResponse}},
 )
-async def google_callback(code: str) -> GoogleCallbackResponse | GoogleLoginErrorResponse:
+async def google_callback(code: str) -> GoogleCallbackResponse:
     try:
         data = await AuthService.google_callback(code)  # dict
         return GoogleCallbackResponse(**data)           # 스키마 변환

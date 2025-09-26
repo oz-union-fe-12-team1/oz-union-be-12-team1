@@ -63,6 +63,7 @@ class UserUpdateRequest(BaseModel):
         "json_schema_extra": {
             "example": {
                 "username": "고터키",
+                "birthday": "1995-05-21",
                 "bio": "안녕하세요!",
                 "profile_image": "https://example.com/profile.png",
             }
