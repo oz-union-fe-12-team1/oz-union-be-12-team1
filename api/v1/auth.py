@@ -78,7 +78,7 @@ async def google_login() -> RedirectResponse:
         "https://accounts.google.com/o/oauth2/v2/auth"
         "?response_type=code"
         f"&client_id={core.google_handler.GOOGLE_CLIENT_ID}"
-        f"&redirect_uri={core.google_handler.GOOGLE_CALLBACK_URI}"
+        f"&redirect_uri={core.google_handler.GOOGLE_REDIRECT_URI}"
         "&scope=openid%20email%20profile"
     )
     return RedirectResponse(url=google_auth_url)
