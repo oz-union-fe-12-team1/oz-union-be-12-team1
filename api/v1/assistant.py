@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, validator
 from tortoise.expressions import Q
@@ -13,7 +15,7 @@ class ChatRequest(BaseModel):
     message: str
 
     @validator("message")
-    def validate_message(cls, v):
+    def validate_message(self, v: str) -> str:
         if len(v) > 200:
             raise ValueError("메시지는 200자 이내여야 합니다.")
         if any(bad in v.lower() for bad in BAD_WORDS):
@@ -24,7 +26,7 @@ class ChatRequest(BaseModel):
 
 
 @router.post("/assistant")
-async def chat_with_assistant(request: ChatRequest):
+async def chat_with_assistant(request: ChatRequest) -> dict[str, Any]:
     """AI 어시스턴트 기본 대화"""
     user_message = request.message.strip()
 

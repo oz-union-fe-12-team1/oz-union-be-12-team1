@@ -1,11 +1,19 @@
+from typing import TYPE_CHECKING
+
 from tortoise import fields
+from tortoise.fields import ForeignKeyRelation
 from tortoise.models import Model
 
+from models.user import User
+
+if TYPE_CHECKING:
+    from models.todo import Todo
+    from models.notifications import Notification
 
 class Schedule(Model):
     id = fields.BigIntField(pk=True)  # SERIAL → BigIntField
 
-    user = fields.ForeignKeyField(
+    user: ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User",
         related_name="schedules",
         on_delete=fields.CASCADE

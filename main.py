@@ -1,3 +1,5 @@
+from typing import AsyncIterator
+
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from core.db import init_db, close_db
@@ -9,7 +11,6 @@ from api.v1 import (
     users,
     todos,
     schedules,
-    notifications,
     inquiries,
     user_location,
     weather,
@@ -20,7 +21,7 @@ from api.v1 import (
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await init_db()
     try:
         yield
@@ -39,13 +40,11 @@ app.include_router(inquiries.router)
 app.include_router(schedules.router)
 app.include_router(todos.router)
 app.include_router(user_location.router)
-
 app.include_router(weather.router)
 app.include_router(quiz.router)       # 퀴즈 API
 app.include_router(news.router)       # 뉴스 API
 app.include_router(gemini.router)     # 제미나이 API
 
-
-@app.get("/")
-def root():
-    return {"message": "Hello, FastAPI is running!"}
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

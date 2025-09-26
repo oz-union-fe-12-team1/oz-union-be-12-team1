@@ -20,7 +20,7 @@ router = APIRouter(prefix="/schedules", tags=["schedules"])
 async def create_schedule(
     request: ScheduleCreateRequest,
     current_user: User = Depends(get_current_user),
-):
+) -> ScheduleOut:
     return await ScheduleService.create_schedule(
         user_id=current_user.id,
         **request.model_dump()
@@ -31,16 +31,16 @@ async def create_schedule(
 # 2. 내 일정 목록 조회
 # -----------------------------
 @router.get("/me", response_model=ScheduleListOut)
-async def get_my_schedules(current_user: User = Depends(get_current_user)):
+async def get_my_schedules(current_user: User = Depends(get_current_user)) -> ScheduleListOut:
     schedules = await ScheduleService.get_schedules_by_user(current_user.id)
-    return {"schedules": schedules, "total": len(schedules)}
+    return ScheduleListOut(schedules=schedules, total=len(schedules))
 
 
 # -----------------------------
 # 3. 단일 일정 조회
 # -----------------------------
 @router.get("/{schedule_id}", response_model=ScheduleOut)
-async def get_schedule(schedule_id: int, current_user: User = Depends(get_current_user)):
+async def get_schedule(schedule_id: int, current_user: User = Depends(get_current_user)) -> ScheduleOut:
     schedule = await ScheduleService.get_schedule_by_id(schedule_id)
     if not schedule:
         raise HTTPException(status_code=404, detail="SCHEDULE_NOT_FOUND")
@@ -48,7 +48,7 @@ async def get_schedule(schedule_id: int, current_user: User = Depends(get_curren
     if schedule.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
 
-    return schedule
+    return ScheduleOut.model_validate(schedule)
 
 
 # -----------------------------
@@ -59,7 +59,7 @@ async def update_schedule(
     schedule_id: int,
     request: ScheduleUpdateRequest,
     current_user: User = Depends(get_current_user),
-):
+) -> ScheduleOut:
     schedule = await ScheduleService.get_schedule_by_id(schedule_id)
     if not schedule:
         raise HTTPException(status_code=404, detail="SCHEDULE_NOT_FOUND")
@@ -70,7 +70,7 @@ async def update_schedule(
     updated = await ScheduleService.update_schedule(
         schedule_id, **request.model_dump(exclude_unset=True)
     )
-    return updated
+    return ScheduleOut.model_validate(updated)
 
 
 # -----------------------------
@@ -81,7 +81,7 @@ async def delete_schedule(
     schedule_id: int,
     hard: bool = Query(False, description="True면 완전 삭제, False면 소프트 삭제"),
     current_user: User = Depends(get_current_user),
-):
+) -> ScheduleDeleteResponse:
     schedule = await ScheduleService.get_schedule_by_id(schedule_id)
     if not schedule:
         raise HTTPException(status_code=404, detail="SCHEDULE_NOT_FOUND")

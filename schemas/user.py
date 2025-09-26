@@ -6,94 +6,163 @@ from datetime import date, datetime
 # 요청(Request)
 # ========================
 
-# 👉 회원가입 요청
 class UserCreateRequest(BaseModel):
-    email: EmailStr = Field(..., example="goturkey@example.com")
-    password: str = Field(..., example="password123!")
-    password_check: str = Field(..., example="password123!")  # ✅ 비밀번호 재입력
-    username: str = Field(..., example="고터키")
-    birthday: date = Field(..., example="1995-05-21")  # ✅ 완료테이블 맞춤
+    email: EmailStr
+    password: str
+    password_check: str
+    username: str
+    birthday: date
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "email": "goturkey@example.com",
                 "password": "password123!",
                 "password_check": "password123!",
                 "username": "고터키",
-                "birthday": "1995-05-21"
+                "birthday": "1995-05-21",
             }
         }
+    }
 
 
-# 👉 이메일 인증 요청
 class UserVerifyRequest(BaseModel):
-    email: EmailStr = Field(..., example="goturkey@example.com")   # ✅ token → email+code 구조
-    code: str = Field(..., example="123456")                       # ✅ 수정됨
+    email: EmailStr
+    code: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "goturkey@example.com",
+                "code": "123456",
+            }
+        }
+    }
 
 
-# 👉 로그인 요청
 class UserLoginRequest(BaseModel):
-    email: EmailStr = Field(..., example="goturkey@example.com")
-    password: str = Field(..., example="password123!")
+    email: EmailStr
+    password: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "goturkey@example.com",
+                "password": "password123!",
+            }
+        }
+    }
 
 
-# 👉 구글 로그인 요청
-class GoogleLoginRequest(BaseModel):
-    access_token: str = Field(..., example="ya29.A0ARrdaM...")
-
-
-# 👉 사용자 정보 수정 요청
 class UserUpdateRequest(BaseModel):
-    username: Optional[str] = Field(None, example="고터키")
-    bio: Optional[str] = Field(None, example="안녕하세요!")  # ✅ 완료테이블 반영
-    profile_image: Optional[str] = Field(None, example="https://example.com/profile.png")
+    username: Optional[str] = None
+    bio: Optional[str] = None
+    profile_image: Optional[str] = None
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "username": "고터키",
+                "bio": "안녕하세요!",
+                "profile_image": "https://example.com/profile.png",
+            }
+        }
+    }
 
 
 # ========================
 # 응답(Response)
 # ========================
 
-# 👉 회원가입 성공 응답
 class UserCreateResponse(BaseModel):
-    id: int = Field(..., example=42)
-    email: EmailStr = Field(..., example="goturkey@example.com")
-    username: str = Field(..., example="고터키")
-    birthday: date = Field(..., example="1995-05-21")  # ✅ 완료테이블 반영
-    is_email_verified: bool = Field(False, example=False)
-    created_at: datetime = Field(..., example="2025-09-18T12:34:56")
-    updated_at: datetime = Field(..., example="2025-09-18T12:34:56")
+    id: int
+    email: EmailStr
+    username: str
+    birthday: date
+    is_email_verified: bool
+    created_at: datetime
+    updated_at: datetime
 
-    class Config:
-        from_attributes = True   # ✅ Pydantic v2
+    model_config = {"from_attributes": True}
 
 
-# 👉 이메일 인증 성공 응답
 class UserVerifySuccessResponse(BaseModel):
-    success: bool = Field(..., example=True)
+    success: bool
+
+    model_config = {"json_schema_extra": {"example": {"success": True}}}
 
 
-# 👉 이메일 인증 실패 응답
 class UserVerifyErrorResponse(BaseModel):
-    errors: List[str] = Field(..., example=["CODE_INVALID", "CODE_EXPIRED"])  # ✅ TOKEN → CODE
-    status: List[int] = Field(..., example=[400])
+    errors: List[str]
+    status: List[int]
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "errors": ["CODE_INVALID", "CODE_EXPIRED"],
+                "status": [400],
+            }
+        }
+    }
 
 
-# 👉 로그인 성공 응답
 class UserLoginResponse(BaseModel):
-    access_token: str = Field(..., example="eyJhbGciOiJIUzI1NiIs...")
-    refresh_token: str = Field(..., example="eyJhbGciOiJIUzI1NiIs...")
-    token_type: str = Field("bearer", example="bearer")
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "access_token": "eyJhbGciOiJIUzI1NiIs...",
+                "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+                "token_type": "bearer",
+            }
+        }
+    }
+
+#구글 로그인
+class GoogleCallbackRequest(BaseModel):
+    code: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "code": "4/0AfJohXyZ_example_code_from_google"
+            }
+        }
+    }
 
 
-# 👉 구글 로그인 성공 응답
-class GoogleLoginResponse(BaseModel):
-    access_token: str = Field(..., example="eyJhbGciOiJIUzI1NiIs...")
-    refresh_token: str = Field(..., example="eyJhbGciOiJIUzI1NiIs...")
-    token_type: str = Field("bearer", example="bearer")
+class GoogleCallbackResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "access_token": "eyJhbGciOiJIUzI1NiIs...",
+                "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+                "token_type": "bearer",
+            }
+        }
+    }
 
 
-# 👉 단일 사용자 조회 응답 (일반 사용자)
+class GoogleLoginErrorResponse(BaseModel):
+    errors: List[str]
+    status: List[int]
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "errors": ["GOOGLE_TOKEN_INVALID", "GOOGLE_ID_CONFLICT"],
+                "status": [401, 409],
+            }
+        }
+    }
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr
@@ -103,37 +172,9 @@ class UserOut(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
-# 👉 관리자 전용 단일 조회 응답 (superuser 포함)
-class AdminUserOut(UserOut):
-    is_superuser: bool = Field(False, example=False)
-
-    class Config:
-        from_attributes = True
-
-
-# 👉 사용자 목록 조회 응답 (일반 사용자)
-class UserListResponse(BaseModel):
-    users: List[UserOut]
-    total: int
-
-    class Config:
-        from_attributes = True
-
-
-# 👉 관리자 전용 사용자 목록 조회 응답
-class AdminUserListResponse(BaseModel):
-    users: List[AdminUserOut]
-    total: int
-
-    class Config:
-        from_attributes = True
-
-
-# 👉 사용자 정보 수정 응답
 class UserUpdateResponse(BaseModel):
     id: int
     username: str
@@ -141,10 +182,50 @@ class UserUpdateResponse(BaseModel):
     profile_image: Optional[str] = None
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
-# 👉 사용자 삭제 응답
 class UserDeleteResponse(BaseModel):
-    message: str = Field("User deleted successfully", example="User deleted successfully")
+    success: bool
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {"success": True}
+        }
+    }
+#관리자
+class AdminUserOut(BaseModel):
+        id: int
+        email: EmailStr
+        username: str
+        is_active: bool
+        is_email_verified: bool
+        created_at: datetime
+        updated_at: datetime
+        is_superuser: bool = False  # ✅ 관리자 여부 (기본값 False)
+
+        model_config = {"from_attributes": True}
+
+class AdminUserListResponse(BaseModel):
+        users: List[AdminUserOut]
+        total: int
+
+        model_config = {
+            "json_schema_extra": {
+                "example": {
+                    "users": [
+                        {
+                            "id": 1,
+                            "email": "admin@example.com",
+                            "username": "관리자",
+                            "is_active": True,
+                            "is_email_verified": True,
+                            "created_at": "2025-09-25T12:00:00",
+                            "updated_at": "2025-09-25T12:00:00",
+                            "is_superuser": True,
+                        }
+                    ],
+                    "total": 1,
+                }
+            }
+        }

@@ -7,6 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     UV_SYSTEM_PYTHON=1
 
+# 기본 패키지 설치
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 curl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
@@ -17,15 +18,37 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-# 의존성 먼저 복사/설치 (캐시 최적화)
+# -------------------------
+# 1. 의존성 정의 파일 먼저 복사
+# -------------------------
 COPY pyproject.toml uv.lock* ./
-RUN uv venv /opt/venv && . /opt/venv/bin/activate && uv sync --frozen --no-dev
+COPY README.md ./
+
+# -------------------------
+# 2. 최소한 setup에 필요한 소스 디렉토리 복사
+# -------------------------
+COPY api ./api
+COPY core ./core
+COPY models ./models
+COPY services ./services
+COPY repositories ./repositories
+COPY schemas ./schemas
+
+# -------------------------
+# 3. 가상환경 생성 + 의존성 설치
+# -------------------------
+RUN uv venv /opt/venv \
+ && . /opt/venv/bin/activate \
+ && uv sync --frozen --no-dev
+
 ENV PATH="/opt/venv/bin:${PATH}"
 
-# 애플리케이션 전체 복사 ( 루트의 모든 폴더/파일)
+# -------------------------
+# 4. 나머지 애플리케이션 전체 복사
+# -------------------------
 COPY . .
 
 EXPOSE 8000
 
-# 엔트리포인트: 네 트리 기준으로 main.py 안의 FastAPI 인스턴스 이름이 app 이라고 가정
+# 엔트리포인트 (main.py 안에 FastAPI app 가정)
 CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

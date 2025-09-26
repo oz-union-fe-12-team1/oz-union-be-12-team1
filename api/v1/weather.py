@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Query, HTTPException
 import httpx, os
 from datetime import datetime
@@ -6,7 +8,7 @@ router = APIRouter()
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 @router.get("/weather")
-async def get_current_weather(lat: float = Query(...), lon: float = Query(...)):
+async def get_current_weather(lat: float = Query(...), lon: float = Query(...)) -> dict[str, Any]:
     url = "http://api.openweathermap.org/data/2.5/weather"
     params = {"lat": lat, "lon": lon, "appid": OPENWEATHER_API_KEY, "units": "metric", "lang": "kr"}
 

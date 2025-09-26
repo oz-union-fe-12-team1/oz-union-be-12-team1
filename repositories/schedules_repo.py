@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from tortoise.exceptions import DoesNotExist
 from datetime import datetime, timezone
 from models.schedules import Schedule
@@ -63,7 +63,7 @@ class ScheduleRepository:
     # UPDATE
     # --------------------
     @staticmethod
-    async def update_schedule(schedule_id: int, **kwargs) -> Optional[Schedule]:
+    async def update_schedule(schedule_id: int, **kwargs: Any) -> Optional[Schedule]:
         """일정 업데이트"""
         schedule = await Schedule.get_or_none(id=schedule_id)
         if schedule:

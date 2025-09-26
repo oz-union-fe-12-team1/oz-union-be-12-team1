@@ -1,26 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException
 from schemas.user import (
-    UserOut,
+    UserCreateResponse,   # ✅ 조회 시 재활용
     UserUpdateRequest,
     UserUpdateResponse,
     UserDeleteResponse,
 )
 from services.user_service import UserService
 from models.user import User
-from core.security import get_current_user   # ✅ core/security.py 의 인증 유틸 사용
+from core.security import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 # -----------------------------
 # 내 프로필 조회
 # -----------------------------
-@router.get("/me", response_model=UserOut)
-async def get_my_profile(current_user: User = Depends(get_current_user)):
-    """
-    로그인한 사용자 본인의 프로필 조회
-    """
-    return UserOut.from_orm(current_user)
-
+@router.get("/me", response_model=UserCreateResponse)
+async def get_my_profile(current_user: User = Depends(get_current_user)) -> UserCreateResponse:
+    return UserCreateResponse.model_validate(current_user)
 
 # -----------------------------
 # 내 프로필 수정
@@ -29,10 +25,7 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
 async def update_my_profile(
     request: UserUpdateRequest,
     current_user: User = Depends(get_current_user),
-):
-    """
-    로그인한 사용자 본인의 프로필 수정
-    """
+) -> UserUpdateResponse:
     updated_user = await UserService.update_profile(
         user_id=current_user.id,
         username=request.username,
@@ -41,20 +34,14 @@ async def update_my_profile(
     )
     if not updated_user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
-
-    return UserUpdateResponse.from_orm(updated_user)   # ✅ 스키마 매핑 통일
-
+    return UserUpdateResponse.model_validate(updated_user)
 
 # -----------------------------
 # 회원 탈퇴
 # -----------------------------
 @router.delete("/me", response_model=UserDeleteResponse)
-async def delete_my_account(current_user: User = Depends(get_current_user)):
-    """
-    로그인한 사용자 본인 계정 삭제
-    """
+async def delete_my_account(current_user: User = Depends(get_current_user)) -> UserDeleteResponse:
     deleted = await UserService.delete_user(current_user.id)
     if not deleted:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
-
-    return UserDeleteResponse(message="User deleted successfully")  # ✅ 응답 스키마 통일
+    return UserDeleteResponse(success=True)
