@@ -43,10 +43,7 @@ class UserRepository:
     @staticmethod
     async def get_user_by_email(email: str) -> Optional[User]:
         """이메일 기준 단일 조회"""
-        try:
-            return await User.get(email=email)
-        except DoesNotExist:
-            return None
+        return await User.filter(email=email).first()
 
     @staticmethod
     async def get_all_users() -> List[User]:
@@ -99,3 +96,4 @@ class UserRepository:
             return False
         await user.delete()
         return True
+
