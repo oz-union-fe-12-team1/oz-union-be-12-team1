@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from typing import Union
 
 import core.google_handler
 from schemas.user import (
@@ -79,8 +80,10 @@ async def google_login() -> RedirectResponse:
         "?response_type=code"
         f"&client_id={core.google_handler.GOOGLE_CLIENT_ID}"
         f"&redirect_uri={core.google_handler.GOOGLE_REDIRECT_URI}"
-        "&scope=openid%20email%20profile"
+        "&scope=openid email profile"
     )
+
+    print(google_auth_url)
     return RedirectResponse(url=google_auth_url)
 
 
@@ -89,7 +92,7 @@ async def google_login() -> RedirectResponse:
     response_model=GoogleCallbackResponse,
     responses={400: {"model": GoogleLoginErrorResponse}},
 )
-async def google_callback(code: str) -> GoogleCallbackResponse | GoogleLoginErrorResponse:
+async def google_callback(code: str) -> Union[GoogleCallbackResponse,GoogleLoginErrorResponse]:
     try:
         data = await AuthService.google_callback(code)  # dict
         return GoogleCallbackResponse(**data)           # 스키마 변환

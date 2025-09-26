@@ -6,7 +6,7 @@ import redis.asyncio as redis   # ✅ Redis 클라이언트
 from passlib.hash import bcrypt
 import httpx
 from google.oauth2 import id_token
-from google.auth.transport import requests
+import requests
 
 
 from core.config import settings
@@ -125,33 +125,54 @@ class AuthService:
     # ---------------------------
     @staticmethod
     async def google_callback(code: str) -> dict[str, str]:
-        token_url = "https://oauth2.googleapis.com/token"
-        data = {
-            "code": code,
-            "client_id": settings.GOOGLE_CLIENT_ID,
-            "client_secret": settings.GOOGLE_SECRET,
-            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
-            "grant_type": "authorization_code",
-        }
+        try:
+            token_url = "https://oauth2.googleapis.com/token"
+            data = {
+                "code": code,
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_SECRET,
+                "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+                "grant_type": "authorization_code",
+            }
 
-        # 1. 구글에 access_token + id_token 요청
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(token_url, data=data)
-            token_data = resp.json()
+            # 1. 구글에 access_token + id_token 요청
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(token_url, data=data)
+                # token_data = resp.json()
 
-        if "id_token" not in token_data:
-            raise Exception("GOOGLE_TOKEN_INVALID")
+                access_token = resp.json()['access_token']
+                user_info = f"https://www.googleapis.com/oauth2/v1/userinfo"
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                }
+                user_response = requests.get(user_info, headers=headers)
 
-        # 2. id_token 검증 → 사용자 정보 추출
-        idinfo = id_token.verify_oauth2_token(
-            token_data["id_token"],
-            requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
-        )
 
-        google_id = idinfo["sub"]
-        email = idinfo["email"]
-        name = idinfo.get("name")
+                if user_response.status_code != 200:
+                    raise Exception
+
+        except:
+            raise Exception("google oauth error")
+
+        info = user_response.json()
+        name=info.get('name')
+        email=info.get('email')
+        google_id=info.get('id_token')
+        print(name, email, google_id)
+
+        # if "id_token" not in token_data:
+        #     raise Exception("GOOGLE_TOKEN_INVALID")
+
+        # # 2. id_token 검증 → 사용자 정보 추출
+        # idinfo = id_token.verify_oauth2_token(
+        #     token_data["id_token"],
+        #     requests.Request(),
+        #     settings.GOOGLE_CLIENT_ID,
+        # )
+        #
+        # google_id = idinfo["sub"]
+        # email = idinfo["email"]
+        # name = idinfo.get("name")
 
         # 3. DB 조회 (기존 유저 여부 확인)
         user = await UserRepository.get_user_by_email(email)
