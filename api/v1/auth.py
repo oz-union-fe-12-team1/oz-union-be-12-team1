@@ -144,10 +144,11 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
 # -----------------------------
 # 구글 로그인 관련
 # -----------------------------
+
 # @router.get("/google/login")
 # async def google_login() -> RedirectResponse:
 #     google_auth_url = (
-#         "https://accounts.google.com/o/oauth2/v2/auth"
+#         "https://openidconnect.googleapis.com/v1/userinfo"
 #         "?response_type=code"
 #         f"&client_id={core.google_handler.GOOGLE_CLIENT_ID}"
 #         f"&redirect_uri={core.google_handler.GOOGLE_REDIRECT_URI}"
