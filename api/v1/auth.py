@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from typing import Dict, Union
 
 import core.google_handler
@@ -68,6 +68,39 @@ async def verify_email(request: UserVerifyRequest) -> Dict[str, bool]:
             raise HTTPException(status_code=400, detail=error)
     return {"success": True}
 
+#----------------------------
+# 비밀번호 재설정
+#----------------------------
+@router.post(
+    "/password/reset-request",
+    response_model=UserVerifySuccessResponse,
+    responses={404: {"model": UserVerifyErrorResponse}},
+)
+async def password_reset_request(email: str) -> dict[str, bool]:
+    result = await AuthService.request_password_reset(email)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return {"success": True}
+
+
+@router.post(
+    "/password/reset-confirm",
+    response_model=UserVerifySuccessResponse,
+    responses={400: {"model": UserVerifyErrorResponse}, 404: {"model": UserVerifyErrorResponse}},
+)
+async def password_reset_confirm(
+    email: str,
+    new_password: str,
+    new_password_check: str,
+) -> dict[str, bool]:
+    result = await AuthService.confirm_password_reset(email, new_password, new_password_check)
+    if not result.get("success"):
+        error = result.get("error")
+        if error == "USER_NOT_FOUND":
+            raise HTTPException(status_code=404, detail=error)
+        elif error == "PASSWORD_MISMATCH":
+            raise HTTPException(status_code=400, detail=error)
+    return {"success": True}
 
 # ---------------------------
 # 회원가입 (/auth/register)
@@ -89,25 +122,34 @@ async def register_user(request: UserCreateRequest) -> UserCreateResponse:
 # 로그인
 # -----------------------------
 @router.post("/login", response_model=UserLoginResponse)
-async def login_user(request: UserLoginRequest) -> UserLoginResponse:
+async def login_user(request: UserLoginRequest, response: Response) -> UserLoginResponse:
     result = await AuthService.login(request.email, request.password)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
-
-    return UserLoginResponse(
-        access_token=result["access_token"],
-        refresh_token=result["refresh_token"],
-        token_type="bearer",
+    response.set_cookie(
+        key="access_token",
+        value=result["access_token"],
+        httponly=True,
+        secure=True,
+        samesite="lax"
     )
-
+    response.set_cookie(
+        key="refresh_token",
+        value=result["refresh_token"],
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    return UserLoginResponse(success=True)
 
 # -----------------------------
 # 구글 로그인 관련
 # -----------------------------
+
 # @router.get("/google/login")
 # async def google_login() -> RedirectResponse:
 #     google_auth_url = (
-#         "https://accounts.google.com/o/oauth2/v2/auth"
+#         "https://openidconnect.googleapis.com/v1/userinfo"
 #         "?response_type=code"
 #         f"&client_id={core.google_handler.GOOGLE_CLIENT_ID}"
 #         f"&redirect_uri={core.google_handler.GOOGLE_REDIRECT_URI}"
@@ -134,16 +176,29 @@ async def login_user(request: UserLoginRequest) -> UserLoginResponse:
 # 토큰 갱신
 # -----------------------------
 @router.post("/refresh", response_model=UserLoginResponse)
-async def refresh_token(refresh_token: str) -> UserLoginResponse:
+async def refresh_token(response: Response, refresh_token: str) -> UserLoginResponse:
     new_access = await AuthService.refresh_token(refresh_token)
     if not new_access:
         raise HTTPException(status_code=400, detail="TOKEN_INVALID_OR_EXPIRED")
 
-    return UserLoginResponse(
-        access_token=new_access,
-        refresh_token=refresh_token,
-        token_type="bearer",
+    #새 access_token을 쿠키에 갱신
+    response.set_cookie(
+        key="access_token",
+        value=new_access,
+        httponly=True,
+        secure=True,
+        samesite="lax"
     )
+    # refresh_token도 그대로 갱신(선택)
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+
+    return UserLoginResponse(success=True)
 
 
 # -----------------------------

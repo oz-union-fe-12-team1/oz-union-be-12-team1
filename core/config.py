@@ -4,6 +4,8 @@ from pydantic import Field
 
 
 class Settings(BaseSettings):
+    #CORS
+    CORS_ALLOW_ORIGINS: list[str] = ["*"]
     # ==============================
     # JWT / 토큰
     # ==============================
