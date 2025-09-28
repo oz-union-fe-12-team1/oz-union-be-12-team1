@@ -141,7 +141,6 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         samesite="lax"
     )
     return UserLoginResponse(success=True)
-
 # -----------------------------
 # 구글 로그인 관련
 # -----------------------------

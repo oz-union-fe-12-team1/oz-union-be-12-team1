@@ -112,7 +112,30 @@ class AuthService:
         await redis_client.delete(f"verify:success:{request.email}")
 
         return user
+    #----------------------------
+    # 비밀번호 재설정 /auth/password/reset-request, /auth/password/reset-confirm
+    #----------------------------
+    @staticmethod
+    async def request_password_reset(email: str) -> dict[str, bool|str]:
+        user = await UserRepository.get_user_by_email(email)
+        if not user:
+            return {"success": False}
+        return {"success": True}
 
+    @staticmethod
+    async def confirm_password_reset(email: str, new_password: str, new_password_check: str) -> dict[str, bool]:
+        """비밀번호 재설정: 새 비밀번호 저장"""
+        if new_password != new_password_check:
+            return {"success": False}
+
+        user = await UserRepository.get_user_by_email(email)
+        if not user:
+            return {"success": False}
+
+        user.password_hash = bcrypt.hash(new_password)
+        await user.save()
+
+        return {"success": True}
     # ---------------------------
     # 로그인 (/auth/login)
     # ---------------------------
