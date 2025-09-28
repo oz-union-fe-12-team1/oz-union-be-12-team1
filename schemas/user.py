@@ -225,3 +225,46 @@ class AdminUserListResponse(BaseModel):
                 }
             }
         }
+
+#  비밀번호 재설정 요청
+class PasswordResetConfirm(BaseModel):
+    email: EmailStr
+    new_password: str
+    new_password_check: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "old_password123",
+                "new_password": "new_password123",
+                "new_password_check": "new_password123"
+            }
+        }
+    }
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "test@test.com",
+            }
+        }
+    }
+
+#비밀번호 번경
+class PasswordChangeRequest(BaseModel):
+    old_password: str
+    new_password: str
+    new_password_check: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "old_password": "old_password123",
+                "new_password": "new_password123",
+                "new_password_check": "new_password123"
+            }
+        }
+    }

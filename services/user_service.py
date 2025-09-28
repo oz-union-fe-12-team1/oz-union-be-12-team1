@@ -1,4 +1,5 @@
 from typing import Optional, List
+from passlib.hash import bcrypt
 from repositories.user_repo import UserRepository
 from models.user import User
 
@@ -50,6 +51,22 @@ class UserService:
             profile_image=profile_image
         )
 
+    @staticmethod
+    async def change_password(
+        user: User,
+        old_password: str,
+        new_password: str,
+        new_password_check: str,
+    ) -> dict[str, bool | str]:
+        if not bcrypt.verify(old_password, user.password_hash):
+            return {"success": False, "error": "WRONG_OLD_PASSWORD"}
+
+        if new_password != new_password_check:
+            return {"success": False, "error": "PASSWORD_MISMATCH"}
+
+        user.password_hash = bcrypt.hash(new_password)
+        await user.save()
+        return {"success": True}
     # --------------------
     # DELETE
     # --------------------

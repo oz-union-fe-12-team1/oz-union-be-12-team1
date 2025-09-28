@@ -115,27 +115,34 @@ class AuthService:
     #----------------------------
     # 비밀번호 재설정 /auth/password/reset-request, /auth/password/reset-confirm
     #----------------------------
+    #분실 시 재설정을 위한 이메일 확인
     @staticmethod
-    async def request_password_reset(email: str) -> dict[str, bool|str]:
+    async def request_password_reset(email: str) -> dict[str, bool | str]:
         user = await UserRepository.get_user_by_email(email)
         if not user:
-            return {"success": False}
+            return {"success": False, "error": "USER_NOT_FOUND"}
         return {"success": True}
 
     @staticmethod
-    async def confirm_password_reset(email: str, new_password: str, new_password_check: str) -> dict[str, bool]:
+    async def confirm_password_reset(
+        email: str,
+        new_password: str,
+        new_password_check: str
+    ) -> dict[str, bool | str]:
         """비밀번호 재설정: 새 비밀번호 저장"""
         if new_password != new_password_check:
-            return {"success": False}
+            return {"success": False, "error": "PASSWORD_MISMATCH"}
 
         user = await UserRepository.get_user_by_email(email)
         if not user:
-            return {"success": False}
+            return {"success": False, "error": "USER_NOT_FOUND"}
 
+        # 비밀번호 해싱 후 저장
         user.password_hash = bcrypt.hash(new_password)
         await user.save()
 
         return {"success": True}
+
     # ---------------------------
     # 로그인 (/auth/login)
     # ---------------------------

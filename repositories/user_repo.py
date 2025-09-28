@@ -1,4 +1,5 @@
 from typing import Optional, List
+from passlib.hash import bcrypt
 from tortoise.exceptions import DoesNotExist
 from datetime import date
 from models.user import User
@@ -91,6 +92,15 @@ class UserRepository:
         if profile_image is not None:
             user.profile_image = profile_image
 
+        await user.save()
+        return user
+
+    @staticmethod
+    async def update_password(user: User, new_password: str) -> User:
+        """
+        주어진 User 객체의 비밀번호를 새로운 값으로 해시 후 저장한다.
+        """
+        user.password_hash = bcrypt.hash(new_password)
         await user.save()
         return user
 
