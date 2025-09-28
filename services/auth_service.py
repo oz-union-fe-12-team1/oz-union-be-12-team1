@@ -253,24 +253,6 @@ class AuthService:
             return None
         except jwt.InvalidTokenError:
             return None
-        # ---------------------------
-        # 토큰 갱신 (/auth/refresh)
-        # ---------------------------
-
-    @staticmethod
-    async def refresh_token(refresh_token: str) -> Optional[str]:
-        try:
-            payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-            user_id = int(payload.get("sub"))
-
-            if await TokenRevocationsRepository.is_token_revoked(refresh_token):
-                return None
-
-            return AuthService.create_access_token(user_id)
-        except jwt.ExpiredSignatureError:
-            return None
-        except jwt.InvalidTokenError:
-            return None
 
     # ---------------------------
     # 로그아웃 (/auth/logout)
