@@ -227,21 +227,44 @@ class AdminUserListResponse(BaseModel):
         }
 
 #  비밀번호 재설정 요청
-
-class PasswordResetRequset(BaseModel):
-    email: EmailStr = Field(..., example="test@test.com")
-
-#비밀번호 재설정
-
 class PasswordResetConfirm(BaseModel):
-    email: EmailStr = Field(..., example="test@test.com")
-    new_password: str = Field(..., example="new!pasword1")
-    new_password_check: str = Field(..., example="new!password1")
+    email: EmailStr
+    new_password: str
+    new_password_check: str
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "old_password123",
+                "new_password": "new_password123",
+                "new_password_check": "new_password123"
+            }
+        }
+    }
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "test@test.com",
+            }
+        }
+    }
 
 #비밀번호 번경
-
 class PasswordChangeRequest(BaseModel):
-    old_password: str = Field(..., example="old_password123")
-    new_password: str = Field(..., example="new_password123")
-    new_password_check: str = Field(..., example="new_password123")
+    old_password: str
+    new_password: str
+    new_password_check: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "old_password": "old_password123",
+                "new_password": "new_password123",
+                "new_password_check": "new_password123"
+            }
+        }
+    }

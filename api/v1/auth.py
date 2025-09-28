@@ -10,7 +10,7 @@ from schemas.user import (
     UserVerifyErrorResponse,
     UserLoginRequest,
     UserLoginResponse,
-    PasswordResetRequset,
+    PasswordResetRequest,
     PasswordResetConfirm,
     PasswordChangeRequest,
     GoogleCallbackResponse,
@@ -80,13 +80,9 @@ async def verify_email(request: UserVerifyRequest) -> Dict[str, bool]:
     responses={404: {"model": UserVerifyErrorResponse}},
 )
 async def password_reset_request(
-    request: PasswordResetRequset,   # ✅ request body를 Pydantic 모델로 받음
+    request: PasswordResetRequest,   # ✅ request body를 Pydantic 모델로 받음
 ) -> dict[str, bool]:
-    """
-    사용자 이메일을 받아 비밀번호 재설정을 요청한다.
-    - 이메일이 존재하지 않으면 404 반환
-    - 존재하면 success: True
-    """
+
     result = await AuthService.request_password_reset(request.email)
     if not result.get("success"):
         raise HTTPException(status_code=404, detail=result.get("error"))
