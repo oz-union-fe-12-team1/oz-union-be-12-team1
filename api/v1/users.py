@@ -4,6 +4,8 @@ from schemas.user import (
     UserUpdateRequest,
     UserUpdateResponse,
     UserDeleteResponse,
+    UserVerifySuccessResponse,
+    PasswordChangeRequest,
 )
 from services.user_service import UserService
 from models.user import User
@@ -35,6 +37,26 @@ async def update_my_profile(
     if not updated_user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
     return UserUpdateResponse.model_validate(updated_user)
+
+#비밀번호 변경
+@router.post(
+    "/password/change",
+    response_model=UserVerifySuccessResponse,
+)
+async def change_password(
+    request: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user),
+) -> dict[str, bool]:
+    result = await UserService.change_password(
+        user=current_user,
+        old_password=request.old_password,
+        new_password=request.new_password,
+        new_password_check=request.new_password_check,
+    )
+
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+    return {"success": True}
 
 # -----------------------------
 # 회원 탈퇴

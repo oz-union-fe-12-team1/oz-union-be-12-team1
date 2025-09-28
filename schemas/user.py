@@ -225,3 +225,23 @@ class AdminUserListResponse(BaseModel):
                 }
             }
         }
+
+#  비밀번호 재설정 요청
+
+class PasswordResetRequset(BaseModel):
+    email: EmailStr = Field(..., example="test@test.com")
+
+#비밀번호 재설정
+
+class PasswordResetConfirm(BaseModel):
+    email: EmailStr = Field(..., example="test@test.com")
+    new_password: str = Field(..., example="new!pasword1")
+    new_password_check: str = Field(..., example="new!password1")
+
+
+#비밀번호 번경
+
+class PasswordChangeRequest(BaseModel):
+    old_password: str = Field(..., example="old_password123")
+    new_password: str = Field(..., example="new_password123")
+    new_password_check: str = Field(..., example="new_password123")
