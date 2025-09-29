@@ -1,20 +1,20 @@
 from datetime import datetime, timedelta, date
 from typing import Optional, Dict
 import jwt
-import random   # ✅ 인증번호 생성용
-import redis.asyncio as redis
+import random   #  인증번호 생성용
+import redis.asyncio as redis   #  Redis 클라이언트
 from passlib.hash import bcrypt
 import httpx
 
 from core.config import settings
 from models.token_revocations import TokenRevocation
 from repositories.user_repo import UserRepository
-from core.security import send_verification_email   # ✅ 메일 발송 함수
+from core.security import send_verification_email   #  메일 발송 함수
 from repositories.token_revocations_repo import TokenRevocationsRepository
 from models.user import User
 from schemas.user import UserCreateRequest
 
-# ✅ Redis 연결
+#  Redis 연결 (docker-compose 기준 redis 컨테이너)
 REDIS_URL = "redis://redis:6379/0"
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
@@ -108,38 +108,7 @@ class AuthService:
             username=request.username,
             birthday=request.birthday,
         )
-
-        # 가입 후 플래그 제거
-        await redis_client.delete(f"verify:success:{request.email}")
-
-        return user
-    #----------------------------
-    # 비밀번호 재설정 /auth/password/reset-request, /auth/password/reset-confirm
-    #----------------------------
-    #분실 시 재설정을 위한 이메일 확인
-    @staticmethod
-    async def request_password_reset(email: str) -> dict[str, bool | str]:
-        user = await UserRepository.get_user_by_email(email)
-        if not user:
-            return {"success": False, "error": "USER_NOT_FOUND"}
-        return {"success": True}
-
-    @staticmethod
-    async def confirm_password_reset(
-        email: str,
-        new_password: str,
-        new_password_check: str
-    ) -> dict[str, bool | str]:
-        """비밀번호 재설정: 새 비밀번호 저장"""
-        if new_password != new_password_check:
-            return {"success": False, "error": "PASSWORD_MISMATCH"}
-
-        user = await UserRepository.get_user_by_email(email)
-        if not user:
-            return {"success": False, "error": "USER_NOT_FOUND"}
-
-        # 비밀번호 해싱 후 저장
-        user.password_hash = bcrypt.hash(new_password)
+        user.is_email_verified = False   #  완료테이블 기준 반영
         await user.save()
 
         return {"success": True}
@@ -166,6 +135,31 @@ class AuthService:
         await user.save()
 
         return {"access_token": access_token, "refresh_token": refresh_token}
+
+    # ---------------------------
+    # 이메일 인증 (/auth/email/verify)
+    # ---------------------------
+    @staticmethod
+    async def verify_email_token(email: str, code: str) -> Dict:
+        saved_code = await redis_client.get(f"verify:{email}")
+        if not saved_code:
+            return {"success": False, "error": "CODE_EXPIRED_OR_NOT_FOUND"}
+
+        if saved_code != code:
+            return {"success": False, "error": "CODE_MISMATCH"}
+
+        user = await UserRepository.get_user_by_email(email)
+        if not user:
+            return {"success": False, "error": "USER_NOT_FOUND"}
+
+        user.is_email_verified = True   #  완료테이블 기준 반영
+        await user.save()
+
+        # 인증번호 삭제 (1회성)
+        await redis_client.delete(f"verify:{email}")
+
+        return {"success": True}
+
     # ---------------------------
     # 구글 로그인 (/auth/google/callback)
     # ---------------------------
@@ -278,9 +272,18 @@ class AuthService:
     @staticmethod
     async def logout(token: str) -> Optional[TokenRevocation]:
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-            user_id = int(payload.get("sub"))
+            # ✅ 토큰 디코드해서 user_id 추출
+            payload = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=[settings.ALGORITHM]
+            )
+            user_id = int(payload.get("sub"))   #  sub → user_id
+
+            #  jti는 토큰 전체 문자열로 저장
             jti = token
+
+            #  repository에 jti와 user_id 전달
             return await TokenRevocationsRepository.revoke_token(jti, user_id)
         except jwt.InvalidTokenError:
             return None

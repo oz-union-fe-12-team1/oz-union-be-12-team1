@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from models.user import User
 from services.user_service import UserService
 from schemas.user import AdminUserOut, AdminUserListResponse, UserDeleteResponse
-from core.security import get_current_admin   # ✅ 관리자 권한 의존성 가져오기
+from core.security import get_current_admin   #  관리자 권한 의존성 가져오기
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 # -----------------------------
 @router.get("/users", response_model=AdminUserListResponse)
 async def get_all_users(
-    current_admin: User = Depends(get_current_admin)  # ✅ 관리자 권한 검사
+    current_admin: User = Depends(get_current_admin)  #  관리자 권한 검사
 ) -> AdminUserListResponse:
     users = await UserService.get_all_users()
     return AdminUserListResponse(
@@ -23,10 +23,10 @@ async def get_all_users(
 # -----------------------------
 # 특정 사용자 조회 (관리자 전용)
 # -----------------------------
-@router.get("/users/{search}", response_model=AdminUserOut)
-async def search_user(
-    search: str,
-    current_admin: User = Depends(get_current_admin),  # ✅ 의존성 추가
+@router.get("/users/{user_id}", response_model=AdminUserOut)
+async def get_user(
+    user_id: int,
+    current_admin: User = Depends(get_current_admin),  #  의존성 추가
 ) -> AdminUserOut:
     if "@" in search:
         user = await UserService.get_user_by_email(search)  # 이메일 검색
@@ -44,7 +44,7 @@ async def search_user(
 @router.delete("/users/{user_id}", response_model=UserDeleteResponse)
 async def delete_user(
     user_id: int,
-    current_admin: User = Depends(get_current_admin),  # ✅ 의존성 추가
+    current_admin: User = Depends(get_current_admin),  #  의존성 추가
 ) -> UserDeleteResponse:
     deleted = await UserService.delete_user(user_id)
     if not deleted:
@@ -59,7 +59,7 @@ async def delete_user(
 async def update_user_status(
     user_id: int,
     is_active: bool,
-    current_admin: User = Depends(get_current_admin),  # ✅ 의존성 추가
+    current_admin: User = Depends(get_current_admin),  #  의존성 추가
 ) -> AdminUserOut:
     user = await UserService.update_user_status(user_id, is_active)
     if not user:
