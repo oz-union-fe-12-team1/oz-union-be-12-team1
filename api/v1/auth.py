@@ -10,6 +10,9 @@ from schemas.user import (
     UserVerifyErrorResponse,
     UserLoginRequest,
     UserLoginResponse,
+    PasswordResetRequest,
+    PasswordResetConfirm,
+    PasswordChangeRequest,
     GoogleCallbackResponse,
     GoogleLoginErrorResponse,
 )
@@ -69,31 +72,38 @@ async def verify_email(request: UserVerifyRequest) -> Dict[str, bool]:
     return {"success": True}
 
 #----------------------------
-# 비밀번호 재설정
+# 비밀번호 재설정(분실)
 #----------------------------
 @router.post(
     "/password/reset-request",
     response_model=UserVerifySuccessResponse,
     responses={404: {"model": UserVerifyErrorResponse}},
 )
-async def password_reset_request(email: str) -> dict[str, bool]:
-    result = await AuthService.request_password_reset(email)
+async def password_reset_request(
+    request: PasswordResetRequest,   # ✅ request body를 Pydantic 모델로 받음
+) -> dict[str, bool]:
+
+    result = await AuthService.request_password_reset(request.email)
     if not result.get("success"):
         raise HTTPException(status_code=404, detail=result.get("error"))
     return {"success": True}
 
-
 @router.post(
     "/password/reset-confirm",
     response_model=UserVerifySuccessResponse,
-    responses={400: {"model": UserVerifyErrorResponse}, 404: {"model": UserVerifyErrorResponse}},
+    responses={
+        400: {"model": UserVerifyErrorResponse},
+        404: {"model": UserVerifyErrorResponse},
+    },
 )
 async def password_reset_confirm(
-    email: str,
-    new_password: str,
-    new_password_check: str,
+    request: PasswordResetConfirm,  # ✅ 이메일 + 새 비밀번호를 JSON body로 받음
 ) -> dict[str, bool]:
-    result = await AuthService.confirm_password_reset(email, new_password, new_password_check)
+    result = await AuthService.confirm_password_reset(
+        request.email,
+        request.new_password,
+        request.new_password_check,
+    )
     if not result.get("success"):
         error = result.get("error")
         if error == "USER_NOT_FOUND":
@@ -144,10 +154,11 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
 # -----------------------------
 # 구글 로그인 관련
 # -----------------------------
+
 # @router.get("/google/login")
 # async def google_login() -> RedirectResponse:
 #     google_auth_url = (
-#         "https://accounts.google.com/o/oauth2/v2/auth"
+#         "https://openidconnect.googleapis.com/v1/userinfo"
 #         "?response_type=code"
 #         f"&client_id={core.google_handler.GOOGLE_CLIENT_ID}"
 #         f"&redirect_uri={core.google_handler.GOOGLE_REDIRECT_URI}"

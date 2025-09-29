@@ -115,27 +115,34 @@ class AuthService:
     #----------------------------
     # 비밀번호 재설정 /auth/password/reset-request, /auth/password/reset-confirm
     #----------------------------
+    #분실 시 재설정을 위한 이메일 확인
     @staticmethod
-    async def request_password_reset(email: str) -> dict[str, bool|str]:
+    async def request_password_reset(email: str) -> dict[str, bool | str]:
         user = await UserRepository.get_user_by_email(email)
         if not user:
-            return {"success": False}
+            return {"success": False, "error": "USER_NOT_FOUND"}
         return {"success": True}
 
     @staticmethod
-    async def confirm_password_reset(email: str, new_password: str, new_password_check: str) -> dict[str, bool]:
+    async def confirm_password_reset(
+        email: str,
+        new_password: str,
+        new_password_check: str
+    ) -> dict[str, bool | str]:
         """비밀번호 재설정: 새 비밀번호 저장"""
         if new_password != new_password_check:
-            return {"success": False}
+            return {"success": False, "error": "PASSWORD_MISMATCH"}
 
         user = await UserRepository.get_user_by_email(email)
         if not user:
-            return {"success": False}
+            return {"success": False, "error": "USER_NOT_FOUND"}
 
+        # 비밀번호 해싱 후 저장
         user.password_hash = bcrypt.hash(new_password)
         await user.save()
 
         return {"success": True}
+
     # ---------------------------
     # 로그인 (/auth/login)
     # ---------------------------
@@ -158,11 +165,87 @@ class AuthService:
         await user.save()
 
         return {"access_token": access_token, "refresh_token": refresh_token}
+    # ---------------------------
+    # 구글 로그인 (/auth/google/callback)
+    # ---------------------------
+    # @staticmethod
+    # async def google_callback(code: str) -> dict[str, str]:
+    #     try:
+    #         token_url = "https://oauth2.googleapis.com/token"
+    #         data = {
+    #             "code": code,
+    #             "client_id": settings.GOOGLE_CLIENT_ID,
+    #             "client_secret": settings.GOOGLE_SECRET,
+    #             "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+    #             "grant_type": "authorization_code",
+    #         }
+    #
+    #         # 1. 구글에 access_token + id_token 요청
+    #         async with httpx.AsyncClient() as client:
+    #             resp = await client.post(token_url, data=data)
+    #             # token_data = resp.json()
+    #
+    #             access_token = resp.json()['access_token']
+    #             user_info = f"https://www.googleapis.com/oauth2/v1/userinfo"
+    #             headers = {
+    #                 "Authorization": f"Bearer {access_token}",
+    #             }
+    #             user_response = requests.get(user_info, headers=headers)
+    #
+    #
+    #             if user_response.status_code != 200:
+    #                 raise Exception
+    #
+    #     except:
+    #         raise Exception("google oauth error")
+    #
+    #     info = user_response.json()
+    #     name=info.get('name')
+    #     email=info.get('email')
+    #     google_id=info.get('id_token')
+    #     print(name, email, google_id)
+    #
+    #     # if "id_token" not in token_data:
+    #     #     raise Exception("GOOGLE_TOKEN_INVALID")
+    #     #
+    #     # # 2. id_token 검증 → 사용자 정보 추출
+    #     # idinfo = id_token.verify_oauth2_token(
+    #     #     token_data["id_token"],
+    #     #     requests.Request(),
+    #     #     settings.GOOGLE_CLIENT_ID,
+        # )
+        #
+        # google_id = idinfo["sub"]
+        # email = idinfo["email"]
+        # name = idinfo.get("name")
 
-        # ---------------------------
-        # 토큰 갱신 (/auth/refresh)
-        # ---------------------------
+        # # 3. DB 조회 (기존 유저 여부 확인)
+        # user = await UserRepository.get_user_by_email(email)
+        # if not user:
+        #     # 신규 사용자 생성
+        #     user = await UserRepository.create_user(
+        #         email=email,
+        #         password_hash="",  # 소셜 로그인은 비밀번호 불필요
+        #         username=name or "구글사용자",
+        #         birthday=date(2000, 1, 1),  # 기본값
+        #     )
+        #     user.google_id = google_id
+        #     user.is_email_verified = True
+        #     await user.save()
+        #
+        # # 4. JWT 토큰 발급
+        # access_token = AuthService.create_access_token(user.id)
+        # refresh_token = AuthService.create_refresh_token(user.id)
+        #
+        # return {
+        #     "access_token": access_token,
+        #     "refresh_token": refresh_token,
+        #     "token_type": "bearer",
+        # }
 
+    # ---------------------------
+    # 토큰 갱신 (/auth/refresh)
+    # ---------------------------
     @staticmethod
     async def refresh_token(refresh_token: str) -> Optional[str]:
         try:
