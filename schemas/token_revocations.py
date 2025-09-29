@@ -3,7 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 
 
-# 👉 공통 속성
+#  공통 속성
 class TokenRevocationBase(BaseModel):
     token: str = Field(
         ...,
@@ -21,7 +21,7 @@ class TokenRevocationBase(BaseModel):
     )
 
 
-# 👉 생성 요청 (토큰 무효화)
+#  생성 요청 (토큰 무효화)
 class TokenRevocationCreate(BaseModel):
     token: str = Field(
         ...,
@@ -33,7 +33,7 @@ class TokenRevocationCreate(BaseModel):
     )
 
 
-# 👉 단일 조회 응답
+#  단일 조회 응답
 class TokenRevocationOut(TokenRevocationBase):
     id: int = Field(
         ...,
@@ -44,7 +44,7 @@ class TokenRevocationOut(TokenRevocationBase):
         json_schema_extra={"example": 42},
     )
 
-    model_config = {"from_attributes": True}  # ✅ Pydantic v2
+    model_config = {"from_attributes": True}  #  Pydantic v2
 
 
 # 👉 목록 조회 응답
@@ -69,7 +69,7 @@ class TokenRevocationListOut(BaseModel):
     )
 
 
-# 👉 삭제 응답 (관리자 전용, 선택적)
+#  삭제 응답 (관리자 전용, 선택적)
 class TokenRevocationDeleteResponse(BaseModel):
     message: str = Field(
         "Token revocation entry deleted successfully",

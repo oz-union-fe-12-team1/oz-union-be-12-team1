@@ -5,7 +5,7 @@ from enum import Enum
 import httpx
 import feedparser
 
-# ✅ 네이버 뉴스 섹션 URL 매핑 (RSS 대신 네이버 섹션 그대로 사용)
+#  네이버 뉴스 섹션 URL 매핑 (RSS 대신 네이버 섹션 그대로 사용)
 NAVER_NEWS_SECTIONS = {
     "politics": "https://news.naver.com/section/100",  # 정치
     "economy": "https://news.naver.com/section/101",  # 경제
@@ -151,7 +151,7 @@ async def get_news(
     if res.status_code != 200:
         raise HTTPException(status_code=res.status_code, detail="뉴스 불러오기 실패")
 
-    # ✅ feedparser 대신 BeautifulSoup 로 파싱하거나
+    #  feedparser 대신 BeautifulSoup 로 파싱하거나
     #    여기서는 단순히 제목만 보여주도록 수정 (임시 처리)
     feed = feedparser.parse(res.text)
 
