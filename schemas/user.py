@@ -230,6 +230,7 @@ class AdminUserListResponse(BaseModel):
 class PasswordResetConfirm(BaseModel):
     email: EmailStr
     new_password: str
+    token: str   
     new_password_check: str
 
     model_config = {

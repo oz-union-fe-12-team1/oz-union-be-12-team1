@@ -43,7 +43,6 @@ class Settings(BaseSettings):
     MAIL_USERNAME: str = Field("example@example.com")
     MAIL_PASSWORD: str = Field("examplepassword")
     MAIL_FROM: Optional[str] = None
-    MAIL_FROM: Optional[str] = None
     MAIL_PORT: int = Field(587)
     MAIL_SERVER: str = Field("smtp.gmail.com")
     MAIL_STARTTLS: bool = Field(True)
