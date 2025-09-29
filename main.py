@@ -34,7 +34,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # 주소
+    allow_origins=["http://localhost:5173","http://3.24.190.187:8000"], # 주소
     allow_methods=["*"], #crud
     allow_headers=["*"], #헤더
     allow_credentials=True,#인증서
