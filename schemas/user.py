@@ -106,6 +106,10 @@ class UserVerifyErrorResponse(BaseModel):
         }
     }
 
+class UserCreateErrorResponse(BaseModel):
+    error: str
+
+
 
 class UserLoginResponse(BaseModel):
     success: bool

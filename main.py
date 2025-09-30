@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from typing import AsyncIterator, Dict
 from starlette.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
@@ -30,11 +30,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(lifespan=lifespan)
 
-#
+#프론트, 도메인 발급 받은 것 (cors)
+origins=[
+    "http://localhost:5173",
+    "https://nyangnyang.vercel.app",
+    "https://develop-nyangnyang.vercel.app",
+    "https://nyangbiseo.store/"
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173","http://3.24.190.187:8000"], # 주소
+    allow_origins=origins, # 주소
     allow_methods=["*"], #crud
     allow_headers=["*"], #헤더
     allow_credentials=True,#인증서
@@ -42,9 +48,9 @@ app.add_middleware(
 
 #로드밸런서 대상그룹 헬스채크 포인트
 
-# @app.get("/health")
-# def health() -> dict[str, str]:
-#     return {"status": "ok"}
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 # 라우터 등록

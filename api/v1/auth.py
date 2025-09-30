@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response
 from typing import Dict, Union
-from urllib.parse import urlencode
 
-import core.google_handler
 from schemas.user import (
     UserCreateRequest,
     UserCreateResponse,
@@ -13,12 +11,8 @@ from schemas.user import (
     UserLoginResponse,
     PasswordResetRequest,
     PasswordResetConfirm,
-    PasswordChangeRequest,
-    GoogleCallbackResponse,
-    GoogleLoginErrorResponse,
+    UserCreateErrorResponse
 )
-from fastapi.responses import RedirectResponse
-from services.user_service import UserService
 from services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -119,15 +113,22 @@ async def password_reset_confirm(
 @router.post(
     "/register",
     response_model=UserCreateResponse,
-    responses={400: {"model": UserVerifyErrorResponse}},
+    responses={400: {"model": UserCreateErrorResponse}},
 )
 async def register_user(request: UserCreateRequest) -> UserCreateResponse:
     """
     이메일 인증 성공 후 회원가입
     """
     user = await AuthService.register(request)
+
     if not user:
-        raise HTTPException(status_code=400, detail="EMAIL_NOT_VERIFIED_OR_ALREADY_EXISTS")
+        # 실패 시
+        raise HTTPException(
+            status_code=400,
+            detail="EMAIL_NOT_VERIFIED_OR_ALREADY_EXISTS"
+        )
+
+    # 성공 시
     return UserCreateResponse.model_validate(user)
 # -----------------------------
 # 로그인
