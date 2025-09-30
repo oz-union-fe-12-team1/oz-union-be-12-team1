@@ -198,7 +198,7 @@ class AdminUserOut(BaseModel):
         is_email_verified: bool
         created_at: datetime
         updated_at: datetime
-        is_superuser: bool = False  # ✅ 관리자 여부 (기본값 False)
+        is_superuser: bool = False  #  관리자 여부 (기본값 False)
 
         model_config = {"from_attributes": True}
 

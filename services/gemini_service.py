@@ -1,5 +1,4 @@
 from datetime import datetime
-from services.gemini_client import gemini_request  # API 호출만 담당하는 모듈
 
 
 async def get_fortune_prompt(birthday: str) -> str:
