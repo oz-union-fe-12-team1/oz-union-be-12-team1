@@ -142,14 +142,14 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         value=result["access_token"],
         httponly=True,
         secure=True,
-        samesite="None"
+        samesite="none"
     )
     response.set_cookie(
         key="refresh_token",
         value=result["refresh_token"],
         httponly=True,
         secure=True,
-        samesite="None"
+        samesite="none"
     )
     return UserLoginResponse(success=True)
 # -----------------------------

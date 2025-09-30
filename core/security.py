@@ -58,7 +58,7 @@ async def get_current_user(
 
     # 1) 우선 쿠키 확인
     token = request.cookies.get("access_token")
-
+    print(token)
     # 2) 쿠키 없으면 Authorization 헤더 확인 (Swagger/Postman용 fallback)
     if not token and credentials:
         token = credentials.credentials
