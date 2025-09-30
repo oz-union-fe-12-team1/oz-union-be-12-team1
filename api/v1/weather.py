@@ -1,36 +1,21 @@
 from typing import Any
-
 from fastapi import APIRouter, Query, HTTPException
-import httpx, os
-from datetime import datetime
+from services.weather_service import WeatherService
 
 router = APIRouter()
-OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
+# 현재 날씨
 @router.get("/weather")
 async def get_current_weather(lat: float = Query(...), lon: float = Query(...)) -> dict[str, Any]:
-    url = "http://api.openweathermap.org/data/2.5/weather"
-    params = {"lat": lat, "lon": lon, "appid": OPENWEATHER_API_KEY, "units": "metric", "lang": "kr"}
+    weather_data = await WeatherService.fetch_weather(lat, lon)
+    if not weather_data:
+        raise HTTPException(status_code=400, detail="날씨 불러오기 실패")
+    return {"success": True, "data": weather_data}
 
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            res = await client.get(url, params=params)
-    except httpx.RequestError:
-        raise HTTPException(status_code=500, detail="날씨 요청 실패")
-
-    if res.status_code != 200:
-        raise HTTPException(status_code=res.status_code, detail="날씨 불러오기 실패")
-
-    data = res.json()
-
-    return {
-        "success": True,
-        "data": {
-            "city": data.get("name"),
-            "temperature": data.get("main", {}).get("temp"),
-            "description": data.get("weather", [{}])[0].get("description"),
-            "humidity": data.get("main", {}).get("humidity"),
-            "icon": data.get("weather", [{}])[0].get("icon"),
-            "updated_at": datetime.now().isoformat(),
-        },
-    }
+# 5일치 예보
+@router.get("/weather/forecast")
+async def get_weather_forecast(lat: float = Query(...), lon: float = Query(...)) -> dict[str, Any]:
+    forecast_data = await WeatherService.fetch_forecast(lat, lon)
+    if not forecast_data:
+        raise HTTPException(status_code=400, detail="날씨 예보 불러오기 실패")
+    return {"success": True, "data": forecast_data}

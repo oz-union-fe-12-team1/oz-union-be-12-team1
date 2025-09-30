@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 # ========================
-# ✅ 내 위치 조회 (Response)
+#  내 위치 조회 (Response)
 # ========================
 class UserLocationResponse(BaseModel):
     id: int
@@ -31,7 +31,7 @@ class UserLocationResponse(BaseModel):
 
 
 # ========================
-# ✅ 내 위치 수정 (Request)
+#  내 위치 수정 (Request)
 # ========================
 class UserLocationUpdateRequest(BaseModel):
     latitude: Optional[float] = None
@@ -52,7 +52,7 @@ class UserLocationUpdateRequest(BaseModel):
 
 
 # ========================
-# ✅ 내 위치 수정 (Response)
+#  내 위치 수정 (Response)
 # ========================
 class UserLocationUpdateResponse(BaseModel):
     id: int
