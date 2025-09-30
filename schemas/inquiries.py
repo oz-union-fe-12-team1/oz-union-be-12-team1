@@ -3,7 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 
 
-# 👉 상태 Enum (명세서 기준)
+#  상태 Enum (명세서 기준)
 class InquiryStatus(str):
     pending = "pending"
     in_progress = "in_progress"
@@ -11,7 +11,7 @@ class InquiryStatus(str):
     closed = "closed"
 
 
-# 👉 공통 속성
+#  공통 속성
 class InquiryBase(BaseModel):
     title: str = Field(
         ...,
@@ -23,12 +23,12 @@ class InquiryBase(BaseModel):
     )
 
 
-# 👉 생성 요청
+#  생성 요청
 class InquiryCreate(InquiryBase):
     pass
 
 
-# 👉 수정 요청 (관리자 답변, 상태 변경 등)
+#  수정 요청 (관리자 답변, 상태 변경 등)
 class InquiryUpdate(BaseModel):
     status: Optional[str] = Field(
         None,
@@ -44,7 +44,7 @@ class InquiryUpdate(BaseModel):
     )
 
 
-# 👉 단일 조회 응답
+#  단일 조회 응답
 class InquiryOut(InquiryBase):
     id: int = Field(
         ...,
@@ -75,10 +75,10 @@ class InquiryOut(InquiryBase):
         json_schema_extra={"example": "2025-09-18T12:34:56"},
     )
 
-    model_config = {"from_attributes": True}  # ✅ v2 스타일
+    model_config = {"from_attributes": True}  #  v2 스타일
 
 
-# 👉 목록 조회 응답
+#  목록 조회 응답
 class InquiryListOut(BaseModel):
     inquiries: List[InquiryOut]
     total: int = Field(
@@ -86,10 +86,10 @@ class InquiryListOut(BaseModel):
         json_schema_extra={"example": 1},
     )
 
-    model_config = {"from_attributes": True}  # ✅ v2 스타일
+    model_config = {"from_attributes": True}  #  v2 스타일
 
 
-# 👉 삭제 응답
+#  삭제 응답
 class InquiryDeleteResponse(BaseModel):
     message: str = Field(
         default="Inquiry deleted successfully",

@@ -40,6 +40,13 @@ app.add_middleware(
     allow_credentials=True,#인증서
 )
 
+#로드밸런서 대상그룹 헬스채크 포인트
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
 # 라우터 등록
 app.include_router(auth.router)
 app.include_router(admin.router)

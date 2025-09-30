@@ -38,8 +38,8 @@ COPY schemas ./schemas
 # 3. 가상환경 생성 + 의존성 설치
 # -------------------------
 RUN uv venv /opt/venv \
- && . /opt/venv/bin/activate \
- && uv sync --frozen --no-dev
+&& . /opt/venv/bin/activate \
+&& uv sync --frozen --no-dev
 
 ENV PATH="/opt/venv/bin:${PATH}"
 
