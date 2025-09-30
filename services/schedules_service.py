@@ -8,7 +8,7 @@ class ScheduleService:
     Service layer for managing Schedules (CRUD + soft/hard delete).
     """
 
-    # ✅ Create
+    #  Create
     @staticmethod
     async def create_schedule(**kwargs: Any) -> ScheduleOut:
         schedule = await ScheduleRepository.create_schedule(**kwargs)
@@ -18,7 +18,7 @@ class ScheduleService:
             from_attributes=True,
         )
 
-    # ✅ Read (단일 일정 조회)
+    #  Read (단일 일정 조회)
     @staticmethod
     async def get_schedule_by_id(schedule_id: int) -> Optional[ScheduleOut]:
         schedule = await ScheduleRepository.get_schedule_by_id(schedule_id)
@@ -47,7 +47,7 @@ class ScheduleService:
             )
         return results
 
-    # ✅ Update
+    #  Update
     @staticmethod
     async def update_schedule(schedule_id: int, **kwargs: Any) -> Optional[ScheduleOut]:
         updated = await ScheduleRepository.update_schedule(schedule_id, **kwargs)
@@ -60,7 +60,7 @@ class ScheduleService:
             from_attributes=True,
         )
 
-    # ✅ Delete (soft/hard 분기)
+    #  Delete (soft/hard 분기)
     @staticmethod
     async def delete_schedule(schedule_id: int, hard: bool = False) -> bool:
         """

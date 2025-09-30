@@ -36,6 +36,7 @@ schemas/user.py
 schemas/user_locations.py
 services/__init__.py
 services/auth_service.py
+services/gemini_service.py
 services/inquiries_service.py
 services/location_service.py
 services/news_service.py
@@ -43,3 +44,4 @@ services/notification_service.py
 services/schedules_service.py
 services/todo_service.py
 services/user_service.py
+services/weather_service.py

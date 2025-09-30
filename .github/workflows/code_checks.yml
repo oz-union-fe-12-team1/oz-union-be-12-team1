@@ -11,33 +11,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4  # v3 -> v4로 업데이트
-        
+        uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.13"
-          
+
       - name: Install uv
         uses: astral-sh/setup-uv@v3
         with:
           version: "latest"
-          
-      - name: Cache uv dependencies
+
+      - name: Cache dependencies
         uses: actions/cache@v3
         with:
-          key: uv-${{ runner.os }}-${{ hashFiles('**/pyproject.toml') }}-${{ hashFiles('**/uv.lock') }}
+          key: uv-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('uv.lock') }}
           path: ~/.cache/uv
-          
-      # uv를 올바르게 사용하는 방법
-      - name: Create virtual environment and install dependencies
-        run: |
-          uv venv
-          uv pip install -e .
-          
-      # 또는 더 간단한 방법
-      - name: Install dependencies with uv sync
-        run: uv sync
-        
+
+      - name: Generate requirements.txt
+        run: uv pip freeze > requirements.txt
+
+      - name: Install dependencies from requirements
+        run: uv pip install -r requirements.txt --system
+
       - name: Run Mypy
-        run: uv run mypy .
+        run: uv run mypy . --explicit-package-bases
