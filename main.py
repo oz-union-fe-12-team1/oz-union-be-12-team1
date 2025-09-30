@@ -42,9 +42,9 @@ app.add_middleware(
 
 #로드밸런서 대상그룹 헬스채크 포인트
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+# @app.get("/health")
+# def health() -> dict[str, str]:
+#     return {"status": "ok"}
 
 
 # 라우터 등록

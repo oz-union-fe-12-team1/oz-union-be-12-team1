@@ -1,6 +1,6 @@
 from typing import Any, Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, SecretStr
 
 
 class Settings(BaseSettings):
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # Mail
     # ==============================
     MAIL_USERNAME: str = Field("example@example.com")
-    MAIL_PASSWORD: str = Field("examplepassword")
+    MAIL_PASSWORD: SecretStr = Field(SecretStr("examplepassword"))
     MAIL_FROM: Optional[str] = None
     MAIL_PORT: int = Field(587)
     MAIL_SERVER: str = Field("smtp.gmail.com")
