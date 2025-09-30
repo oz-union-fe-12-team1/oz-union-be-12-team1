@@ -13,10 +13,12 @@ from schemas.user import (
     UserLoginResponse,
     PasswordResetRequest,
     PasswordResetConfirm,
+    PasswordChangeRequest,
     GoogleCallbackResponse,
     GoogleLoginErrorResponse,
 )
 from fastapi.responses import RedirectResponse
+from services.user_service import UserService
 from services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -150,36 +152,7 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         samesite="none"
     )
     return UserLoginResponse(success=True)
-# # -----------------------------
-# # 토큰 갱신
-# # -----------------------------
-# @router.post("/refresh", response_model=UserLoginResponse)
-# async def refresh_token(response: Response, refresh_token: str) -> UserLoginResponse:
-#     new_access = await AuthService.refresh_token(refresh_token)
-#     if not new_access:
-#         raise HTTPException(status_code=400, detail="TOKEN_INVALID_OR_EXPIRED")
-#
-#     #새 access_token을 쿠키에 갱신
-#     response.set_cookie(
-#         key="access_token",
-#         value=new_access,
-#         httponly=True,
-#         secure=True,
-#         samesite="lax"
-#     )
-#     # refresh_token도 그대로 갱신(선택)
-#     response.set_cookie(
-#         key="refresh_token",
-#         value=refresh_token,
-#         httponly=True,
-#         secure=True,
-#         samesite="lax"
-#     )
-#
-#     return UserLoginResponse(success=True)
-#
 
-# --------------------------
 # 로그아웃
 # -----------------------------
 @router.post("/logout")

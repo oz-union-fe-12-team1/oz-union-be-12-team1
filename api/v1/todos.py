@@ -70,7 +70,7 @@ async def update_todo(
 
     updated = await TodoService.update_todo(
         todo_id,
-        **request.model_dump(exclude_unset=True)  # ✅ v2 방식
+        **request.model_dump(exclude_unset=True)  #  v2 방식
     )
     return updated
 

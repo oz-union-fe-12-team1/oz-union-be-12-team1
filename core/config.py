@@ -1,7 +1,7 @@
 from typing import Any, Optional
+from typing import Any, Optional
 from pydantic_settings import BaseSettings
 from pydantic import Field, SecretStr
-
 
 class Settings(BaseSettings):
     #CORS
@@ -25,14 +25,12 @@ class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = None
 
     # ==============================
-    # Redis
-    # ==============================
-    REDIS_URL: str = Field("redis://redis:6379/0")
-
-    # ==============================
     # Gemini
     # ==============================
     GEMINI_API_KEY: str = Field("")
+    GEMINI_URL: Optional[str] = Field(
+        default="https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+    )
 
     # ==============================
     # OpenWeather
@@ -58,11 +56,12 @@ class Settings(BaseSettings):
     PYTHONUNBUFFERED: int = Field(1)
 
     # ==============================
-    # 구글 로그인
+    # 구글 로그인 (선택적)
     # ==============================
-    GOOGLE_CLIENT_ID: str
-    GOOGLE_SECRET: str
-    GOOGLE_REDIRECT_URI: str
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: Optional[str] = None
+
     # ==============================
     # Pydantic Settings Config
     # ==============================
@@ -70,7 +69,7 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
-        "extra": "ignore",
+        "extra": "ignore",   # 알 수 없는 필드는 무시
     }
 
     # ==============================

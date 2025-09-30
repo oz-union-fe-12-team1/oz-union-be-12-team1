@@ -17,19 +17,19 @@ class LocationService:
     def __init__(self, repo: UserLocationsRepository):
         self.repo = repo
 
-    # ✅ 단일 위치 조회
+    #  단일 위치 조회
     async def get_location(self, location_id: int) -> Optional[UserLocationResponse]:
         location = await self.repo.get_location_by_id(location_id)
         if not location:
             return None
         return UserLocationResponse.model_validate(location)
 
-    # ✅ 사용자 위치 목록 조회
+    #  사용자 위치 목록 조회
     async def get_user_locations(self, user_id: int) -> List[UserLocationResponse]:
         locations = await self.repo.get_locations_by_user(user_id)
         return [UserLocationResponse.model_validate(loc) for loc in locations]
 
-    # ✅ 위치 수정
+    #  위치 수정
     async def update_location(
         self, location_id: int, update_data: UserLocationUpdateRequest
     ) -> Optional[UserLocationUpdateResponse]:

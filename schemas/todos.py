@@ -17,7 +17,7 @@ class TodoBase(BaseModel):
     )
     is_completed: bool = Field(
         False,
-        json_schema_extra={"example": False},  # ✅ 기본값 False로 강제 (체크박스 대응)
+        json_schema_extra={"example": False},  #  기본값 False로 강제 (체크박스 대응)
     )
 
 
@@ -43,7 +43,7 @@ class TodoUpdate(BaseModel):
     )
     is_completed: Optional[bool] = Field(
         None,
-        json_schema_extra={"example": True},  # ✅ 수정 시에만 nullable 허용
+        json_schema_extra={"example": True},  #  수정 시에만 nullable 허용
     )
     # ✅ 일정 변경 가능 (None이면 일정과 분리하거나 그대로 유지)
     schedule_id: Optional[int] = Field(
@@ -78,7 +78,7 @@ class TodoOut(TodoBase):
         json_schema_extra={"example": "2025-09-18T12:34:56"},
     )
 
-    model_config = {"from_attributes": True}  # ✅ ORM 변환 허용 (Pydantic v2)
+    model_config = {"from_attributes": True}  #  ORM 변환 허용 (Pydantic v2)
 
 
 class TodoListOut(BaseModel):
