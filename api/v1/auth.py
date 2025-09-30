@@ -137,14 +137,14 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         value=result["access_token"],
         httponly=True,
         secure=True,
-        samesite="lax"
+        samesite="none"
     )
     response.set_cookie(
         key="refresh_token",
         value=result["refresh_token"],
         httponly=True,
         secure=True,
-        samesite="lax"
+        samesite="none"
     )
     return UserLoginResponse(success=True)
 
@@ -174,36 +174,13 @@ async def google_callback(code: str) -> GoogleCallbackResponse:
         data = await AuthService.google_callback(code)
         return GoogleCallbackResponse(**data)
     except Exception:
-        raise HTTPException(status_code=400, detail="GOOGLE_TOKEN_INVALID")
 
-
-# -----------------------------
-# 토큰 갱신
-# -----------------------------
-@router.post("/refresh", response_model=UserLoginResponse)
-async def refresh_token(response: Response, refresh_token: str) -> UserLoginResponse:
-    new_access = await AuthService.refresh_token(refresh_token)
-    if not new_access:
-        raise HTTPException(status_code=400, detail="TOKEN_INVALID_OR_EXPIRED")
-
-    response.set_cookie(
-        key="access_token",
-        value=new_access,
-        httponly=True,
-        secure=True,
-        samesite="lax"
-    )
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=True,
-        samesite="lax"
-    )
-    return UserLoginResponse(success=True)
-
-
-# -----------------------------
+        raise HTTPException(
+            status_code=400,
+            detail="GOOGLE_TOKEN_INVALID"
+        )
+        
+        
 # 로그아웃
 # -----------------------------
 @router.post("/logout")
