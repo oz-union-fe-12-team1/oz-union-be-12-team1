@@ -60,12 +60,12 @@ async def get_current_user(request: Request, response: Response) -> User:
             # 새로운 Access Token 재발급 + 쿠키 갱신
             new_access = create_access_token(user_id)
             response.set_cookie(
-                "access_token",
-                value=new_access,
-                httponly=True,
-                secure=True,
-                samesite="none"
-            )
+            "access_token",
+            value=new_access,
+            httponly=True,
+            secure=False,     # dev에서는 False
+            samesite="lax"    # dev에서는 lax
+        )
 
         except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=401, detail="REFRESH_TOKEN_EXPIRED")
