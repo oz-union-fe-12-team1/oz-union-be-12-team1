@@ -34,10 +34,10 @@ app = FastAPI(lifespan=lifespan)
 origins=[
     "http://localhost:5173",
     "http://3.24.190.187:8000",
-    "https://nyangnyang.vercel.app",
-    "https://develop-nyangnyang.vercel.app",
-    "https://nyangbiseo.store",
-    "https://www.nyangbiseo.store"
+    "http://nyangnyang.vercel.app",
+    "http://develop-nyangnyang.vercel.app",
+    "http://nyangbiseo.store",
+    "http://www.nyangbiseo.store"
 ]
 
 app.add_middleware(
