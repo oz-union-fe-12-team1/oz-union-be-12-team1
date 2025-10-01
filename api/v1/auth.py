@@ -146,15 +146,15 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         key="access_token",
         value=result["access_token"],
         httponly=True,
-        secure=False,     # 로컬에서는 False
-        samesite="lax"    # 로컬에서는 lax
+        secure=True,     # 로컬에서는 False
+        samesite="None"    # 로컬에서는 lax
     )
     response.set_cookie(
         key="refresh_token",
         value=result["refresh_token"],
         httponly=True,
-        secure=False,     # 로컬에서는 False
-        samesite="lax"    # 로컬에서는 lax
+        secure=True,     # 로컬에서는 False
+        samesite="None"    # 로컬에서는 lax
     )
     return UserLoginResponse(success=True)
 
