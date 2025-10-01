@@ -4,9 +4,9 @@ from fastapi import HTTPException
 from core.config import settings
 
 
-async def gemini_request(prompt: str) -> dict[str, Any]:
+async def gemini_request(prompt: str) -> str:
     """Gemini API 호출 담당"""
-    if not settings.GEMINI_URL:
+    if not settings.GEMINI_URL or not settings.GEMINI_API_KEY:
         raise HTTPException(
             status_code=500,
             detail={
@@ -19,6 +19,7 @@ async def gemini_request(prompt: str) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=15) as client:
             res = await client.post(
                 settings.GEMINI_URL,
+                headers={"Authorization": f"Bearer {settings.GEMINI_API_KEY}"},
                 json={"contents": [{"parts": [{"text": prompt}]}]},
             )
     except httpx.RequestError as e:
@@ -39,6 +40,18 @@ async def gemini_request(prompt: str) -> dict[str, Any]:
             }
         )
 
-    # 🔑 여기서 타입을 dict[str, Any]로 명시
     data: dict[str, Any] = cast(dict[str, Any], res.json())
-    return data
+
+    #  응답에서 실제 텍스트 추출 (mypy 에러도 해결)
+    try:
+        text: str = str(data["candidates"][0]["content"]["parts"][0]["text"])
+    except (KeyError, IndexError):
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error_code": "GEMINI_PARSE_ERROR",
+                "message": f"Gemini 응답 파싱 실패: {data}"
+            }
+        )
+
+    return text
