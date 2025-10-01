@@ -22,73 +22,69 @@ def create_access_token(user_id: int) -> str:
 # ========================
 # 인증/인가 유틸
 # ========================
-async def get_current_user(
-    request: Request, response: Response) -> User:
-
-    # 1) 우선 쿠키 확인
+async def get_current_user(request: Request, response: Response) -> User:
+    # 1) 쿠키 확인
     token = request.cookies.get("access_token")
     refresh_token = request.cookies.get("refresh_token")
 
-    # 2) 쿠키 없으면 Authorization 헤더 확인 (Swagger/Postman용 fallback)
-    # if not token and credentials:
-    #     token = credentials.credentials
-
     if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="NOT_AUTHENTICATED"
-        )
+        raise HTTPException(status_code=401, detail="NOT_AUTHENTICATED")
 
-    # JWT 디코드
+    user_id: int | None = None
+
+    # 2) Access Token 검증
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: int = int(payload.get("sub"))
-    # 엑세스 토큰 만료시 재발급
+        sub = payload.get("sub")
+        if not sub:
+            raise HTTPException(status_code=401, detail="INVALID_ACCESS_TOKEN")
+        user_id = int(sub)
+
     except jwt.ExpiredSignatureError:
+        # 3) Access Token 만료 → Refresh Token 확인
         if not refresh_token:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="TOKEN_EXPIRED")
+            raise HTTPException(status_code=401, detail="TOKEN_EXPIRED")
+
+        try:
+            refresh_payload = jwt.decode(
+                refresh_token,
+                settings.SECRET_KEY,
+                algorithms=[settings.ALGORITHM]
+            )
+            sub = refresh_payload.get("sub")
+            if not sub:
+                raise HTTPException(status_code=401, detail="INVALID_REFRESH_TOKEN")
+
+            user_id = int(sub)
+
+            # 새로운 Access Token 재발급 + 쿠키 갱신
+            new_access = create_access_token(user_id)
+            response.set_cookie(
+                "access_token",
+                value=new_access,
+                httponly=True,
+                secure=True,
+                samesite="none"
+            )
+
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="REFRESH_TOKEN_EXPIRED")
+        except Exception:
+            raise HTTPException(status_code=401, detail="INVALID_REFRESH_TOKEN")
+
     except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="TOKEN_INVALID")
+        raise HTTPException(status_code=401, detail="TOKEN_INVALID")
 
-    try:
-        refresh_payload = jwt.decode(
-            refresh_token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
-        )
-        user_id: int = int(refresh_payload.get("sub"))
-
-        #리프레시 -> 액새스 토큰 발급 시 쿠키 갱신하기
-        new_access = create_access_token(user_id)
-        response.set_cookie(
-            "access_token",
-            value=new_access,
-            httponly=True,
-            secure=True,
-            samesite="none"
-        )
-
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="REFRESH_TOKEN_EXPIRED")
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,detail="INVALID_REFRESH_TOKEN")
-
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="TOKEN_INVALID")
-
-    # DB에서 유저 조회
+    # 4) DB 조회
     user = await User.get_or_none(id=user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="USER_NOT_FOUND")
+        raise HTTPException(status_code=401, detail="USER_NOT_FOUND")
 
     return user
+
 
 async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     """관리자 권한 확인"""
     if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="NOT_ENOUGH_PRIVILEGES"
-        )
+        raise HTTPException(status_code=403, detail="NOT_ENOUGH_PRIVILEGES")
     return current_user
