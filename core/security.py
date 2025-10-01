@@ -5,9 +5,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from core.config import settings
 from models.user import User
 
-bearer_scheme = HTTPBearer(
-    description="로그인(/auth/login)에서 발급받은 Bearer Token을 입력하세요."
-)
+# bearer_scheme = HTTPBearer(
+#     description="로그인(/auth/login)에서 발급받은 Bearer Token을 입력하세요."
+# )
 # ========================
 # 인증/인가 유틸
 # ========================
@@ -19,7 +19,7 @@ async def get_current_user(
     # 1) 우선 쿠키 확인
     token = request.cookies.get("access_token")
 
-    # # 2) 쿠키 없으면 Authorization 헤더 확인 (Swagger/Postman용 fallback)
+    # 2) 쿠키 없으면 Authorization 헤더 확인 (Swagger/Postman용 fallback)
     # if not token and credentials:
     #     token = credentials.credentials
 
