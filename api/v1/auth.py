@@ -139,19 +139,22 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
     result = await AuthService.login(request.email, request.password)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
+        # 로컬 테스트용
+        # http 환경에서는 secure=True + samesite="none" 불가능
+        # 배포 시(https 환경)에는 반드시 secure=True, samesite="none" 으로 되돌릴 것
     response.set_cookie(
         key="access_token",
         value=result["access_token"],
         httponly=True,
-        secure=True,
-        samesite="none"
+        secure=False,     # 로컬에서는 False
+        samesite="lax"    # 로컬에서는 lax
     )
     response.set_cookie(
         key="refresh_token",
         value=result["refresh_token"],
         httponly=True,
-        secure=True,
-        samesite="none"
+        secure=False,     # 로컬에서는 False
+        samesite="lax"    # 로컬에서는 lax
     )
     return UserLoginResponse(success=True)
 
