@@ -35,7 +35,6 @@ class Schedule(Model):
     deleted_at = fields.DatetimeField(null=True)
 
     # 역참조 (문자열 참조만으로 충분)
-    todos: fields.ReverseRelation["Todo"]
     notifications: fields.ReverseRelation["Notification"]
 
     class Meta:

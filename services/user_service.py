@@ -44,12 +44,18 @@ class UserService:
         profile_image: Optional[str] = None
     ) -> Optional[User]:
         """프로필 수정 (마이페이지)"""
-        return await UserRepository.update_profile(
-            user_id=user_id,
-            username=username,
-            bio=bio,
-            profile_image=profile_image
-        )
+        update_data = {}
+        if username is not None:
+            update_data["username"] = username
+        if bio is not None:
+            update_data["bio"] = bio
+        if profile_image is not None:
+            update_data["profile_image"] = profile_image
+
+        if not update_data:
+            return await UserRepository.get_user_by_id(user_id)
+
+        return await UserRepository.update_profile(user_id=user_id, **update_data)
 
     @staticmethod
     async def change_password(
