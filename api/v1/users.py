@@ -23,7 +23,7 @@ async def get_my_profile(current_user: User = Depends(get_current_user)) -> User
 # -----------------------------
 # 내 프로필 수정
 # -----------------------------
-@router.put("/me", response_model=UserUpdateResponse)
+@router.patch("/me", response_model=UserUpdateResponse)
 async def update_my_profile(
     request: UserUpdateRequest,
     current_user: User = Depends(get_current_user),
