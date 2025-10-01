@@ -14,7 +14,7 @@ async def get_fortune_prompt(birthday: str) -> str:
     """
 
 
-async def get_conversation_summary_prompt(schedules: list, todos: list) -> str:
+async def get_conversation_summary_prompt(schedules: list[str], todos: list[str]) -> str:
     schedule_text = "\n".join(schedules) or "일정 없음"
     todo_text = "\n".join(todos) or "투두 없음"
 
@@ -36,10 +36,40 @@ async def get_conversation_summary_prompt(schedules: list, todos: list) -> str:
 
 
 async def get_briefing_prompt(period: str) -> str:
-    return f"""
-# {period} 브리핑
+    if period == "아침":
+        return f"""
+# 아침 브리핑
 
-- 오늘 뉴스/할 일/날씨를 요약해서 3~4문장으로 정리
-- 마지막에 짧은 조언 추가
-- 반드시 한국어로 작성
-    """
+- 오늘 날씨를 간단히 요약
+- 오늘 일정을 간단히 정리
+- 오늘의 운세 포함
+- 전체를 3~4문장으로 작성
+- 마지막에 **짧은 조언** 추가
+
+⚠️ 반드시 한국어로 작성하세요. 영어를 사용하지 마세요.
+        """
+
+    elif period == "점심":
+        return f"""
+# 점심 브리핑
+
+- 남은 일정을 간단히 요약
+- 주요 뉴스나 퀴즈 추천 포함
+- 전체를 3~4문장으로 작성
+- 마지막에 **짧은 조언** 추가
+
+⚠️ 반드시 한국어로 작성하세요. 영어를 사용하지 마세요.
+        """
+
+    else:  # 저녁
+        return f"""
+# 저녁 브리핑
+
+- 오늘 일정 완료율 요약
+- 내일 일정을 미리보기 형태로 정리
+- 하루를 돌아보는 간단한 정리
+- 전체를 3~4문장으로 작성
+- 마지막에 **짧은 조언** 추가
+
+⚠️ 반드시 한국어로 작성하세요. 영어를 사용하지 마세요.
+        """
