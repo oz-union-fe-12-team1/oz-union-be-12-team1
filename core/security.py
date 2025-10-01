@@ -8,13 +8,12 @@ from models.user import User
 # bearer_scheme = HTTPBearer(
 #     description="로그인(/auth/login)에서 발급받은 Bearer Token을 입력하세요."
 # )
+# credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
 # ========================
 # 인증/인가 유틸
 # ========================
 async def get_current_user(
-    request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> User:
+    request: Request) -> User:
 
     # 1) 우선 쿠키 확인
     token = request.cookies.get("access_token")
