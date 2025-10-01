@@ -1,9 +1,9 @@
 from typing import Any
 from fastapi import APIRouter, Query, HTTPException, Depends
 from services.weather_service import WeatherService
-from models.users import User
+from models.user import User
 from models.user_locations import UserLocation
-from api.dependencies import get_current_user  # 현재 로그인 유저 불러오기
+from core.security import get_current_user  # 현재 로그인 유저 불러오기
 
 router = APIRouter(prefix="/weather", tags=["weather"])
 
