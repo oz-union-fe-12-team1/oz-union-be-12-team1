@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response,Request
+from fastapi.responses import JSONResponse
 from typing import Dict, Union
 
 from schemas.user import (
@@ -157,8 +158,16 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
 # 로그아웃
 # -----------------------------
 @router.post("/logout")
-async def logout_user(token: str) -> dict[str, bool]:
+async def logout_user(request: Request) -> Response:
+    token: str | None = request.cookies.get("refresh_token")
+    if token is None:
+        raise HTTPException(status_code=401, detail="NOT_AUTHENTICATED")
+
     revoked = await AuthService.logout(token)
     if not revoked:
         raise HTTPException(status_code=400, detail="LOGOUT_FAILED")
-    return {"success": True}
+
+    response = JSONResponse({"success": True})
+    response.delete_cookie("refresh_token")
+    return response
+
