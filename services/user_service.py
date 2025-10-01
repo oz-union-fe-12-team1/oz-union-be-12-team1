@@ -44,7 +44,6 @@ class UserService:
         profile_image: Optional[str] = None
     ) -> Optional[User]:
         """프로필 수정 (마이페이지)"""
-        update_data = {}
         user = await UserRepository.get_user_by_id(user_id)
         if not user:
             return None
