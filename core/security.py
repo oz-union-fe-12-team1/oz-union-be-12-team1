@@ -64,7 +64,7 @@ async def get_current_user(request: Request, response: Response) -> User:
             value=new_access,
             httponly=True,
             secure=True,     # dev에서는 False
-            samesite="None"    # dev에서는 lax
+            samesite="none"    # dev에서는 lax
         )
 
         except jwt.ExpiredSignatureError:
