@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, date
 from typing import Optional, Dict, Any
+from fastapi import Request
+
 import jwt
 import random   # ✅ 인증번호 생성용
 import redis.asyncio as redis
@@ -171,7 +173,7 @@ class AuthService:
     # 로그아웃 (/auth/logout)
     # ---------------------------
     @staticmethod
-    async def logout(token: str) -> Optional[TokenRevocation]:
+    async def logout(token:str) -> Optional[TokenRevocation]:
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
             user_id = int(payload.get("sub"))
