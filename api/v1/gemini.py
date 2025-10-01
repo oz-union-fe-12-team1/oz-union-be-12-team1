@@ -7,8 +7,8 @@ from models.schedules import Schedule
 from models.todo import Todo
 from services import gemini_service
 from services.gemini_client import gemini_request
-from models.users import User
-from api.dependencies import get_current_user
+from models.user import User
+from core.security import get_current_user
 
 router = APIRouter(prefix="/gemini", tags=["gemini"])
 
