@@ -36,7 +36,7 @@ origins=[
     "http://3.24.190.187:8000",
     "https://nyangnyang.vercel.app",
     "https://develop-nyangnyang.vercel.app",
-    "https://nyangbiseo.store/",
+    "https://nyangbiseo.store",
     "https://www.nyangbiseo.store"
 ]
 
