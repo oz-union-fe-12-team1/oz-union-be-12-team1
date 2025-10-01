@@ -4,6 +4,7 @@ core/config.py
 core/db.py
 core/google_handler.py
 core/security.py
+core/verify_mail.py
 models/__init__.py
 models/inquiries.py
 models/notifications.py
@@ -36,7 +37,9 @@ schemas/user.py
 schemas/user_locations.py
 services/__init__.py
 services/auth_service.py
+services/email_service.py
 services/gemini_service.py
+services/google_auth_service.py
 services/inquiries_service.py
 services/location_service.py
 services/news_service.py

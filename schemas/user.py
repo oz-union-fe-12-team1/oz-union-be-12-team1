@@ -106,14 +106,20 @@ class UserVerifyErrorResponse(BaseModel):
         }
     }
 
+class UserCreateErrorResponse(BaseModel):
+    error: str
+
+
 
 class UserLoginResponse(BaseModel):
     success: bool
+    last_login_at: datetime | None=None
 
     model_config = {
         "json_schema_extra": {
             "example": {
-                "success": True
+                "success": True,
+                "last_login_at": "2025-09-30T08:13:45.123Z"
             }
         }
     }
@@ -230,7 +236,6 @@ class AdminUserListResponse(BaseModel):
 class PasswordResetConfirm(BaseModel):
     email: EmailStr
     new_password: str
-    token: str   
     new_password_check: str
 
     model_config = {
