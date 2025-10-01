@@ -162,8 +162,10 @@ class AuthService:
         access_token = AuthService.create_access_token(user.id)
         refresh_token = AuthService.create_refresh_token(user.id)
 
-        user.last_login_ip = "TODO: 클라이언트 IP"
-        await user.save()
+        user.last_login_at = datetime.now()
+        await user.save(
+            update_fields=["last_login_at"]
+        )
         return {"access_token": access_token, "refresh_token": refresh_token}
     # ---------------------------
     # 로그아웃 (/auth/logout)
