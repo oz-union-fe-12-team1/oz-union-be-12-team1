@@ -53,14 +53,14 @@ async def google_callback(code: str, response: Response) -> GoogleCallbackRespon
             key="access_token",
             value=data["access_token"],
             httponly=True,
-            secure=True,
+            secure=False,
             samesite="none"
         )
         response.set_cookie(
             key="refresh_token",
             value=data["refresh_token"],
             httponly=True,
-            secure=True,
+            secure=False,
             samesite="none"
         )
         return GoogleCallbackResponse(success=True)            # 스키마 변환
