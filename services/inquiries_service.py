@@ -82,6 +82,7 @@ class InquiryService:
     # --------------------
     # DELETE
     # --------------------
+
     @staticmethod
     async def delete_inquiry(inquiry_id: int) -> bool:
         """문의 삭제 (사용자 or 관리자)"""
