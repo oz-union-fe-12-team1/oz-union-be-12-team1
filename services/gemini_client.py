@@ -15,10 +15,12 @@ async def gemini_request(prompt: str) -> str:
             }
         )
 
+    # 최신 모델과 v1 엔드포인트 사용
     GEMINI_URL = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-pro:generateContent?key={settings.GEMINI_API_KEY}"
+        "https://generativelanguage.googleapis.com/v1/models/"
+        f"gemini-1.5-pro:generateContent?key={settings.GEMINI_API_KEY}"
     )
+    # 빠른 응답 원하면 gemini-1.5-flash 로 교체 가능
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
