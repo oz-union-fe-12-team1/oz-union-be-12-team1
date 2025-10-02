@@ -8,7 +8,7 @@ from schemas.inquiries import (
     InquiryUpdate,
     InquiryOut,
     InquiryListOut,
-    InquiryDeleteResponse,
+    InquiryDeleteResponse, InquiryUserUpdate,
 )
 
 router = APIRouter(prefix="/inquiries", tags=["inquiries"])
@@ -58,6 +58,24 @@ async def get_inquiry(
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
 
     return InquiryOut.from_orm(inquiry)
+
+#문의 수정 (유저)
+
+@router.patch("/me/{inquiry_id}", response_model=InquiryOut)
+async def update_my_inquiry(
+    inquiry_id: int,
+    request: InquiryUserUpdate,   # 새로운 스키마 (title/message만 포함)
+    current_user: User = Depends(get_current_user),
+) -> InquiryOut:
+    inquiry = await InquiryService.update_inquiry_user(
+        inquiry_id=inquiry_id,
+        user_id=current_user.id,
+        title=request.title,
+        message=request.message,
+    )
+    if not inquiry:
+        raise HTTPException(status_code=400, detail="UPDATE_NOT_ALLOWED")
+    return InquiryOut.model_validate(inquiry, from_attributes=True)
 
 
 # -----------------------------

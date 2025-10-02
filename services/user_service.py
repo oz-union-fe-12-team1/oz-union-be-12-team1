@@ -2,6 +2,7 @@ from typing import Optional, List
 from passlib.hash import bcrypt
 from repositories.user_repo import UserRepository
 from models.user import User
+from schemas.user import UserOut
 
 
 class UserService:
@@ -14,9 +15,20 @@ class UserService:
     # READ
     # --------------------
     @staticmethod
-    async def get_user_by_id(user_id: int) -> Optional[User]:
+    async def get_user_by_id(user_id: int) -> Optional[UserOut]:
         """ID 기준 단일 유저 조회"""
-        return await UserRepository.get_user_by_id(user_id)
+        user = await UserRepository.get_user_by_id(user_id)
+
+        if not user:
+            return None
+
+        return UserOut.model_validate(
+            {
+                **user.__dict__,
+                "is_google_user": bool(user.google_id),
+            },
+            from_attributes=True,
+        )
 
     @staticmethod
     async def get_user_by_email(email: str) -> Optional[User]:
