@@ -167,6 +167,9 @@ class UserOut(BaseModel):
     username: str
     birthday: date
     is_email_verified: bool
+    is_active: bool
+    is_superuser: bool
+    is_google_user: bool
     created_at: datetime
     updated_at: datetime
 
