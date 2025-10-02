@@ -146,7 +146,7 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         key="access_token",
         value=result["access_token"],
         httponly=True,
-        secure=False,     # 로컬에서는 False
+        secure=True,     # 로컬에서는 False
         samesite="lax"    # 로컬에서는 lax
     )
     response.set_cookie(
@@ -159,7 +159,6 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
     return UserLoginResponse(success=True)
 
 # 로그아웃
-# -----------------------------
 @router.post("/logout")
 async def logout_user(request: Request) -> Response:
     token: str | None = request.cookies.get("refresh_token")

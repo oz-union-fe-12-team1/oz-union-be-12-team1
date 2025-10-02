@@ -33,6 +33,8 @@ app = FastAPI(lifespan=lifespan)
 #프론트, 도메인 발급 받은 것 (cors)
 origins=[
     "http://localhost:5173",
+    "https://localhost:5173",
+    "http://0.0.0.0:8000/docs",
     "http://3.24.190.187:8000",
     "https://nyangnyang.vercel.app",
     "https://develop-nyangnyang.vercel.app",
