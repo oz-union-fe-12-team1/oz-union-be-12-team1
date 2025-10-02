@@ -30,16 +30,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(lifespan=lifespan)
 
-#프론트, 도메인 발급 받은 것 (cors)
-origins=[
+origins = [
+    # 로컬 개발
     "http://localhost:5173",
     "https://localhost:5173",
     "http://0.0.0.0:8000/docs",
+
+    # EC2 퍼블릭 IP (http/https 둘 다)
     "http://3.24.190.187:8000",
+    "https://3.24.190.187:8000",
+
+    # 프론트 Vercel 배포 도메인
     "https://nyangnyang.vercel.app",
     "https://develop-nyangnyang.vercel.app",
-    "https://nyangbiseo.store/",
-    "https://www.nyangbiseo.store"
+
+    # 커스텀 도메인 (www 유무 + http/https)
+    "http://nyangbiseo.store",
+    "https://nyangbiseo.store",
+    "http://www.nyangbiseo.store",
+    "https://www.nyangbiseo.store",
 ]
 
 app.add_middleware(
