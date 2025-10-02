@@ -169,11 +169,11 @@ class AuthService:
             update_fields=["last_login_at"]
         )
         return {"access_token": access_token, "refresh_token": refresh_token}
-    # ---------------------------
+
     # 로그아웃 (/auth/logout)
-    # ---------------------------
+    # 토큰 블랙리스트로 저장
     @staticmethod
-    async def logout(token:str) -> Optional[TokenRevocation]:
+    async def logout(token: str) -> Optional[TokenRevocation]:
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
             user_id = int(payload.get("sub"))
