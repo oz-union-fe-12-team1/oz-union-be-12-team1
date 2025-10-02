@@ -119,7 +119,7 @@ async def delete_inquiry(
         raise HTTPException(status_code=404, detail="INQUIRY_NOT_FOUND")
 
     # 본인 것만 삭제 가능 (단, 관리자는 예외)
-    if not current_user.is_superuser and inquiry != current_user:
+    if not current_user.is_superuser and inquiry.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="NOT_ALLOWED")
 
     deleted = await InquiryService.delete_inquiry(inquiry_id)
@@ -127,3 +127,4 @@ async def delete_inquiry(
         raise HTTPException(status_code=500, detail="DELETE_FAILED")
 
     return InquiryDeleteResponse()
+
