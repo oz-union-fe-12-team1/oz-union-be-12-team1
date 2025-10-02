@@ -170,6 +170,16 @@ async def logout_user(request: Request) -> Response:
         raise HTTPException(status_code=400, detail="LOGOUT_FAILED")
 
     response = JSONResponse({"success": True})
-    response.delete_cookie("refresh_token")
+
+#브라우저 상에서 토큰 삭제 (set_coockie의 key, path는 일치해야함)
+    response.delete_cookie(
+        "refresh_token",
+        path="/"
+    )
+    response.delete_cookie(
+        "access_token",
+        path="/"
+    )
+
     return response
 
