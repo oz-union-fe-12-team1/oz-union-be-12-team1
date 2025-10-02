@@ -17,6 +17,7 @@ from api.v1 import (
     quiz,
     news,
     gemini,
+    google_auth
 )
 
 
@@ -80,6 +81,7 @@ app.include_router(weather.router)
 app.include_router(quiz.router)       # 퀴즈 API
 app.include_router(news.router)       # 뉴스 API
 app.include_router(gemini.router)     # 제미나이 API
+app.include_router(google_auth.router)
 
 if __name__ == "__main__":
     import uvicorn
