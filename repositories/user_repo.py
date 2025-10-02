@@ -26,7 +26,10 @@ class UserRepository:
             password_hash=password_hash,
             username=username,
             birthday=birthday,
-            is_email_verified=True,  # ✅ 인증 완료 상태로 저장
+            is_email_verified=True,  # 인증 완료 상태로 저장
+            is_google_user=False, # 구글 로그인 일시 True로 / 기본 False
+            is_active=True,
+            is_superuser=False,
         )
         return user
 
