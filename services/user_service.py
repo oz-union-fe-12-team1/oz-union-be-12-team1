@@ -95,10 +95,8 @@ class UserService:
         return user
 
     @staticmethod
-    async def set_superuser(user_id: int, is_superuser: bool) -> Optional[User]:
-        """관리자 권한 부여/회수"""
-        user = await User.get_or_none(id=user_id)
-        if user:
-            user.is_superuser = is_superuser
-            await user.save()
-        return user
+    async def search_user(search: str) -> Optional[User]:
+        """이메일 또는 닉네임 기반 단일 사용자 검색"""
+        if "@" in search:
+            return await UserRepository.get_user_by_email(search)
+        return await UserRepository.get_user_by_username(search)
