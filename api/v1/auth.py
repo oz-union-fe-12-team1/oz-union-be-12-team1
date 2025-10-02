@@ -159,7 +159,6 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
     return UserLoginResponse(success=True)
 
 # 로그아웃
-# -----------------------------
 @router.post("/logout")
 async def logout_user(request: Request) -> Response:
     token: str | None = request.cookies.get("refresh_token")

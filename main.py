@@ -33,6 +33,8 @@ app = FastAPI(lifespan=lifespan)
 origins = [
     # 로컬 개발
     "http://localhost:5173",
+    "https://localhost:5173",
+    "http://0.0.0.0:8000/docs",
 
     # EC2 퍼블릭 IP (http/https 둘 다)
     "http://3.24.190.187:8000",
