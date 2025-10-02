@@ -174,10 +174,18 @@ async def logout_user(request: Request) -> Response:
 #브라우저 상에서 토큰 삭제 (set_coockie의 key, path는 일치해야함)
     response.delete_cookie(
         "refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        #domain="nyangbiseo.store" # 배포시 추가
         path="/"
     )
     response.delete_cookie(
         "access_token",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        # domain="nyangbiseo.store" # 배포시 추가
         path="/"
     )
 
