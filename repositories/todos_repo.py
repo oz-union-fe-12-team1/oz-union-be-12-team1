@@ -15,8 +15,7 @@ class TodosRepository:
     async def create_todo(
         user_id: int,
         title: str,
-        description: Optional[str] = None,
-        schedule_id: Optional[int] = None,
+        description: Optional[str] = None
     ) -> Todo:
         """
         새로운 Todo 생성
@@ -26,8 +25,7 @@ class TodosRepository:
         return await Todo.create(
             user_id=user_id,
             title=title,
-            description=description,
-            schedule_id=schedule_id,  # ✅ 연결할 일정이 없으면 None 저장
+            description=description
         )
 
     # --------------------
