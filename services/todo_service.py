@@ -22,8 +22,7 @@ class TodoService:
         todo: Todo = await TodosRepository.create_todo(
             user_id=user_id,
             title=title,
-            description=description,
-            schedule_id=schedule_id,
+            description=description
         )
         return TodoOut.model_validate(todo, from_attributes=True)
 
