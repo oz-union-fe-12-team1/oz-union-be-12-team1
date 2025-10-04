@@ -1,40 +1,43 @@
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List
+from decimal import Decimal
+from models.user_locations import UserLocation
+from models.user import User
+from schemas.user_locations import UserLocationUpdateRequest, UserLocationUpdateResponse
+from core.security import get_current_user
 
-from repositories.user_locations_repo import UserLocationsRepository
-from services.location_service import LocationService
-from schemas.user_locations import (
-    UserLocationResponse,
-    UserLocationUpdateRequest,
-    UserLocationUpdateResponse,
-)
-
-# 라우터 생성
-router = APIRouter(prefix="/locations", tags=["User Locations"])
-
-# Service 인스턴스
-location_service = LocationService(UserLocationsRepository())
+router = APIRouter(prefix="/user-locations", tags=["User Location"])
 
 
-# ✅ 내 위치 단일 조회
-@router.get("/{location_id}", response_model=UserLocationResponse)
-async def get_location(location_id: int) -> UserLocationResponse:
-    location = await location_service.get_location(location_id)
-    if not location:
-        raise HTTPException(status_code=404, detail="Location not found")
-    return location
+@router.patch("/", response_model=UserLocationUpdateResponse)
+async def update_user_location(
+    request: UserLocationUpdateRequest,
+    current_user: User = Depends(get_current_user)
+) -> UserLocationUpdateResponse:
 
+    # 로그인한 사용자의 위치 정보를 업데이트하거나 없으면 새로 생성
+    user_location = await UserLocation.get_or_none(user_id=current_user.id)
 
-# ✅ 내 위치 전체 조회
-@router.get("/", response_model=List[UserLocationResponse])
-async def get_locations(user_id: int) -> List[UserLocationResponse]:  # 실제로는 Depends(get_current_user) 같은 인증 로직 들어감
-    return await location_service.get_user_locations(user_id)
+    # ✅ 없으면 새로 생성
+    if not user_location:
+        user_location = await UserLocation.create(
+            user_id=current_user.id,
+            latitude=Decimal(str(request.latitude)) if request.latitude is not None else Decimal("0"),
+            longitude=Decimal(str(request.longitude)) if request.longitude is not None else Decimal("0"),
+            label=request.label,
+            is_default=request.is_default if request.is_default is not None else True,
+        )
 
+    # 있으면 업데이트
+    else:
+        if request.latitude is not None:
+            user_location.latitude = Decimal(str(request.latitude))
+        if request.longitude is not None:
+            user_location.longitude = Decimal(str(request.longitude))
+        if request.label is not None:
+            user_location.label = request.label
+        if request.is_default is not None:
+            user_location.is_default = request.is_default
 
-# ✅ 내 위치 수정
-@router.put("/{location_id}", response_model=UserLocationUpdateResponse)
-async def update_location(location_id: int, update_data: UserLocationUpdateRequest) -> UserLocationUpdateResponse:
-    updated_location = await location_service.update_location(location_id, update_data)
-    if not updated_location:
-        raise HTTPException(status_code=404, detail="Location not found")
-    return updated_location
+        await user_location.save()
+
+    return UserLocationUpdateResponse.model_validate(user_location, from_attributes=True)
