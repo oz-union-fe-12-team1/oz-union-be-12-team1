@@ -5,7 +5,7 @@ from models.user import User
 from core.security import get_current_user
 from services.todo_service import TodoService
 from schemas.todos import (
-    TodoCreate,
+    TodoBase,
     TodoUpdate,
     TodoOut,
     TodoListOut,
@@ -20,14 +20,13 @@ router = APIRouter(prefix="/todos", tags=["todos"])
 # -----------------------------
 @router.post("", response_model=TodoOut)
 async def create_todo(
-    request: TodoCreate,
+    request: TodoBase,
     current_user: User = Depends(get_current_user),
 ) -> TodoOut:
     return await TodoService.create_todo(
         user_id=current_user.id,
         title=request.title,
-        description=request.description,
-        schedule_id=request.schedule_id,
+        description=request.description
     )
 
 
@@ -56,7 +55,7 @@ async def get_todo(todo_id: int, current_user: User = Depends(get_current_user))
 # -----------------------------
 # 4. Todo 수정
 # -----------------------------
-@router.put("/{todo_id}", response_model=TodoOut)
+@router.patch("/{todo_id}", response_model=TodoOut)
 async def update_todo(
     todo_id: int,
     request: TodoUpdate,

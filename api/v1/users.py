@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
+from mypyc.crash import crash_report
+
 from schemas.user import (
-    UserCreateResponse,   # ✅ 조회 시 재활용
+    UserCreateResponse,  # ✅ 조회 시 재활용
     UserUpdateRequest,
     UserUpdateResponse,
     UserDeleteResponse,
     UserVerifySuccessResponse,
-    PasswordChangeRequest,
+    PasswordChangeRequest, UserOut,
 )
 from services.user_service import UserService
 from models.user import User
@@ -16,9 +18,15 @@ router = APIRouter(prefix="/users", tags=["users"])
 # -----------------------------
 # 내 프로필 조회
 # -----------------------------
-@router.get("/me", response_model=UserCreateResponse)
-async def get_my_profile(current_user: User = Depends(get_current_user)) -> UserCreateResponse:
-    return UserCreateResponse.model_validate(current_user)
+@router.get("/me", response_model=UserOut)
+async def get_my_profile(current_user: User = Depends(get_current_user)) -> UserOut:
+    return UserOut.model_validate(
+        {
+            **current_user.__dict__,
+            "is_google_user": bool(current_user.google_id)
+        },
+        from_attributes=True,
+    )
 
 # -----------------------------
 # 내 프로필 수정

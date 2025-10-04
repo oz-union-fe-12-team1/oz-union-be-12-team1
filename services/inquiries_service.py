@@ -41,7 +41,29 @@ class InquiryService:
 
     # --------------------
     # UPDATE
-    # --------------------
+
+    # user 문의내역 수정
+    @staticmethod
+    async def update_inquiry_user(
+            inquiry_id: int,
+            user_id: int,
+            title: Optional[str] = None,
+            message: Optional[str] = None
+    ) -> Optional[Inquiry]:
+        inquiry = await InquiryRepository.get_inquiry_by_id(inquiry_id)
+        if not inquiry:
+            return None
+
+        # 본인만 수정 가능
+        if inquiry.user_id != user_id:  # ✅ user_id 바로 비교 가능
+            return None
+
+        # 이미 답변된 건 수정 불가
+        if inquiry.admin_reply:
+            return None
+
+        return await InquiryRepository.update_inquiry_user(inquiry_id, title, message)
+
     @staticmethod
     async def update_inquiry(
         inquiry_id: int,
@@ -60,6 +82,7 @@ class InquiryService:
     # --------------------
     # DELETE
     # --------------------
+
     @staticmethod
     async def delete_inquiry(inquiry_id: int) -> bool:
         """문의 삭제 (사용자 or 관리자)"""

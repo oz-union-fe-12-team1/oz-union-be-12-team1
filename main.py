@@ -18,6 +18,7 @@ from api.v1 import (
     news,
     gemini,
     s3,
+    google_auth
 )
 
 
@@ -34,6 +35,8 @@ app = FastAPI(lifespan=lifespan)
 origins = [
     # 로컬 개발
     "http://localhost:5173",
+    "https://localhost:5173",
+    "http://0.0.0.0:8000/docs",
 
     # EC2 퍼블릭 IP (http/https 둘 다)
     "http://3.24.190.187:8000",
@@ -55,7 +58,7 @@ app.add_middleware(
     allow_origins=origins, # 주소
     allow_methods=["*"], #crud
     allow_headers=["*"], #헤더
-    allow_credentials=True,#인증서
+    allow_credentials=True, #인증서
 )
 
 #로드밸런서 대상그룹 헬스채크 포인트
@@ -80,6 +83,7 @@ app.include_router(quiz.router)       # 퀴즈 API
 app.include_router(news.router)       # 뉴스 API
 app.include_router(gemini.router)     # 제미나이 API
 app.include_router(s3.router)
+app.include_router(google_auth.router)
 
 if __name__ == "__main__":
     import uvicorn
