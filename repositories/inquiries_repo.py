@@ -1,3 +1,4 @@
+from pyexpat.errors import messages
 from typing import List, Optional
 from datetime import datetime
 from tortoise.exceptions import DoesNotExist
@@ -46,6 +47,19 @@ class InquiryRepository:
     # --------------------
     # UPDATE
     # --------------------
+    @staticmethod
+    async def update_inquiry_user(inquiry_id: int, title: Optional[str], message: Optional[str]) -> Optional[Inquiry]:
+        try:
+            inquiry = await Inquiry.get(id=inquiry_id)
+            if title is not None:
+                inquiry.title = title
+            if message is not None:
+                inquiry.message = message
+            await inquiry.save()
+            return inquiry
+        except DoesNotExist:
+            return None
+
     @staticmethod
     async def update_inquiry(
         inquiry_id: int,

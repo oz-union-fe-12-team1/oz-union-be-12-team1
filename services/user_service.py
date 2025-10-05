@@ -2,6 +2,7 @@ from typing import Optional, List
 from passlib.hash import bcrypt
 from repositories.user_repo import UserRepository
 from models.user import User
+from schemas.user import UserOut
 
 
 class UserService:
@@ -14,9 +15,20 @@ class UserService:
     # READ
     # --------------------
     @staticmethod
-    async def get_user_by_id(user_id: int) -> Optional[User]:
+    async def get_user_by_id(user_id: int) -> Optional[UserOut]:
         """ID 기준 단일 유저 조회"""
-        return await UserRepository.get_user_by_id(user_id)
+        user = await UserRepository.get_user_by_id(user_id)
+
+        if not user:
+            return None
+
+        return UserOut.model_validate(
+            {
+                **user.__dict__,
+                "is_google_user": bool(user.google_id),
+            },
+            from_attributes=True,
+        )
 
     @staticmethod
     async def get_user_by_email(email: str) -> Optional[User]:
@@ -95,10 +107,8 @@ class UserService:
         return user
 
     @staticmethod
-    async def set_superuser(user_id: int, is_superuser: bool) -> Optional[User]:
-        """관리자 권한 부여/회수"""
-        user = await User.get_or_none(id=user_id)
-        if user:
-            user.is_superuser = is_superuser
-            await user.save()
-        return user
+    async def search_user(search: str) -> Optional[User]:
+        """이메일 또는 닉네임 기반 단일 사용자 검색"""
+        if "@" in search:
+            return await UserRepository.get_user_by_email(search)
+        return await UserRepository.get_user_by_username(search)

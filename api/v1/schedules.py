@@ -54,7 +54,7 @@ async def get_schedule(schedule_id: int, current_user: User = Depends(get_curren
 # -----------------------------
 # 4. 일정 수정
 # -----------------------------
-@router.put("/{schedule_id}", response_model=ScheduleOut)
+@router.patch("/{schedule_id}", response_model=ScheduleOut)
 async def update_schedule(
     schedule_id: int,
     request: ScheduleUpdateRequest,

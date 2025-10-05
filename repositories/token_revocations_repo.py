@@ -10,16 +10,15 @@ class TokenRevocationsRepository:
     # ✅ Create (토큰 무효화 등록)
     @staticmethod
     async def revoke_token(jti: str, user_id: int) -> TokenRevocation:
-        """
-        jti: JWT ID (토큰 고유 식별자)
-        user_id: 해당 토큰 소유자
-        """
-        revoked = await TokenRevocation.create(
+        # 중복 방지
+        existing = await TokenRevocation.get_or_none(jti=jti)
+        if existing:
+            return existing
+
+        return await TokenRevocation.create(
             jti=jti,
-            user_id=user_id,
-            revoked_at=datetime.utcnow()
+            user_id=user_id,  # FK → user_id로 지정해야 함
         )
-        return revoked
 
     # ✅ Read (특정 토큰 무효화 여부 확인)
     @staticmethod
