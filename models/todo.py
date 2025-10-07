@@ -15,12 +15,6 @@ class Todo(Model):
         related_name="todos",
         on_delete=fields.CASCADE
     )
-    schedule: Optional[ForeignKeyFieldInstance[Schedule]] = fields.ForeignKeyField(
-        "models.Schedule",
-        related_name="todos",
-        null=True,
-        on_delete=fields.SET_NULL
-    )
 
     title = fields.CharField(max_length=255, null=False)
     description = fields.TextField(null=True)

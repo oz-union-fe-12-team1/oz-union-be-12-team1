@@ -20,20 +20,18 @@ async def get_all_users(
         total=len(users),
     )
 
-# -----------------------------
-# 특정 사용자 조회 (관리자 전용)
-# -----------------------------
-@router.get("/users/{user_id}", response_model=AdminUserOut)
-async def get_user(
-    user_id: int,
-    current_admin: User = Depends(get_current_admin),  # 관리자 권한 검사
-) -> AdminUserOut:
-    user = await UserService.get_user_by_id(user_id)
 
+# 특정 사용자 조회 (관리자 전용)
+
+@router.get("/users/search", response_model=AdminUserOut)
+async def search_user(
+    search: str,
+    current_admin: User = Depends(get_current_admin)  # 관리자 권한 검사
+) -> AdminUserOut:
+    user = await UserService.search_user(search)
     if not user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
-
-    return AdminUserOut.model_validate(user)
+    return AdminUserOut.model_validate(user, from_attributes=True)
 
 # -----------------------------
 # 사용자 삭제 (관리자 전용)

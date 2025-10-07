@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List
 from datetime import date, datetime
 
@@ -124,42 +124,43 @@ class UserLoginResponse(BaseModel):
 
 # 구글 로그인
 class GoogleCallbackRequest(BaseModel):
-    code: str
 
-    model_config = {
-        "json_schema_extra": {"example": {"code": "4/0AfJohXyZ_example_code_from_google"}}
-    }
+    code: str = Field(..., description="구글 OAuth 인가 코드")
 
-
-class GoogleCallbackResponse(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-
-    model_config = {
-        "json_schema_extra": {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "access_token": "eyJhbGciOiJIUzI1NiIs...",
-                "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
-                "token_type": "bearer",
+                "code": "4/0AfJohXyZ_example_code_from_google"
             }
         }
-    }
+    )
+
+class GoogleCallbackResponse(BaseModel):
+
+    redirect_url: str = Field(..., description="로그인 성공 후 이동할 프론트엔드 URL")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "redirect_url": "https://your-frontend-domain.com/auth/success"
+            }
+        }
+    )
 
 
 class GoogleLoginErrorResponse(BaseModel):
-    errors: List[str]
-    status: List[int]
 
-    model_config = {
-        "json_schema_extra": {
+    error: str = Field(..., description="오류 코드 또는 메시지")
+    status_code: int = Field(..., description="HTTP 상태 코드")
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "errors": ["GOOGLE_TOKEN_INVALID", "GOOGLE_ID_CONFLICT"],
-                "status": [401, 409],
+                "error": "GOOGLE_TOKEN_INVALID",
+                "status_code": 400
             }
         }
-    }
-
+    )
 
 class UserOut(BaseModel):
     id: int
@@ -168,6 +169,9 @@ class UserOut(BaseModel):
     birthday: date
     profile_image: Optional[str] = None   
     is_email_verified: bool
+    is_active: bool
+    is_superuser: bool
+    is_google_user: bool
     created_at: datetime
     updated_at: datetime
 
@@ -209,26 +213,25 @@ class AdminUserListResponse(BaseModel):
     users: List[AdminUserOut]
     total: int
 
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "users": [
-                    {
-                        "id": 1,
-                        "email": "admin@example.com",
-                        "username": "관리자",
-                        "profile_image": "https://nyangbucket.s3.ap-northeast-2.amazonaws.com/uploads/admin.png",
-                        "is_active": True,
-                        "is_email_verified": True,
-                        "created_at": "2025-09-25T12:00:00",
-                        "updated_at": "2025-09-25T12:00:00",
-                        "is_superuser": True,
-                    }
-                ],
-                "total": 1,
+model_config = {
+            "json_schema_extra": {
+                "example": {
+                    "users": [
+                        {
+                            "id": 1,
+                            "email": "admin@example.com",
+                            "username": "관리자",
+                            "is_active": True,
+                            "is_email_verified": True,
+                            "created_at": "2025-09-25T12:00:00",
+                            "updated_at": "2025-09-25T12:00:00",
+                            "is_superuser": True,
+                        }
+                    ],
+                    "total": 1,
+                }
             }
         }
-    }
 
 
 # 비밀번호 재설정

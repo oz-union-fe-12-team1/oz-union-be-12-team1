@@ -20,6 +20,8 @@ class Inquiry(Model):
         on_delete=fields.CASCADE,
         null=False
     )
+
+    user_id: int
     # FK → 문의 작성 사용자
 
     title = fields.CharField(max_length=255, null=False)

@@ -1,35 +1,63 @@
 from typing import Any
-from fastapi import APIRouter, Query, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from services.weather_service import WeatherService
 from models.user import User
 from models.user_locations import UserLocation
-from core.security import get_current_user  # 현재 로그인 유저 불러오기
+from core.security import get_current_user
 
-router = APIRouter(prefix="/weather", tags=["weather"])
+router = APIRouter(prefix="/weather", tags=["Weather"])
 
-
-@router.get("")
+# 🌤 오늘의 날씨
+@router.get("/", summary="현재 사용자 위치 기반 날씨 조회")
 async def get_current_weather(
-    lat: float | None = Query(None, description="위도 (테스트용, 선택)"),
-    lon: float | None = Query(None, description="경도 (테스트용, 선택)"),
     current_user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
-    """
-    현재 날씨 API
-    - 프론트에서 lat/lon 주면 그 값 사용
-    - 안 주면 user_location 테이블에서 조회
-    """
+    #유저 로케이션에서 가져온 값으로 날씨 처리
+    user_location = await UserLocation.get_or_none(user_id=current_user.id)
+    if not user_location:
+        raise HTTPException(status_code=404, detail="USER_LOCATION_NOT_FOUND")
 
-    # DB 조회 (lat/lon 없을 때만)
-    if lat is None or lon is None:
-        user_loc = await UserLocation.get_or_none(user=current_user.id, is_default=True)
-        if not user_loc:
-            raise HTTPException(status_code=400, detail="위치 정보가 없습니다.")
-        lat, lon = float(user_loc.latitude), float(user_loc.longitude)  # Decimal → float 변환
-
-    # OpenWeather API 호출
-    weather_data = await WeatherService.fetch_weather(lat, lon)
+    weather_data = await WeatherService.fetch_weather(
+        lat=float(user_location.latitude),
+        lon=float(user_location.longitude),
+    )
     if not weather_data:
         raise HTTPException(status_code=400, detail="날씨 불러오기 실패")
 
-    return {"success": True, "data": weather_data}
+    return {
+        "success": True,
+        "data": {
+            "label": user_location.label,
+            "latitude": user_location.latitude,
+            "longitude": user_location.longitude,
+            "weather": weather_data,
+        },
+    }
+
+
+# 🌦 5일치 예보
+@router.get("/forecast", summary="현재 사용자 위치 기반 5일치 예보 조회")
+async def get_weather_forecast(
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """DB의 user_locations에서 좌표를 불러와 예보 조회"""
+    user_location = await UserLocation.get_or_none(user_id=current_user.id)
+    if not user_location:
+        raise HTTPException(status_code=404, detail="USER_LOCATION_NOT_FOUND")
+
+    forecast_data = await WeatherService.fetch_forecast(
+        lat=float(user_location.latitude),
+        lon=float(user_location.longitude),
+    )
+    if not forecast_data:
+        raise HTTPException(status_code=400, detail="날씨 예보 불러오기 실패")
+
+    return {
+        "success": True,
+        "data": {
+            "label": user_location.label,
+            "latitude": user_location.latitude,
+            "longitude": user_location.longitude,
+            "forecast": forecast_data,
+        },
+    }

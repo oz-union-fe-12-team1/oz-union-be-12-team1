@@ -159,7 +159,6 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
     return UserLoginResponse(success=True)
 
 # 로그아웃
-# -----------------------------
 @router.post("/logout")
 async def logout_user(request: Request) -> Response:
     token: str | None = request.cookies.get("refresh_token")
@@ -171,6 +170,24 @@ async def logout_user(request: Request) -> Response:
         raise HTTPException(status_code=400, detail="LOGOUT_FAILED")
 
     response = JSONResponse({"success": True})
-    response.delete_cookie("refresh_token")
+
+#브라우저 상에서 토큰 삭제 (set_coockie의 key, path는 일치해야함)
+    response.delete_cookie(
+        "refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        #domain="nyangbiseo.store" # 배포시 추가
+        path="/"
+    )
+    response.delete_cookie(
+        "access_token",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        # domain="nyangbiseo.store" # 배포시 추가
+        path="/"
+    )
+
     return response
 

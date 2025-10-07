@@ -27,6 +27,23 @@ class InquiryBase(BaseModel):
 class InquiryCreate(InquiryBase):
     pass
 
+# 유저 본인 문의 수정
+class InquiryUserUpdate(BaseModel):
+    title: Optional[str] = Field(
+        None,
+        json_schema_extra={
+            "example": "문의 내용 잘못 적었어요"
+        }
+    )
+
+    message: Optional[str] = Field(
+        None,
+        json_schema_extra={
+            "example": "수정 어떻게 해요?!"
+        }
+    )
+
+
 
 #  수정 요청 (관리자 답변, 상태 변경 등)
 class InquiryUpdate(BaseModel):
