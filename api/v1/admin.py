@@ -35,7 +35,7 @@ async def get_all_users(
 async def search_users(
     search: str,
     current_user: User = Depends(get_current_user),
-) ->AdminUserOut:
+) ->List[AdminUserOut]:
     """
     관리자 전용 — 유저 이름 또는 이메일 일부 검색
     ex) 'oh' → oh, ohna, ohnana 모두 반환
