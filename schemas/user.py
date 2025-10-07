@@ -12,6 +12,7 @@ class UserCreateRequest(BaseModel):
     password_check: str
     username: str
     birthday: date
+    profile_image: Optional[str] = None   
 
     model_config = {
         "json_schema_extra": {
@@ -21,6 +22,7 @@ class UserCreateRequest(BaseModel):
                 "password_check": "password123!",
                 "username": "고터키",
                 "birthday": "1995-05-21",
+                "profile_image": "https://nyangbucket.s3.ap-northeast-2.amazonaws.com/uploads/cat.png"
             }
         }
     }
@@ -32,10 +34,7 @@ class UserVerifyRequest(BaseModel):
 
     model_config = {
         "json_schema_extra": {
-            "example": {
-                "email": "goturkey@example.com",
-                "code": "123456",
-            }
+            "example": {"email": "goturkey@example.com", "code": "123456"}
         }
     }
 
@@ -46,18 +45,16 @@ class UserLoginRequest(BaseModel):
 
     model_config = {
         "json_schema_extra": {
-            "example": {
-                "email": "goturkey@example.com",
-                "password": "password123!",
-            }
+            "example": {"email": "goturkey@example.com", "password": "password123!"}
         }
     }
 
 
 class UserUpdateRequest(BaseModel):
     username: Optional[str] = None
+    birthday: Optional[date] = None  
     bio: Optional[str] = None
-    profile_image: Optional[str] = None
+    profile_image: Optional[str] = None   
 
     model_config = {
         "json_schema_extra": {
@@ -65,7 +62,7 @@ class UserUpdateRequest(BaseModel):
                 "username": "고터키",
                 "birthday": "1995-05-21",
                 "bio": "안녕하세요!",
-                "profile_image": "https://example.com/profile.png",
+                "profile_image": "https://nyangbucket.s3.ap-northeast-2.amazonaws.com/uploads/cat.png"
             }
         }
     }
@@ -80,11 +77,26 @@ class UserCreateResponse(BaseModel):
     email: EmailStr
     username: str
     birthday: date
+    profile_image: Optional[str] = None   
     is_email_verified: bool
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserCreateErrorResponse(BaseModel):
+    errors: List[str]
+    status: int
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "errors": ["EMAIL_ALREADY_EXISTS", "INVALID_PASSWORD_FORMAT"],
+                "status": 400
+            }
+        }
+    }
 
 
 class UserVerifySuccessResponse(BaseModel):
@@ -99,31 +111,18 @@ class UserVerifyErrorResponse(BaseModel):
 
     model_config = {
         "json_schema_extra": {
-            "example": {
-                "errors": ["CODE_INVALID", "CODE_EXPIRED"],
-                "status": [400],
-            }
+            "example": {"errors": ["CODE_INVALID", "CODE_EXPIRED"], "status": 400}
         }
     }
-
-class UserCreateErrorResponse(BaseModel):
-    error: str
-
 
 
 class UserLoginResponse(BaseModel):
     success: bool
-    last_login_at: datetime | None=None
 
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "success": True,
-                "last_login_at": "2025-09-30T08:13:45.123Z"
-            }
-        }
-    }
-#구글 로그인
+    model_config = {"json_schema_extra": {"example": {"success": True}}}
+
+
+# 구글 로그인
 class GoogleCallbackRequest(BaseModel):
 
     code: str = Field(..., description="구글 OAuth 인가 코드")
@@ -168,6 +167,7 @@ class UserOut(BaseModel):
     email: EmailStr
     username: str
     birthday: date
+    profile_image: Optional[str] = None   
     is_email_verified: bool
     is_active: bool
     is_superuser: bool
@@ -182,7 +182,7 @@ class UserUpdateResponse(BaseModel):
     id: int
     username: str
     bio: Optional[str] = None
-    profile_image: Optional[str] = None
+    profile_image: Optional[str] = None   
     updated_at: datetime
 
     model_config = {"from_attributes": True}
@@ -191,29 +191,29 @@ class UserUpdateResponse(BaseModel):
 class UserDeleteResponse(BaseModel):
     success: bool
 
-    model_config = {
-        "json_schema_extra": {
-            "example": {"success": True}
-        }
-    }
-#관리자
-class AdminUserOut(BaseModel):
-        id: int
-        email: EmailStr
-        username: str
-        is_active: bool
-        is_email_verified: bool
-        created_at: datetime
-        updated_at: datetime
-        is_superuser: bool = False  #  관리자 여부 (기본값 False)
+    model_config = {"json_schema_extra": {"example": {"success": True}}}
 
-        model_config = {"from_attributes": True}
+
+# 관리자
+class AdminUserOut(BaseModel):
+    id: int
+    email: EmailStr
+    username: str
+    profile_image: Optional[str] = None   
+    is_active: bool
+    is_email_verified: bool
+    created_at: datetime
+    updated_at: datetime
+    is_superuser: bool = False
+
+    model_config = {"from_attributes": True}
+
 
 class AdminUserListResponse(BaseModel):
-        users: List[AdminUserOut]
-        total: int
+    users: List[AdminUserOut]
+    total: int
 
-        model_config = {
+model_config = {
             "json_schema_extra": {
                 "example": {
                     "users": [
@@ -233,34 +233,33 @@ class AdminUserListResponse(BaseModel):
             }
         }
 
-#  비밀번호 재설정 요청
+
+# 비밀번호 재설정
 class PasswordResetConfirm(BaseModel):
     email: EmailStr
     new_password: str
     new_password_check: str
+    token: str
 
     model_config = {
         "json_schema_extra": {
             "example": {
-                "email": "old_password123",
+                "email": "goturkey@example.com",
                 "new_password": "new_password123",
-                "new_password_check": "new_password123"
+                "new_password_check": "new_password123",
+                "token": "abcdef123456"
             }
         }
     }
+
 
 class PasswordResetRequest(BaseModel):
     email: EmailStr
 
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "email": "test@test.com",
-            }
-        }
-    }
+    model_config = {"json_schema_extra": {"example": {"email": "test@test.com"}}}
 
-#비밀번호 번경
+
+# 비밀번호 변경
 class PasswordChangeRequest(BaseModel):
     old_password: str
     new_password: str
