@@ -51,4 +51,4 @@ COPY . .
 EXPOSE 8000
 
 # 엔트리포인트 (main.py 안에 FastAPI app 가정)
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--ssl-keyfile", "/app/certs/localhost.key", "--ssl-certfile", "/app/certs/localhost.crt"]

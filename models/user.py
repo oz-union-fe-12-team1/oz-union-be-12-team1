@@ -18,7 +18,7 @@ class User(Model):
 
     google_id = fields.CharField(max_length=255, unique=True, null=True)
 
-    last_login_at = fields.DatetimeField(null=True)
+    last_login_at = fields.DatetimeField(auto_now_add=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

@@ -1,11 +1,10 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional, List
-from datetime import date, datetime
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_serializer
+from typing import Optional, List, Union, Any
+from datetime import date, datetime, timedelta, timezone
 
 # ========================
 # 요청(Request)
 # ========================
-
 class UserCreateRequest(BaseModel):
     email: EmailStr
     password: str
@@ -113,7 +112,7 @@ class UserCreateErrorResponse(BaseModel):
 
 class UserLoginResponse(BaseModel):
     success: bool
-    last_login_at: datetime | None=None
+    last_login_at: Union[datetime, str]
 
     model_config = {
         "json_schema_extra": {
@@ -125,13 +124,13 @@ class UserLoginResponse(BaseModel):
     }
 #구글 로그인
 class GoogleCallbackRequest(BaseModel):
-
     code: str = Field(..., description="구글 OAuth 인가 코드")
+
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "code": "4/0AfJohXyZ_example_code_from_google"
+                "code": "4/0AfJohXyZ_example_code_from_google",
             }
         }
     )
@@ -139,11 +138,13 @@ class GoogleCallbackRequest(BaseModel):
 class GoogleCallbackResponse(BaseModel):
 
     redirect_url: str = Field(..., description="로그인 성공 후 이동할 프론트엔드 URL")
+    last_login_at: datetime
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "redirect_url": "https://your-frontend-domain.com/auth/success"
+                "redirect_url": "https://your-frontend-domain.com/auth/success",
+                "last_login_at":"2025-09-30T08:13:45.123Z",
             }
         }
     )
@@ -163,6 +164,10 @@ class GoogleLoginErrorResponse(BaseModel):
         }
     )
 
+
+
+KST = timezone(timedelta(hours=9))  # ✅ 한국시간 (UTC+9)
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr
@@ -171,11 +176,20 @@ class UserOut(BaseModel):
     is_email_verified: bool
     is_active: bool
     is_superuser: bool
-    is_google_user: bool
+    is_google_user: bool = False
+    last_login_at: Union[datetime, None] = None  # ✅ 변환 대상
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+    # ✅ 마지막 로그인 시간만 한국시간으로 변환
+    @field_serializer("last_login_at")
+    def serialize_last_login(self, value: datetime | None, _info: Any) -> str | None:
+        if not value:
+            return None
+        return value.astimezone(KST).strftime("%Y-%m-%d %H:%M")
+
 
 
 class UserUpdateResponse(BaseModel):
@@ -197,41 +211,33 @@ class UserDeleteResponse(BaseModel):
         }
     }
 #관리자
-class AdminUserOut(BaseModel):
-        id: int
-        email: EmailStr
-        username: str
-        is_active: bool
-        is_email_verified: bool
-        created_at: datetime
-        updated_at: datetime
-        is_superuser: bool = False  #  관리자 여부 (기본값 False)
 
-        model_config = {"from_attributes": True}
+class AdminUserOut(BaseModel):
+    id: int
+    email: EmailStr
+    username: str
+    is_active: bool
+    is_email_verified: bool
+    is_superuser: bool
+    last_login_at: Union[datetime, None] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("last_login_at")
+    def serialize_last_login_at(self, value: datetime | None) -> str | None:
+        if value:
+            return value.astimezone(KST).strftime("%Y-%m-%d %H:%M")
+        return None
+
 
 class AdminUserListResponse(BaseModel):
-        users: List[AdminUserOut]
-        total: int
+    users: List[AdminUserOut]
+    total: int
 
-        model_config = {
-            "json_schema_extra": {
-                "example": {
-                    "users": [
-                        {
-                            "id": 1,
-                            "email": "admin@example.com",
-                            "username": "관리자",
-                            "is_active": True,
-                            "is_email_verified": True,
-                            "created_at": "2025-09-25T12:00:00",
-                             "updated_at": "2025-09-25T12:00:00",
-                            "is_superuser": True,
-                        }
-                    ],
-                    "total": 1,
-                }
-            }
-        }
+    model_config = ConfigDict(from_attributes=True)
+
 
 #  비밀번호 재설정 요청
 class PasswordResetConfirm(BaseModel):
@@ -275,3 +281,4 @@ class PasswordChangeRequest(BaseModel):
             }
         }
     }
+

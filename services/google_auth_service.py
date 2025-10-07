@@ -1,25 +1,28 @@
 import httpx
-from datetime import date
+from datetime import date, datetime, timezone
 
 from core.config import settings
 from repositories.user_repo import UserRepository
 from .auth_service import AuthService
+from core import google_handler
 
 # ---------------------------
 # 구글 로그인 (/auth/google/callback)
 # ---------------------------
 class GoogleAuthService(AuthService):
 
+
     @staticmethod
     async def google_callback(code: str) -> dict[str, str]:
+        _used_codes: set[str]
         print(f"=== AuthService.google_callback 시작: code={code[:30]}...")  # ⭕
         try:
             token_url = "https://oauth2.googleapis.com/token"
             data = {
                 "code": code,
-                "client_id": settings.GOOGLE_CLIENT_ID,
-                "client_secret": settings.GOOGLE_SECRET,
-                "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+                "client_id": google_handler.GOOGLE_CLIENT_ID,
+                "client_secret": google_handler.GOOGLE_SECRET,
+                "redirect_uri": google_handler.GOOGLE_REDIRECT_URI,
                 "grant_type": "authorization_code",
             }
             print("Google token request data:", data)
@@ -75,6 +78,7 @@ class GoogleAuthService(AuthService):
             # (4) JWT 발급
             access_token = AuthService.create_access_token(user.id)
             refresh_token = AuthService.create_refresh_token(user.id)
+            user.last_login_at = datetime.now(timezone.utc)
 
             result = {
                 "access_token": access_token,

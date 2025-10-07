@@ -1,6 +1,7 @@
 import os
 from typing import Any
 from datetime import datetime, date
+import traceback
 
 from fastapi import APIRouter, HTTPException, Depends
 from models.schedules import Schedule
@@ -44,8 +45,16 @@ async def get_conversations() -> dict[str, Any]:
     """오늘 일정과 투두를 요약"""
     try:
         today = date.today()
-        schedules = await Schedule.filter(start_time__date=today)
+        """
+        schedules = await Schedule.(start_time__date=today)
         todos = await Todo.filter(created_at__date=today)
+"""
+        start = datetime.combine(today, datetime.min.time())  # 자정
+        end = datetime.combine(today, datetime.max.time())  # 하루 끝
+
+        # ✅ 날짜 범위 기반 필터
+        schedules = await Schedule.filter(start_time__range=(start, end))
+        todos = await Todo.filter(created_at__range=(start, end))
 
         schedule_list = [f"{s.start_time.strftime('%H:%M')} {s.title}" for s in schedules]
         todo_list = [f"- [{'x' if t.is_completed else ' '}] {t.title}" for t in todos]
@@ -61,6 +70,7 @@ async def get_conversations() -> dict[str, Any]:
             },
         }
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"DB 조회 실패: {e}")
 
 

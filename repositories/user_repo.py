@@ -1,6 +1,7 @@
 from typing import Optional, List
 from passlib.hash import bcrypt
 from tortoise.exceptions import DoesNotExist
+from tortoise.expressions import Q
 from datetime import date
 from models.user import User
 
@@ -59,6 +60,27 @@ class UserRepository:
         """관리자 전용 전체 사용자 조회"""
         return await User.all().order_by("-created_at")
 
+    @staticmethod
+    async def search_users(keyword: str) -> list[dict]:
+        """
+        유저 이름 또는 이메일 '부분 검색' (대소문자 무시)
+        ex) 'oh' → oh, ohna, ohnana 전부 조회
+        """
+        users = await User.filter(
+            Q(username__icontains=keyword) | Q(email__icontains=keyword)
+        ).values(
+            "id",
+            "email",
+            "username",
+            "is_active",
+            "is_email_verified",
+            "is_superuser",
+            "last_login_at",
+            "created_at",
+            "updated_at",
+        )
+
+        return users
     # --------------------
     # UPDATE
     # --------------------
@@ -118,3 +140,18 @@ class UserRepository:
             return False
         await user.delete()
         return True
+
+#롼리자 전체 유저 접속시간 통게용
+    @staticmethod
+    async def get_all_users_last_login() -> list[dict]:
+        from models.user import User
+        users = await User.all().values("id", "email", "username", "last_login_at")
+        # 한국시간으로 포맷팅
+        from datetime import timezone, timedelta
+        KST = timezone(timedelta(hours=9))
+        formatted = []
+        for u in users:
+            if u["last_login_at"]:
+                u["last_login_at"] = u["last_login_at"].astimezone(KST).strftime("%Y-%m-%d %H:%M")
+            formatted.append(u)
+        return formatted

@@ -20,7 +20,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: dockerfile   # 파일명이 'dockerfile'이라면 지정
+      dockerfile: dockerfile
     env_file:
       - .env
     depends_on:
@@ -34,16 +34,15 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
-    command:
-      # 개발용 (자동 reload)
-      uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-      # 배포 테스트용 (Gunicorn + Uvicorn 워커)
-      #  -w < 워커 수 (현재 티어에서는 2~3개 정도면 충분) -k uvicorn.workers.UvicornWorker -b 이후 바인딩 주소
-      #uv run gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:app
-
     volumes:
-      - ./quiz.xlsx:/app/quiz.xlsx   # ✅ 로컬 quiz.xlsx를 컨테이너 /app/quiz.xlsx 로 마운트
+      - ./quiz.xlsx:/app/quiz.xlsx
+      - ./certs:/app/certs   # ✅ 로컬 SSL 인증서 폴더 연결 (중요!)
+    command: >
+      uv run uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --ssl-keyfile /app/certs/localhost.key
+      --ssl-certfile /app/certs/localhost.crt
 
   redis:
     image: redis:7
@@ -66,7 +65,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
-      - "5050:80"   # 브라우저에서 http://localhost:5050 접속
+      - "5050:80"
     depends_on:
       - db
 
