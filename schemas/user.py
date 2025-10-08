@@ -179,7 +179,8 @@ class UserOut(BaseModel):
     is_email_verified: bool
     is_active: bool
     is_superuser: bool
-    is_google_user: bool
+    google_id: bool = False
+    last_login_at: Union[datetime, None] = None  # ✅ 변환 대상
     created_at: datetime
     updated_at: datetime
 
@@ -201,8 +202,8 @@ class UserDeleteResponse(BaseModel):
 
     model_config = {"json_schema_extra": {"example": {"success": True}}}
 
-
-# 관리자
+    }
+#관리자
 class AdminUserOut(BaseModel):
     id: int
     email: EmailStr
@@ -210,6 +211,10 @@ class AdminUserOut(BaseModel):
     profile_image: Optional[str] = None   
     is_active: bool
     is_email_verified: bool
+
+    is_superuser: bool
+    google_id: Optional[str] = None  # ✅ 구글 로그인 여부는 이걸로 충분
+    last_login_at: Union[datetime, None] = None
     created_at: datetime
     updated_at: datetime
     is_superuser: bool = False
@@ -242,7 +247,7 @@ model_config = {
         }
 
 
-# 비밀번호 재설정
+#  비밀번호 재설정 요청
 class PasswordResetConfirm(BaseModel):
     email: EmailStr
     new_password: str
