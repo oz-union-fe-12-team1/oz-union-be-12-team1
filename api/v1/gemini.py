@@ -53,21 +53,25 @@ async def get_conversations(
     try:
         today = date.today()
 
+        # ✅ 오늘 날짜 기준 일정 조회
         schedules = await Schedule.filter(
             user=current_user, start_time__date=today
         ).all()
-        todos = await Todo.filter(
-            user=current_user, created_at__date=today
-        ).all()
 
+        # ✅ 완료되지 않은 모든 투두 조회 (중복 제거)
+        todos = await Todo.filter(user=current_user, is_completed=False).all()
+
+        # 일정 리스트 포맷팅
         schedule_list = [
             f"{s.start_time.strftime('%H:%M')} {s.title}" for s in schedules
         ] or ["일정 없음"]
 
-        todo_list = [
+        # 투두 리스트 포맷팅 (중복 제거)
+        todo_list = list({
             f"- [{'x' if t.is_completed else ' '}] {t.title}" for t in todos
-        ] or ["투두 없음"]
+        }) or ["투두 없음"]
 
+        # Gemini 프롬프트 생성 및 요청
         prompt = await gemini_service.get_conversation_summary_prompt(
             schedule_list, todo_list
         )
