@@ -26,7 +26,7 @@ class UserService:
         return UserOut.model_validate(
             {
                 **user.__dict__,
-                "is_google_user": bool(user.google_id),
+                "google_id": bool(user.google_id),
             },
             from_attributes=True,
         )
