@@ -1,6 +1,8 @@
 from datetime import datetime
 
-
+# ==================================================
+# 1️⃣ 오늘의 운세 프롬프트
+# ==================================================
 async def get_fortune_prompt(birthday: str) -> str:
     return f"""
 # 오늘의 전반 운세
@@ -14,7 +16,13 @@ async def get_fortune_prompt(birthday: str) -> str:
     """
 
 
+# ==================================================
+# 2️⃣ 일정 & 투두 요약 프롬프트
+# ==================================================
 async def get_conversation_summary_prompt(schedules: list[str], todos: list[str]) -> str:
+    schedules = list(dict.fromkeys(schedules))
+    todos = list(dict.fromkeys(todos))
+
     schedule_text = "\n".join(schedules) or "일정 없음"
     todo_text = "\n".join(todos) or "투두 없음"
 
@@ -27,14 +35,19 @@ async def get_conversation_summary_prompt(schedules: list[str], todos: list[str]
 ## 오늘 투두리스트
 {todo_text}
 
+- 실제 일정과 투두의 개수를 정확히 반영하세요.
+- 항목이 한 줄로 중복 표시되어도 **하나로 계산하세요.**
 - 2~3문장 이내 요약
-- 완료/미완료 개수 강조
+- 완료/미완료 개수를 명확히 구분
 - 간단히 대화하듯 정리
 
 ⚠️ 반드시 한국어로만 작성하세요. 영어를 사용하지 마세요.
     """
 
 
+# ==================================================
+# 3️⃣ 시간대별 브리핑 프롬프트
+# ==================================================
 async def get_briefing_prompt(period: str) -> str:
     if period == "아침":
         return f"""
