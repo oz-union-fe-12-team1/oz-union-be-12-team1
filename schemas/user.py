@@ -202,7 +202,6 @@ class UserDeleteResponse(BaseModel):
 
     model_config = {"json_schema_extra": {"example": {"success": True}}}
 
-    }
 #관리자
 class AdminUserOut(BaseModel):
     id: int
@@ -211,13 +210,11 @@ class AdminUserOut(BaseModel):
     profile_image: Optional[str] = None   
     is_active: bool
     is_email_verified: bool
-
     is_superuser: bool
     google_id: Optional[str] = None  # ✅ 구글 로그인 여부는 이걸로 충분
     last_login_at: Union[datetime, None] = None
     created_at: datetime
     updated_at: datetime
-    is_superuser: bool = False
 
     model_config = {"from_attributes": True}
 
