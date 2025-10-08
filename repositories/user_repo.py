@@ -75,10 +75,14 @@ class UserRepository:
             "is_active",
             "is_email_verified",
             "is_superuser",
+            "google_id",
             "last_login_at",
             "created_at",
             "updated_at",
         )
+        #구글 아이디 존재 여부
+        for u in users:
+            u["is_googleuser"] = bool(u.get("social_id"))
 
         return users
     # --------------------

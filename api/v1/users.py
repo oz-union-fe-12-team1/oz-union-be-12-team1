@@ -41,6 +41,7 @@ async def update_my_profile(
         username=request.username,
         bio=request.bio,
         profile_image=request.profile_image,
+        birthday=request.birthday,
     )
     if not updated_user:
         raise HTTPException(status_code=404, detail="USER_NOT_FOUND")
