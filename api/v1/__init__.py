@@ -1,1 +1,1 @@
-from . import auth, admin, users, todos, inquiries, weather, quiz, news, gemini
+from . import auth, admin, users, todos, inquiries, weather, quiz, news, gemini, s3
