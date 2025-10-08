@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from fastapi import Request
 
@@ -69,20 +69,19 @@ class AuthService:
         """Redis에 저장된 코드 검증"""
         saved_code = await redis_client.get(f"verify:{email}")
         if not saved_code:
+            # 인증번호 만료
             return {"success": False, "error": "TOKEN_EXPIRED"}  # 400
 
         if saved_code != code:
+            # 인증번호 불일치
             return {"success": False, "error": "TOKEN_INVALID"}  # 400
 
-        # 이미 인증된 경우 방어
+        # 이미 인증된 이메일
         existing = await UserRepository.get_user_by_email(email)
         if existing and existing.is_email_verified:
             return {"success": False, "error": "ALREADY_VERIFIED"}  # 409
 
-        # 너무 자주 요청 시 rate limit 체크 (추가 로직 가능)
-        # 지금은 스킵, 필요시 구현
-
-        # 성공 → 가입 가능 플래그 저장
+        # ✅ 성공 시: 인증 완료 플래그 저장 (10분 TTL)
         await redis_client.set(f"verify:success:{email}", "true", ex=600)
         await redis_client.delete(f"verify:{email}")
 
@@ -96,11 +95,11 @@ class AuthService:
         """이메일 인증을 마친 사용자만 DB에 가입"""
         verified = await redis_client.get(f"verify:success:{request.email}")
         if not verified:
-            return None  # EMAIL_NOT_VERIFIED
+            return None  # 이메일 인증 미완료
 
         existing = await UserRepository.get_user_by_email(request.email)
         if existing:
-            return None  # EMAIL_ALREADY_EXISTS
+            return None  # 이미 가입된 이메일
 
         password_hash = bcrypt.hash(request.password)
 
@@ -115,30 +114,31 @@ class AuthService:
         await redis_client.delete(f"verify:success:{request.email}")
 
         return user
-    #----------------------------
-    # 비밀번호 재설정 /auth/password/reset-request, /auth/password/reset-confirm
-    #----------------------------
-    #분실 시 재설정을 위한 이메일 확인
+
+    # ---------------------------
+    # 비밀번호 재설정
+    # ---------------------------
     @staticmethod
     async def request_password_reset(email: str) -> dict[str, bool | str]:
+        """비밀번호 재설정 요청"""
         user = await UserRepository.get_user_by_email(email)
         if not user:
-            return {"success": False, "error": "USER_NOT_FOUND"}
+            return {"success": False, "error": "USER_NOT_FOUND"}  # 등록되지 않은 이메일
         return {"success": True}
 
     @staticmethod
     async def confirm_password_reset(
-        email: str,
-        new_password: str,
-        new_password_check: str
+            email: str,
+            new_password: str,
+            new_password_check: str
     ) -> dict[str, bool | str]:
         """비밀번호 재설정: 새 비밀번호 저장"""
         if new_password != new_password_check:
-            return {"success": False, "error": "PASSWORD_MISMATCH"}
+            return {"success": False, "error": "PASSWORD_MISMATCH"}  # 비밀번호 불일치
 
         user = await UserRepository.get_user_by_email(email)
         if not user:
-            return {"success": False, "error": "USER_NOT_FOUND"}
+            return {"success": False, "error": "USER_NOT_FOUND"}  # 등록되지 않은 이메일
 
         # 비밀번호 해싱 후 저장
         user.password_hash = bcrypt.hash(new_password)
@@ -151,29 +151,34 @@ class AuthService:
     # ---------------------------
     @staticmethod
     async def login(email: str, password: str) -> Dict[str, str]:
+        """로그인 처리"""
         user = await UserRepository.get_user_by_email(email)
         if not user:
-            return {"error": "USER_NOT_FOUND"}
+            return {"error": "USER_NOT_FOUND"}  # 등록되지 않은 이메일
 
         if not bcrypt.verify(password, user.password_hash):
-            return {"error": "INVALID_CREDENTIALS"}
+            return {"error": "INVALID_CREDENTIALS"}  # 비밀번호 불일치
 
         if not user.is_email_verified:
-            return {"error": "EMAIL_NOT_VERIFIED"}
+            return {"error": "EMAIL_NOT_VERIFIED"}  # 이메일 미인증
+
+        if not user.is_active:
+            return {"error": "ACCOUNT_DISABLED"}  # 계정 비활성화 상태
 
         access_token = AuthService.create_access_token(user.id)
         refresh_token = AuthService.create_refresh_token(user.id)
 
-        user.last_login_at = datetime.now()
-        await user.save(
-            update_fields=["last_login_at"]
-        )
+        user.last_login_at = datetime.now(timezone.utc)
+        await user.save(update_fields=["last_login_at"])
+
         return {"access_token": access_token, "refresh_token": refresh_token}
 
+    # ---------------------------
     # 로그아웃 (/auth/logout)
-    # 토큰 블랙리스트로 저장
+    # ---------------------------
     @staticmethod
     async def logout(token: str) -> Optional[TokenRevocation]:
+        """리프레시 토큰 블랙리스트 처리"""
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
             user_id = int(payload.get("sub"))
@@ -181,3 +186,4 @@ class AuthService:
             return await TokenRevocationsRepository.revoke_token(jti, user_id)
         except jwt.InvalidTokenError:
             return None
+

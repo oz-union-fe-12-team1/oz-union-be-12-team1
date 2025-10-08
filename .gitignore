@@ -231,10 +231,5 @@ logs/
 
 .idea/
 
-#연우
-/api/v1/schedules.py
-/api/v1/todos.py
-/services/todo_service.py
-/services/schedules_service.py
-/repositories/schedules_repo.py
-/repositories/todos_repo.py
+#로컬 https
+/certs

@@ -1,4 +1,5 @@
 from typing import Optional, List
+from datetime import date, datetime
 from passlib.hash import bcrypt
 from repositories.user_repo import UserRepository
 from models.user import User
@@ -25,7 +26,7 @@ class UserService:
         return UserOut.model_validate(
             {
                 **user.__dict__,
-                "is_google_user": bool(user.google_id),
+                "google_id": bool(user.google_id),
             },
             from_attributes=True,
         )
@@ -53,7 +54,8 @@ class UserService:
         user_id: int,
         username: Optional[str] = None,
         bio: Optional[str] = None,
-        profile_image: Optional[str] = None
+        profile_image: Optional[str] = None,
+        birthday: Optional[date] = None
     ) -> Optional[User]:
         """프로필 수정 (마이페이지)"""
         user = await UserRepository.get_user_by_id(user_id)
@@ -66,6 +68,8 @@ class UserService:
             user.bio = bio
         if profile_image is not None:
             user.profile_image = profile_image
+        if birthday is not None:
+            user.birthday = birthday
 
         await user.save()
         return user

@@ -7,6 +7,7 @@ Description-Content-Type: text/markdown
 Requires-Dist: aerich>=0.9.1
 Requires-Dist: asyncpg>=0.30.0
 Requires-Dist: bcrypt<5.0.0,>=3.2.0
+Requires-Dist: boto3>=1.40.47
 Requires-Dist: bs4>=0.0.2
 Requires-Dist: fastapi>=0.116.1
 Requires-Dist: fastapi-mail>=1.5.0
