@@ -11,8 +11,7 @@ router = APIRouter(prefix="/quiz", tags=["quiz"])
 EXCEL_FILE = os.getenv("QUIZ_FILE", "quiz.xlsx")
 
 #  엑셀 로드 함수
-def load_quizzes() -> Any\
-        :
+def load_quizzes() -> Any:
     try:
         # pandas로 엑셀 읽기
         df = pd.read_excel(EXCEL_FILE)
@@ -30,15 +29,18 @@ async def get_quiz() -> dict[str, Any]:
 
     quiz = random.choice(quizzes)
 
+    options = [
+        quiz.get(f"option{i}")
+        for i in range(1, 5)
+        if quiz.get(f"option{i}") not in (None, "", " ")
+    ]
+
     return {
         "success": True,
         "data": {
             "id": quiz.get("id", 0),
             "question": quiz.get("question"),
-            #  option1 ~ option4 형태를 배열로 변환
-            "options": [
-                quiz.get(f"option{i}") for i in range(1, 5) if quiz.get(f"option{i}")
-            ],
+            "options": options,  # ← 수정된 부분
             "answer": quiz.get("answer"),
         },
     }

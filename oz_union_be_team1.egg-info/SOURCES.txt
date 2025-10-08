@@ -45,6 +45,7 @@ services/inquiries_service.py
 services/location_service.py
 services/news_service.py
 services/notification_service.py
+services/s3_service.py
 services/schedules_service.py
 services/todo_service.py
 services/user_service.py

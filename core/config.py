@@ -1,11 +1,13 @@
 from typing import Any, Optional
-from typing import Any, Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field, SecretStr
+from pydantic import Field
 
 class Settings(BaseSettings):
-    #CORS
+    # ==============================
+    # CORS
+    # ==============================
     CORS_ALLOW_ORIGINS: list[str] = ["*"]
+
     # ==============================
     # JWT / 토큰
     # ==============================
@@ -41,7 +43,7 @@ class Settings(BaseSettings):
     # Mail
     # ==============================
     MAIL_USERNAME: str = Field("example@example.com")
-    MAIL_PASSWORD: SecretStr = Field(SecretStr("examplepassword"))
+    MAIL_PASSWORD: str = Field("examplepassword")
     MAIL_FROM: Optional[str] = None
     MAIL_PORT: int = Field(587)
     MAIL_SERVER: str = Field("smtp.gmail.com")
@@ -49,6 +51,14 @@ class Settings(BaseSettings):
     MAIL_SSL_TLS: bool = Field(False)
     USE_CREDENTIALS: bool = Field(True)
     VALIDATE_CERTS: bool = Field(True)
+
+    # ==============================
+    # AWS S3 (Presigned URL)
+    # ==============================
+    AWS_ACCESS_KEY_ID: str = Field("")
+    AWS_SECRET_ACCESS_KEY: str = Field("")
+    AWS_REGION: str = Field("ap-northeast-2")
+    AWS_S3_BUCKET: str = Field("nyangbucket")
 
     # ==============================
     # 앱 환경
