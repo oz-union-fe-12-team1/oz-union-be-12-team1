@@ -57,6 +57,7 @@ class UserUpdateRequest(BaseModel):
     username: Optional[str] = None
     bio: Optional[str] = None
     profile_image: Optional[str] = None
+    birthday: Optional[date] = None
 
     model_config = {
         "json_schema_extra": {
@@ -219,6 +220,7 @@ class AdminUserOut(BaseModel):
     is_active: bool
     is_email_verified: bool
     is_superuser: bool
+    is_google_user: bool
     last_login_at: Union[datetime, None] = None
     created_at: datetime
     updated_at: datetime
