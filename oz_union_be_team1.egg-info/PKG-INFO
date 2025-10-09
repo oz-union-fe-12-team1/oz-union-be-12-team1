@@ -14,14 +14,13 @@ Requires-Dist: fastapi-mail>=1.5.0
 Requires-Dist: feedparser>=6.0.12
 Requires-Dist: google-auth>=2.40.3
 Requires-Dist: httpx>=0.28.1
-Requires-Dist: mypy>=1.18.2
 Requires-Dist: openpyxl>=3.1.5
 Requires-Dist: pandas>=2.3.2
 Requires-Dist: passlib[bcrypt]<2.0.0,>=1.7.4
 Requires-Dist: pre-commit>=4.3.0
 Requires-Dist: psycopg-binary>=3.2.10
-Requires-Dist: pydantic-settings>=2.10.1
 Requires-Dist: pydantic[email]>=2.11.9
+Requires-Dist: pydantic-settings>=2.10.1
 Requires-Dist: pyjwt>=2.10.1
 Requires-Dist: redis>=6.4.0
 Requires-Dist: requests>=2.32.5
@@ -31,8 +30,9 @@ Requires-Dist: uvicorn[standard]>=0.35.0
 Provides-Extra: dev
 Requires-Dist: pytest>=8.0.0; extra == "dev"
 Requires-Dist: pytest-asyncio>=0.24.0; extra == "dev"
-Requires-Dist: httpx>=0.28.1; extra == "dev"
 Requires-Dist: pytest-cov>=5.0.0; extra == "dev"
+Requires-Dist: httpx>=0.28.1; extra == "dev"
+Requires-Dist: mypy>=1.18.2; extra == "dev"
 
 ## 시작하기 (Docker + Tortoise ORM + Aerich)
 
