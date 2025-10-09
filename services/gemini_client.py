@@ -15,12 +15,10 @@ async def gemini_request(prompt: str) -> str:
             }
         )
 
-    # 최신 모델과 v1 엔드포인트 사용
     GEMINI_URL = (
         "https://generativelanguage.googleapis.com/v1/models/"
-        f"gemini-1.5-pro:generateContent?key={settings.GEMINI_API_KEY}"
+        f"gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
     )
-    # 빠른 응답 원하면 gemini-1.5-flash 로 교체 가능
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -50,6 +48,7 @@ async def gemini_request(prompt: str) -> str:
 
     try:
         text: str = str(data["candidates"][0]["content"]["parts"][0]["text"])
+        return text
     except (KeyError, IndexError):
         raise HTTPException(
             status_code=500,
@@ -59,4 +58,4 @@ async def gemini_request(prompt: str) -> str:
             }
         )
 
-    return text
+    return ""
