@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     MAIL_STARTTLS: bool
     MAIL_SSL_TLS: bool
 
+    # ✅ email_service에서 참조되는 추가 필드
+    USE_CREDENTIALS: bool = True
+    VALIDATE_CERTS: bool = True
+
     # ==============================
     # 외부 API
     # ==============================
@@ -87,7 +91,8 @@ class Settings(BaseSettings):
     # Config 설정
     # ==============================
     class Config:
-        env_file = (".env.local", ".env")  
+        # 로컬 우선 적용 (.env.local → .env)
+        env_file = (".env.local", ".env")
         env_file_encoding = "utf-8"
 
 
