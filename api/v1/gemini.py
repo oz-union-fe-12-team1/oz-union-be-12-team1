@@ -52,26 +52,33 @@ async def get_conversations(
     """Gemini 기반 오늘의 일정 & 투두 요약"""
     try:
         today = date.today()
+        start_of_day = datetime.combine(today, datetime.min.time())
+        end_of_day = datetime.combine(today, datetime.max.time())
 
-        # ✅ 오늘 날짜 기준 일정 조회
+        # ✅ 올바른 Tortoise 필터 (시간 범위 기반)
         schedules = await Schedule.filter(
-            user=current_user, start_time__date=today
+            user=current_user,
+            start_time__gte=start_of_day,
+            start_time__lte=end_of_day,
         ).all()
 
-        # ✅ 완료되지 않은 모든 투두 조회 (중복 제거)
-        todos = await Todo.filter(user=current_user, is_completed=False).all()
+        # ✅ 오늘 생성된 투두 (완료/미완료 모두)
+        todos = await Todo.filter(
+            user=current_user,
+            created_at__gte=start_of_day,
+            created_at__lte=end_of_day,
+        ).all()
 
         # 일정 리스트 포맷팅
         schedule_list = [
             f"{s.start_time.strftime('%H:%M')} {s.title}" for s in schedules
         ] or ["일정 없음"]
 
-        # 투두 리스트 포맷팅 (중복 제거)
-        todo_list = list({
+        # 투두 리스트 포맷팅
+        todo_list = [
             f"- [{'x' if t.is_completed else ' '}] {t.title}" for t in todos
-        }) or ["투두 없음"]
+        ] or ["투두 없음"]
 
-        # Gemini 프롬프트 생성 및 요청
         prompt = await gemini_service.get_conversation_summary_prompt(
             schedule_list, todo_list
         )
