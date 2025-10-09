@@ -732,7 +732,6 @@ dependencies = [
     { name = "feedparser" },
     { name = "google-auth" },
     { name = "httpx" },
-    { name = "mypy" },
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "passlib", extra = ["bcrypt"] },
@@ -751,6 +750,7 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "httpx" },
+    { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -774,7 +774,7 @@ requires-dist = [
     { name = "google-auth", specifier = ">=2.40.3" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28.1" },
-    { name = "mypy", specifier = ">=1.18.2" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.18.2" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.3.2" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4,<2.0.0" },
