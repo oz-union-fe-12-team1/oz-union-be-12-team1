@@ -2,6 +2,7 @@ from typing import Any, Optional
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
+
 class Settings(BaseSettings):
     # ==============================
     # CORS
@@ -27,11 +28,11 @@ class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = None
 
     # ==============================
-    # Gemini
+    # Gemini (Google Generative AI)
     # ==============================
     GEMINI_API_KEY: str = Field("")
     GEMINI_URL: Optional[str] = Field(
-        default="https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+        default="https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent"
     )
 
     # ==============================
@@ -79,7 +80,7 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
-        "extra": "ignore",   # 알 수 없는 필드는 무시
+        "extra": "ignore",  # 알 수 없는 필드는 무시
     }
 
     # ==============================
@@ -94,6 +95,7 @@ class Settings(BaseSettings):
                 f"{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/"
                 f"{self.POSTGRES_DB}"
             )
+
         # MAIL_FROM 기본값 설정
         if self.MAIL_FROM is None:
             self.MAIL_FROM = self.MAIL_USERNAME
