@@ -1,9 +1,11 @@
 version: "3.9"
 
 services:
+  # ====================================
+  # PostgreSQL Database
+  # ====================================
   db:
     image: postgres:16
-    container_name: oz_union_postgres
     env_file:
       - .env
     environment:
@@ -20,11 +22,13 @@ services:
       timeout: 3s
       retries: 10
 
+  # ====================================
+  # FastAPI Application
+  # ====================================
   api:
     build:
       context: .
       dockerfile: dockerfile
-    container_name: oz_union_api
     env_file:
       - .env
     depends_on:
@@ -32,27 +36,28 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PYTHONUNBUFFERED: "1"
     ports:
       - "8000:8000"
     restart: unless-stopped
     volumes:
       - ./quiz.xlsx:/app/quiz.xlsx
-      - ./certs:/app/certs
+      - ./certs:/app/certs   #로컬 SSL 인증서 폴더 연결
     command: >
       uv run uvicorn main:app
       --host 0.0.0.0
       --port 8000
       --ssl-keyfile /app/certs/localhost.key
       --ssl-certfile /app/certs/localhost.crt
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fk https://localhost:8000/docs || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
+  # ====================================
+  # Redis
+  # ====================================
   redis:
     image: redis:7
-    container_name: oz_union_redis
+    container_name: redis-1
     ports:
       - "6379:6379"
     volumes:
@@ -63,9 +68,11 @@ services:
       timeout: 3s
       retries: 5
 
+  # ====================================
+  # PgAdmin
+  # ====================================
   pgadmin:
     image: dpage/pgadmin4
-    container_name: oz_union_pgadmin
     env_file:
       - .env
     environment:
@@ -75,10 +82,10 @@ services:
       - "5050:80"
     depends_on:
       - db
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
 
+# ====================================
+# Volumes
+# ====================================
 volumes:
   pgdata:
   redisdata:
-  pgadmin_data:
