@@ -6,8 +6,17 @@ OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 class WeatherService:
     @staticmethod
     async def fetch_weather(lat: float, lon: float) -> dict | None:
+        """현재 날씨"""
+        url = "https://api.openweathermap.org/data/2.5/weather"
+        params = {
+            "lat": lat,
+            "lon": lon,
+            "appid": OPENWEATHER_API_KEY,
+            "units": "metric",
+            "lang": "kr",
+        }
         """현재 날씨 + 최고/최저/강수량/미세먼지"""
-        base_url = "http://api.openweathermap.org/data/2.5"
+        base_url = "https://api.openweathermap.org/data/2.5"
         weather_url = f"{base_url}/weather"
         air_url = f"{base_url}/air_pollution"
 
@@ -56,8 +65,9 @@ class WeatherService:
     # 🌦 5일치 예보
     @staticmethod
     async def fetch_forecast(lat: float, lon: float) -> dict | None:
-        """5일치 (3시간 간격) 예보"""
-        url = "http://api.openweathermap.org/data/2.5/forecast"
+
+        """5일치 날씨 (3시간 단위 예보)"""
+        url = "https://api.openweathermap.org/data/2.5/forecast"
         params = {
             "lat": lat,
             "lon": lon,

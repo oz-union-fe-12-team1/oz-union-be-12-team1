@@ -158,12 +158,14 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         key="access_token",
         value=result["access_token"],
         httponly=True,
+        domain="www.nyangbiseo.store",
         secure=True,
         samesite="none"
     )
     response.set_cookie(
         key="refresh_token",
         value=result["refresh_token"],
+        domain="www.nyangbiseo.store",
         httponly=True,
         secure=True,
         samesite="none"
@@ -203,6 +205,7 @@ async def logout_user(request: Request) -> Response:
     response.delete_cookie(
         "refresh_token",
         httponly=True,
+        domain="www.nyangbiseo.store",
         secure=True,
         samesite="none",
         path="/"
@@ -210,6 +213,7 @@ async def logout_user(request: Request) -> Response:
     response.delete_cookie(
         "access_token",
         httponly=True,
+        domain="www.nyangbiseo.store",
         secure=True,
         samesite="none",
         path="/"
