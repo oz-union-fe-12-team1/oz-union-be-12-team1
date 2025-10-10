@@ -23,7 +23,12 @@ async def get_fortune_prompt(birthday: str) -> str:
 async def get_conversation_summary_prompt(schedules: list[str], todos: list[str]) -> str:
     """Gemini에 전달할 일정 및 투두 요약 프롬프트"""
 
-    # 중복 제거
+    schedules = [s for s in schedules if s and str(s).strip()]
+    todos = [t for t in todos if t and str(t).strip()]
+
+    schedules = [str(s) for s in schedules]
+    todos = [str(t) for t in todos]
+
     schedules = list(dict.fromkeys(schedules))
     todos = list(dict.fromkeys(todos))
 
