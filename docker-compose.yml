@@ -36,13 +36,13 @@ services:
     restart: unless-stopped
     volumes:
       - ./quiz.xlsx:/app/quiz.xlsx
-      - ./certs:/app/certs   # ✅ 로컬 SSL 인증서 폴더 연결 (중요!)
+#      - ./certs:/app/certs   # ✅ 로컬 SSL 인증서 폴더 연결 (중요!)
     command: >
       uv run uvicorn main:app
       --host 0.0.0.0
       --port 8000
-      --ssl-keyfile /app/certs/localhost.key
-      --ssl-certfile /app/certs/localhost.crt
+#      --ssl-keyfile /app/certs/localhost.key
+#     # --ssl-certfile /app/certs/localhost.crt
 
   redis:
     image: redis:7

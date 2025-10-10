@@ -7,7 +7,7 @@ class WeatherService:
     @staticmethod
     async def fetch_weather(lat: float, lon: float) -> dict | None:
         """현재 날씨"""
-        url = "http://api.openweathermap.org/data/2.5/weather"
+        url = "https://api.openweathermap.org/data/2.5/weather"
         params = {
             "lat": lat,
             "lon": lon,
@@ -35,7 +35,7 @@ class WeatherService:
     @staticmethod
     async def fetch_forecast(lat: float, lon: float) -> dict | None:
         """5일치 날씨 (3시간 단위 예보)"""
-        url = "http://api.openweathermap.org/data/2.5/forecast"
+        url = "https://api.openweathermap.org/data/2.5/forecast"
         params = {
             "lat": lat,
             "lon": lon,

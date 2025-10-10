@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     # ==============================
     AWS_ACCESS_KEY_ID: str = Field("")
     AWS_SECRET_ACCESS_KEY: str = Field("")
-    AWS_REGION: str = Field("ap-northeast-2")
+    AWS_REGION: str = Field("ap-southeast-2")
     AWS_S3_BUCKET: str = Field("nyangbucket")
 
     # ==============================
