@@ -179,7 +179,7 @@ class UserOut(BaseModel):
     is_email_verified: bool
     is_active: bool
     is_superuser: bool
-    google_id: bool = False
+    google_id: Optional[str] = None
     last_login_at: Union[datetime, None] = None  # ✅ 변환 대상
     created_at: datetime
     updated_at: datetime
