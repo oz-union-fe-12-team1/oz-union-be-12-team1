@@ -21,6 +21,7 @@ requests>=2.32.5
 tomlkit>=0.13.3
 tortoise-orm>=0.25.1
 uvicorn[standard]>=0.35.0
+pytz>=2025.2
 
 [dev]
 pytest>=8.0.0

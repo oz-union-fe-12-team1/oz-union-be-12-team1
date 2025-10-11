@@ -1,5 +1,6 @@
 from datetime import datetime, date, timedelta, timezone
 from typing import Any
+import pytz
 
 from fastapi import APIRouter, HTTPException, Depends
 
@@ -14,20 +15,6 @@ router = APIRouter(prefix="/gemini", tags=["Gemini"])
 
 # ✅ 한국 표준시 (KST)
 KST = timezone(timedelta(hours=9))
-
-from datetime import datetime, date
-from typing import Any
-
-from fastapi import APIRouter, HTTPException, Depends
-
-from models.schedules import Schedule
-from models.todo import Todo
-from models.user import User
-from services import gemini_service
-from services.gemini_client import gemini_request
-from core.security import get_current_user
-
-router = APIRouter(prefix="/gemini", tags=["Gemini"])
 
 
 # ==================================================
@@ -121,12 +108,13 @@ async def get_conversations(
 # 3️⃣ 아침/점심/저녁 브리핑 API
 # ==================================================
 @router.get("/briefings")
-async def get_briefings(
-    current_user: User = Depends(get_current_user),
-) -> dict[str, Any]:
+async def get_briefings(current_user: User = Depends(get_current_user)) -> dict[str, Any]:
     """Gemini 기반 시간대별 브리핑"""
     try:
+        # 시간대 분기 (한국 기준)
         now = datetime.now().hour
+        target_date = date.today()
+
         if 6 <= now < 12:
             period = "아침"
         elif 12 <= now < 18:
@@ -134,7 +122,13 @@ async def get_briefings(
         else:
             period = "저녁"
 
-        prompt = await gemini_service.get_briefing_prompt(period)
+        # -------------------------------
+        # 프롬프트 생성 및 Gemini 호출
+        # -------------------------------
+        prompt = await gemini_service.get_briefing_prompt(
+            period=period,
+            target_date=target_date,
+        )
         briefing = await gemini_request(prompt)
 
         return {
@@ -142,6 +136,7 @@ async def get_briefings(
             "data": {
                 "type": "briefing",
                 "period": period,
+                "date": str(target_date),
                 "briefing": briefing,
                 "generated_at": datetime.now().isoformat(),
             },
