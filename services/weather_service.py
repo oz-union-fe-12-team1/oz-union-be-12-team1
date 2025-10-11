@@ -53,26 +53,42 @@ class WeatherService:
             "updated_at": datetime.now().isoformat(),
         }
 
-    # 🌦 5일치 예보
+    #  5일치 예보
     @staticmethod
     async def fetch_forecast(lat: float, lon: float) -> dict | None:
-        """5일치 (3시간 간격) 예보"""
-        url = "http://api.openweathermap.org/data/2.5/forecast"
-        params = {
-            "lat": lat,
-            "lon": lon,
-            "appid": OPENWEATHER_API_KEY,
-            "units": "metric",
-            "lang": "kr",
-        }
+        """5일치 (3시간 간격) 예보 + 강수량/적설량 포함"""
+        base_url = "http://api.openweathermap.org/data/2.5"
+        forecast_url = f"{base_url}/forecast"
+        air_url = f"{base_url}/air_pollution"
 
         async with httpx.AsyncClient(timeout=10) as client:
-            res = await client.get(url, params=params)
+            res_forecast = await client.get(forecast_url, params={
+                "lat": lat,
+                "lon": lon,
+                "appid": OPENWEATHER_API_KEY,
+                "units": "metric",
+                "lang": "kr",
+            })
 
-        if res.status_code != 200:
-            return None
+            if res_forecast.status_code != 200:
+                return None
 
-        data = res.json()
+            data = res_forecast.json()
+
+            # 🌫 미세먼지 (현재 수치만 함께 포함)
+            res_air = await client.get(air_url, params={
+                "lat": lat,
+                "lon": lon,
+                "appid": OPENWEATHER_API_KEY,
+            })
+            air_data = None
+            if res_air.status_code == 200:
+                components = res_air.json().get("list", [{}])[0].get("components", {})
+                air_data = {
+                    "pm2_5": components.get("pm2_5"),
+                    "pm10": components.get("pm10"),
+                }
+
         forecasts = []
         for item in data.get("list", []):
             forecasts.append({
@@ -82,11 +98,15 @@ class WeatherService:
                 "temp_min": item.get("main", {}).get("temp_min"),
                 "description": item.get("weather", [{}])[0].get("description"),
                 "humidity": item.get("main", {}).get("humidity"),
+                "rain_3h": item.get("rain", {}).get("3h", 0),
+                "snow_3h": item.get("snow", {}).get("3h", 0),
                 "icon": item.get("weather", [{}])[0].get("icon"),
             })
 
         return {
             "city": data.get("city", {}).get("name"),
+            "pm2_5": air_data.get("pm2_5") if air_data else None,
+            "pm10": air_data.get("pm10") if air_data else None,
             "forecasts": forecasts,
             "updated_at": datetime.now().isoformat(),
         }
