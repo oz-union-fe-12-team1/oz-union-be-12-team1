@@ -4,23 +4,16 @@ from datetime import datetime
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 class WeatherService:
+    #  현재 날씨
     @staticmethod
     async def fetch_weather(lat: float, lon: float) -> dict | None:
-        """현재 날씨"""
-        url = "https://api.openweathermap.org/data/2.5/weather"
-        params = {
-            "lat": lat,
-            "lon": lon,
-            "appid": OPENWEATHER_API_KEY,
-            "units": "metric",
-            "lang": "kr",
-        }
         """현재 날씨 + 최고/최저/강수량/미세먼지"""
         base_url = "https://api.openweathermap.org/data/2.5"
         weather_url = f"{base_url}/weather"
         air_url = f"{base_url}/air_pollution"
 
         async with httpx.AsyncClient(timeout=10) as client:
+            # 현재 날씨
             res_weather = await client.get(weather_url, params={
                 "lat": lat,
                 "lon": lon,
@@ -28,12 +21,11 @@ class WeatherService:
                 "units": "metric",
                 "lang": "kr",
             })
-
             if res_weather.status_code != 200:
                 return None
-
             weather = res_weather.json()
 
+            # 미세먼지
             res_air = await client.get(air_url, params={
                 "lat": lat,
                 "lon": lon,
@@ -62,11 +54,10 @@ class WeatherService:
             "updated_at": datetime.now().isoformat(),
         }
 
-    # 🌦 5일치 예보
+    #  5일치 예보
     @staticmethod
     async def fetch_forecast(lat: float, lon: float) -> dict | None:
-
-        """5일치 날씨 (3시간 단위 예보)"""
+        """5일치 (3시간 간격) 예보 + 강수량/적설량"""
         url = "https://api.openweathermap.org/data/2.5/forecast"
         params = {
             "lat": lat,
@@ -84,6 +75,7 @@ class WeatherService:
 
         data = res.json()
         forecasts = []
+
         for item in data.get("list", []):
             forecasts.append({
                 "time": item.get("dt_txt"),
@@ -92,6 +84,9 @@ class WeatherService:
                 "temp_min": item.get("main", {}).get("temp_min"),
                 "description": item.get("weather", [{}])[0].get("description"),
                 "humidity": item.get("main", {}).get("humidity"),
+                "rain_3h": item.get("rain", {}).get("3h", 0),  #  3시간 강수량
+                "snow_3h": item.get("snow", {}).get("3h", 0),  #  3시간 적설량
+                "pop": item.get("pop", 0),  #  강수 확률 (0~1)
                 "icon": item.get("weather", [{}])[0].get("icon"),
             })
 
