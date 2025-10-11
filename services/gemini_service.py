@@ -73,6 +73,7 @@ async def get_conversation_summary_prompt(schedules: list[str], todos: list[str]
 # ==================================================
 # 3️⃣ 시간대별 브리핑 프롬프트
 # ==================================================
+
 async def get_briefing_prompt(
     period: str,
     schedules: Optional[List[str]] = None,
@@ -87,21 +88,26 @@ async def get_briefing_prompt(
     schedule_text = "\n".join(schedules) if schedules else "없음"
     todo_text = "\n".join(todos) if todos else "없음"
 
-    # ✅ 날짜 포맷 지정
-    today_str = target_date.strftime("%m월 %d일")
-    tomorrow_str = (target_date + timedelta(days=1)).strftime("%m월 %d일")
+    # ✅ 날짜 문자열 (YYYY년 MM월 DD일)
+    today_str = target_date.strftime("%Y년 %m월 %d일")
+    tomorrow_str = (target_date + timedelta(days=1)).strftime("%Y년 %m월 %d일")
 
+    # ✅ 안내 문구
     base_notice = "⚠️ 반드시 한국어로만 작성하세요. 영어 사용 금지."
 
+    # -------------------------------
+    # 시간대별 프롬프트 템플릿
+    # -------------------------------
     if period == "아침":
         content = f"""
 # 아침 브리핑
 
 - {today_str}의 날씨를 간단히 요약
-- {today_str} 주요 일정 ({schedule_text}) 정리
-- 오늘 할 일 목록 ({todo_text}) 기반으로 동기부여 문장 작성
+- {today_str}에 예정된 주요 일정 ({schedule_text}) 을 정리
+- 할 일 목록 ({todo_text}) 기반으로 짧은 동기부여 문장 작성
 - 운세를 한 문장으로 포함
-- 전체 3~4문장, 마지막에 **짧은 조언** 추가
+- 전체를 3~4문장으로 작성
+- 마지막에 **짧은 조언** 추가
         """
 
     elif period == "점심":
@@ -111,20 +117,20 @@ async def get_briefing_prompt(
 - 오전에 완료된 {today_str} 일정 또는 진행 중인 작업 요약
 - 남은 {today_str} 일정 ({schedule_text}) 과 할 일 ({todo_text}) 간단히 정리
 - 주요 뉴스나 흥미 요소 포함
-- 전체 3~4문장, 마지막에 **짧은 조언** 추가
+- 전체를 3~4문장으로 작성
+- 마지막에 **짧은 조언** 추가
         """
 
     else:  # 저녁
         content = f"""
 # 저녁 브리핑
 
-- {today_str} 일정 완료율을 요약
-- {today_str} 일정이 없으면 '{today_str} 일정 없음'으로만 작성
-- {tomorrow_str} 일정을 미리보기 형태로 정리
-- 하루를 돌아보는 간단한 정리
-- 전체를 3~4문장으로 작성
+- {today_str}의 일정 완료율을 요약
+- {today_str} 일정이 없으면 '{today_str}은(는) 별다른 일정이 없었습니다.'라고 작성
+- {tomorrow_str}의 일정을 미리보기 형태로 정리
+- 하루를 돌아보는 간단한 문장 작성
+- 전체를 3~4문장으로 구성
 - 마지막에 **짧은 조언** 추가
-- {tomorrow_str} 일정이 없을 경우 '{tomorrow_str} 일정 없음'이라고만 작성
 - 허구의 내용은 절대 생성하지 마세요.
         """
 
