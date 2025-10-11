@@ -1,39 +1,22 @@
-from datetime import datetime, date
-import httpx
-from typing import Any, Optional, List
-from core.config import settings
+from datetime import datetime, date, timedelta, timezone
+from typing import Optional, List
 
 
 # ==================================================
-# 🌐 Gemini Client
+# 🧭 브리핑 기준 날짜 계산
 # ==================================================
-class GeminiClient:
-    BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
-    MODEL = "gemini-1.5-flash-latest"
-
-    async def generate_text(self, prompt: str) -> str:
-        """
-        Gemini API를 호출하여 텍스트 생성
-        """
-        url = f"{self.BASE_URL}/{self.MODEL}:generateContent"
-        headers = {"Content-Type": "application/json"}
-        payload = {"contents": [{"parts": [{"text": prompt}]}]}
-
-        try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.post(
-                    url,
-                    headers=headers,
-                    json=payload,
-                    params={"key": settings.GEMINI_API_KEY},
-                )
-                response.raise_for_status()
-                data: dict[str, Any] = response.json()
-                text: str = data["candidates"][0]["content"]["parts"][0]["text"]
-                return text
-        except Exception as e:
-            # 예외 발생 시 문자열을 반환하도록 보장 (Any → str)
-            return f"Gemini API 호출 실패: {e}"
+def get_briefing_date() -> date:
+    """
+    자정~05시 사이는 전날 날짜를 반환,
+    그 외 시간은 오늘 날짜를 반환.
+    """
+    KST = timezone(timedelta(hours=9))
+    now = datetime.now(KST)
+    if 0 <= now.hour < 5:
+        target_date = now - timedelta(days=1)
+    else:
+        target_date = now
+    return target_date.date()
 
 
 # ==================================================
@@ -97,11 +80,14 @@ async def get_briefing_prompt(
     target_date: Optional[date] = None,
 ) -> str:
     """
-        period (str): '아침', '점심', '저녁'
-        schedules (list[str] | None): 일정 목록
-        todos (list[str] | None): 할 일 목록
-        target_date (date | None): 기준 날짜 (예: 오늘 날짜)
+    period (str): '아침', '점심', '저녁'
+    schedules (list[str] | None): 일정 목록
+    todos (list[str] | None): 할 일 목록
+    target_date (date | None): 기준 날짜 (예: 오늘 날짜)
     """
+
+    # ✅ target_date 자동 계산 (없으면 현재 시각 기준)
+    target_date = target_date or get_briefing_date()
 
     schedules = [s for s in (schedules or []) if str(s).strip()]
     todos = [t for t in (todos or []) if str(t).strip()]
@@ -113,8 +99,7 @@ async def get_briefing_prompt(
     # 날짜 및 공통 지침
     # -------------------------------
     base_notice = "⚠️ 반드시 한국어로만 작성하세요. 영어 사용 금지."
-    if target_date:
-        base_notice += f"\n📅 기준 날짜: {target_date.strftime('%Y-%m-%d')}"
+    base_notice += f"\n📅 기준 날짜: {target_date.strftime('%Y-%m-%d')}"
 
     # -------------------------------
     # 시간대별 프롬프트 템플릿
@@ -142,7 +127,7 @@ async def get_briefing_prompt(
 - 마지막에 **짧은 조언** 추가
         """
 
-    else:  # 저녁
+    else:  # ✅ 저녁
         content = f"""
 # 저녁 브리핑
 
