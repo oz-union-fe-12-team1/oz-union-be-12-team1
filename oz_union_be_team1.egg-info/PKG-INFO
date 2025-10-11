@@ -27,6 +27,7 @@ Requires-Dist: requests>=2.32.5
 Requires-Dist: tomlkit>=0.13.3
 Requires-Dist: tortoise-orm>=0.25.1
 Requires-Dist: uvicorn[standard]>=0.35.0
+Requires-Dist: pytz>=2025.2
 Provides-Extra: dev
 Requires-Dist: pytest>=8.0.0; extra == "dev"
 Requires-Dist: pytest-asyncio>=0.24.0; extra == "dev"

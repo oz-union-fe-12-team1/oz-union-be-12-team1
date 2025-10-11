@@ -45,6 +45,12 @@ services:
       # - ./certs:/app/certs   # 필요 시 SSL 인증서 폴더 연결
     command: "uv run uvicorn main:app --host 0.0.0.0 --port 8000"
 
+    #      --ssl-keyfile /app/certs/localhost.key
+    #     # --ssl-certfile /app/certs/localhost.crt
+
+
+
+
   # ====================================
   # Redis
   # ====================================
