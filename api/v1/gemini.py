@@ -124,12 +124,45 @@ async def get_briefings(current_user: User = Depends(get_current_user)) -> dict[
         else:
             period = "저녁"
 
-        # ✅ 브리핑 기준 날짜 계산
+        # ✅ 브리핑 기준 날짜 계산 (자정~05시는 전날)
         target_date = gemini_service.get_briefing_date()
+
+        # ✅ KST 하루 범위 계산 (target_date 기준)
+        start_of_day_kst = datetime.combine(target_date, datetime.min.time(), tzinfo=KST)
+        end_of_day_kst = datetime.combine(target_date, datetime.max.time(), tzinfo=KST)
+
+        # ✅ UTC로 변환 (DB는 UTC 저장)
+        start_of_day_utc = start_of_day_kst.astimezone(timezone.utc)
+        end_of_day_utc = end_of_day_kst.astimezone(timezone.utc)
+
+        # ✅ 해당 날짜 일정/투두 조회 (target_date 기준)
+        schedules = await Schedule.filter(
+            user=current_user,
+            start_time__gte=start_of_day_utc,
+            start_time__lte=end_of_day_utc,
+        ).all()
+
+        todos = await Todo.filter(
+            user=current_user,
+            created_at__gte=start_of_day_utc,
+            created_at__lte=end_of_day_utc,
+        ).all()
+
+        # ✅ 리스트 변환
+        schedule_list = [
+            f"{s.start_time.astimezone(KST).strftime('%H:%M')} {s.title}"
+            for s in schedules
+        ] or ["일정 없음"]
+
+        todo_list = [
+            f"- [{'x' if t.is_completed else ' '}] {t.title}" for t in todos
+        ] or ["투두 없음"]
 
         # ✅ Gemini 프롬프트 생성 및 요청
         prompt = await gemini_service.get_briefing_prompt(
             period=period,
+            schedules=schedule_list,
+            todos=todo_list,
             target_date=target_date,
         )
         briefing = await gemini_request(prompt)
