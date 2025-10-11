@@ -79,14 +79,6 @@ async def get_briefing_prompt(
     todos: Optional[List[str]] = None,
     target_date: Optional[date] = None,
 ) -> str:
-    """
-    period (str): '아침', '점심', '저녁'
-    schedules (list[str] | None): 일정 목록
-    todos (list[str] | None): 할 일 목록
-    target_date (date | None): 기준 날짜 (예: 오늘 날짜)
-    """
-
-    # ✅ target_date 자동 계산 (없으면 현재 시각 기준)
     target_date = target_date or get_briefing_date()
 
     schedules = [s for s in (schedules or []) if str(s).strip()]
@@ -96,10 +88,9 @@ async def get_briefing_prompt(
     todo_text = "\n".join(todos) if todos else "없음"
 
     # -------------------------------
-    # 날짜 및 공통 지침
+    # 날짜 문구 제거 (Gemini에게는 필요 없음)
     # -------------------------------
     base_notice = "⚠️ 반드시 한국어로만 작성하세요. 영어 사용 금지."
-    base_notice += f"\n📅 기준 날짜: {target_date.strftime('%Y-%m-%d')}"
 
     # -------------------------------
     # 시간대별 프롬프트 템플릿
@@ -108,7 +99,7 @@ async def get_briefing_prompt(
         content = f"""
 # 아침 브리핑
 
-- 오늘({target_date})의 날씨를 간단히 요약
+- 오늘의 날씨를 간단히 요약
 - 오늘 예정된 주요 일정 ({schedule_text}) 을 정리
 - 오늘 할 일 목록 ({todo_text}) 기반으로 짧은 동기 부여 문장
 - 오늘의 운세를 한 문장으로 포함
@@ -127,11 +118,11 @@ async def get_briefing_prompt(
 - 마지막에 **짧은 조언** 추가
         """
 
-    else:  # ✅ 저녁
+    else:  # 저녁
         content = f"""
 # 저녁 브리핑
 
-- 오늘({target_date}) 일정 완료율을 실제 데이터 기반으로 요약
+- 오늘 일정 완료율을 실제 데이터 기반으로 요약
 - 오늘 일정이 없으면 '오늘 일정 없음'이라고만 작성
 - 내일 일정을 미리보기 형태로 정리
 - 하루를 돌아보는 간단한 정리
