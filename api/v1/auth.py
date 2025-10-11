@@ -158,14 +158,14 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         key="access_token",
         value=result["access_token"],
         httponly=True,
-        domain="www.nyangbiseo.store",
+        domain=".nyangbiseo.store",
         secure=True,
         samesite="none"
     )
     response.set_cookie(
         key="refresh_token",
         value=result["refresh_token"],
-        domain="www.nyangbiseo.store",
+        domain=".nyangbiseo.store",
         httponly=True,
         secure=True,
         samesite="none"
