@@ -160,7 +160,8 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         httponly=True,
         domain=".nyangbiseo.store",
         secure=True,
-        samesite="none"
+        samesite="none",
+        path= "/"
     )
     response.set_cookie(
         key="refresh_token",
@@ -168,7 +169,8 @@ async def login_user(request: UserLoginRequest, response: Response) -> UserLogin
         domain=".nyangbiseo.store",
         httponly=True,
         secure=True,
-        samesite="none"
+        samesite="none",
+        path= "/"
     )
 
     # ✅ 로그인 시간 업데이트
