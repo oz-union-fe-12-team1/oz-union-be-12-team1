@@ -1,4 +1,40 @@
 from datetime import datetime
+import httpx
+from typing import Any, Optional
+from core.config import settings
+
+
+# ==================================================
+# 🌐 Gemini Client
+# ==================================================
+class GeminiClient:
+    BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+    MODEL = "gemini-1.5-flash-latest"
+
+    async def generate_text(self, prompt: str) -> str:
+        """
+        Gemini API를 호출하여 텍스트 생성
+        """
+        url = f"{self.BASE_URL}/{self.MODEL}:generateContent"
+        headers = {"Content-Type": "application/json"}
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    params={"key": settings.GEMINI_API_KEY},
+                )
+                response.raise_for_status()
+                data: dict[str, Any] = response.json()
+                text: str = data["candidates"][0]["content"]["parts"][0]["text"]
+                return text
+        except Exception as e:
+            # 예외 발생 시 문자열을 반환하도록 보장 (Any → str)
+            return f"Gemini API 호출 실패: {e}"
+
 
 # ==================================================
 # 1️⃣ 오늘의 운세 프롬프트
@@ -26,11 +62,8 @@ async def get_conversation_summary_prompt(schedules: list[str], todos: list[str]
     schedules = [s for s in schedules if s and str(s).strip()]
     todos = [t for t in todos if t and str(t).strip()]
 
-    schedules = [str(s) for s in schedules]
-    todos = [str(t) for t in todos]
-
-    schedules = list(dict.fromkeys(schedules))
-    todos = list(dict.fromkeys(todos))
+    schedules = list(dict.fromkeys(map(str, schedules)))
+    todos = list(dict.fromkeys(map(str, todos)))
 
     schedule_text = "\n".join(schedules) if schedules else "일정 없음"
     todo_text = "\n".join(todos) if todos else "투두 없음"
@@ -57,12 +90,25 @@ async def get_conversation_summary_prompt(schedules: list[str], todos: list[str]
 # ==================================================
 # 3️⃣ 시간대별 브리핑 프롬프트
 # ==================================================
-async def get_briefing_prompt(period: str) -> str:
+async def get_briefing_prompt(
+    period: str,
+    schedules: Optional[list[str]] = None,
+    todos: Optional[list[str]] = None
+) -> str:
     """Gemini에 전달할 시간대별 브리핑 프롬프트"""
+    schedules = schedules or []
+    todos = todos or []
+
+    schedules = [s for s in schedules if s and str(s).strip()]
+    todos = [t for t in todos if t and str(t).strip()]
+
+    schedule_text = "\n".join(schedules) if schedules else "없음"
+    todo_text = "\n".join(todos) if todos else "없음"
+
     base_notice = "⚠️ 반드시 한국어로 작성하세요. 영어를 사용하지 마세요."
 
     if period == "아침":
-        content = """
+        content = f"""
 # 아침 브리핑
 
 - 오늘 날씨를 간단히 요약
@@ -73,7 +119,7 @@ async def get_briefing_prompt(period: str) -> str:
         """
 
     elif period == "점심":
-        content = """
+        content = f"""
 # 점심 브리핑
 
 - 남은 일정을 간단히 요약
@@ -83,7 +129,7 @@ async def get_briefing_prompt(period: str) -> str:
         """
 
     else:  # 저녁
-        content = """
+        content = f"""
 # 저녁 브리핑
 
 - 오늘 일정 완료율 요약
@@ -91,6 +137,7 @@ async def get_briefing_prompt(period: str) -> str:
 - 하루를 돌아보는 간단한 정리
 - 전체를 3~4문장으로 작성
 - 마지막에 **짧은 조언** 추가
+- 단, 내일 일정이 없을 경우 '내일 일정 없음'이라고만 작성하고, 없는 내용을 지어내지 마세요.
         """
 
     return f"{content}\n\n{base_notice}\n"
