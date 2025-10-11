@@ -69,6 +69,7 @@ async def google_callback(code: str) -> Response:
             secure=True,
             samesite="none",
             domain=".nyangbiseo.store",
+            path="/",
         )
         response.set_cookie(
             key="refresh_token",
@@ -77,6 +78,7 @@ async def google_callback(code: str) -> Response:
             secure=True,
             samesite="none",
             domain=".nyangbiseo.store",
+            path="/",
         )
 
         print("✅ Google 로그인 완료, 프론트로 리디렉트:", redirect_url)
