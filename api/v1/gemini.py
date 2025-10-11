@@ -112,7 +112,6 @@ async def get_conversations(
 async def get_briefings(current_user: User = Depends(get_current_user)) -> dict[str, Any]:
     """Gemini 기반 시간대별 브리핑"""
     try:
-        # ✅ 현재 시각 (KST)
         now_kst = datetime.now(KST)
         hour = now_kst.hour
 
@@ -124,18 +123,18 @@ async def get_briefings(current_user: User = Depends(get_current_user)) -> dict[
         else:
             period = "저녁"
 
-        # ✅ 브리핑 기준 날짜 계산 (자정~05시는 전날)
+        # ✅ 브리핑 기준 날짜 (자정~05시는 전날)
         target_date = gemini_service.get_briefing_date()
 
         # ✅ KST 하루 범위 계산 (target_date 기준)
         start_of_day_kst = datetime.combine(target_date, datetime.min.time(), tzinfo=KST)
         end_of_day_kst = datetime.combine(target_date, datetime.max.time(), tzinfo=KST)
 
-        # ✅ UTC로 변환 (DB는 UTC 저장)
+        # ✅ UTC로 변환
         start_of_day_utc = start_of_day_kst.astimezone(timezone.utc)
         end_of_day_utc = end_of_day_kst.astimezone(timezone.utc)
 
-        # ✅ 해당 날짜 일정/투두 조회 (target_date 기준)
+        # ✅ 오늘 일정 / 투두
         schedules = await Schedule.filter(
             user=current_user,
             start_time__gte=start_of_day_utc,
@@ -148,7 +147,6 @@ async def get_briefings(current_user: User = Depends(get_current_user)) -> dict[
             created_at__lte=end_of_day_utc,
         ).all()
 
-        # ✅ 리스트 변환
         schedule_list = [
             f"{s.start_time.astimezone(KST).strftime('%H:%M')} {s.title}"
             for s in schedules
@@ -158,13 +156,40 @@ async def get_briefings(current_user: User = Depends(get_current_user)) -> dict[
             f"- [{'x' if t.is_completed else ' '}] {t.title}" for t in todos
         ] or ["투두 없음"]
 
-        # ✅ Gemini 프롬프트 생성 및 요청
+        # ✅ 저녁일 경우: 내일 일정도 함께 조회
+        next_day_schedules = []
+        if period == "저녁":
+            next_date = target_date + timedelta(days=1)
+            next_start_kst = datetime.combine(next_date, datetime.min.time(), tzinfo=KST)
+            next_end_kst = datetime.combine(next_date, datetime.max.time(), tzinfo=KST)
+            next_start_utc = next_start_kst.astimezone(timezone.utc)
+            next_end_utc = next_end_kst.astimezone(timezone.utc)
+
+            next_schedules = await Schedule.filter(
+                user=current_user,
+                start_time__gte=next_start_utc,
+                start_time__lte=next_end_utc,
+            ).all()
+
+            next_day_schedules = [
+                f"{s.start_time.astimezone(KST).strftime('%H:%M')} {s.title}"
+                for s in next_schedules
+            ] or ["내일 일정 없음"]
+
+        # ✅ Gemini 프롬프트 생성
         prompt = await gemini_service.get_briefing_prompt(
             period=period,
             schedules=schedule_list,
             todos=todo_list,
             target_date=target_date,
         )
+
+        # ✅ 저녁 프롬프트에는 내일 일정도 포함
+        if period == "저녁":
+            next_text = "\n".join(next_day_schedules)
+            prompt += f"\n\n# 내일 일정 미리보기\n{next_text}\n"
+
+        # ✅ Gemini 호출
         briefing = await gemini_request(prompt)
 
         return {
